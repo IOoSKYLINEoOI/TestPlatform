@@ -10,8 +10,4 @@
       <PackageReference Include="CSharpFunctionalExtensions" Version="3.6.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Models\" />
-    </ItemGroup>
-
 </Project>
