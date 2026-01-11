@@ -6,5 +6,5 @@ public enum QuestionType
     MultipleChoice = 2,
     Text = 3,
     Number = 4,
-    Matching = 5
+    Matching = 5,
 }

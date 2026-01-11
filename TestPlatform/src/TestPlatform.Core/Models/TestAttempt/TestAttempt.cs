@@ -14,16 +14,24 @@ public class TestAttempt
     }
 
     public Guid Id { get; }
+
     public int TotalQuestions { get; }
+
     public int? CorrectAnswers { get; private set; }
+
     public TestAttemptStatus TestAttemptStatus { get; private set; }
+
     public DateTime StartedAt { get; private set; }
+
     public DateTime? FinishedAt { get; private set; }
+
     public Guid TestId { get; }
 
-    public double Score
-        => TestAttemptStatus == TestAttemptStatus.Finished
-            ? (double)CorrectAnswers / TotalQuestions : 0;
+    public double Score =>
+        TestAttemptStatus == TestAttemptStatus.Finished
+        && CorrectAnswers is { } correct
+            ? (double)correct / TotalQuestions
+            : 0;
 
     public static Result<TestAttempt> Create(Guid testId, int totalQuestions)
     {
@@ -32,7 +40,7 @@ public class TestAttempt
 
         var testAttempt = new TestAttempt(Guid.NewGuid(), testId, totalQuestions)
         {
-            TestAttemptStatus = TestAttemptStatus.Started
+            TestAttemptStatus = TestAttemptStatus.Started,
         };
 
         return Result.Success(testAttempt);
@@ -52,7 +60,7 @@ public class TestAttempt
             CorrectAnswers = correctAnswers,
             StartedAt = startedAt,
             FinishedAt = finishedAt,
-            TestAttemptStatus = testAttemptStatus
+            TestAttemptStatus = testAttemptStatus,
         };
 
         return testAttempt;
@@ -62,19 +70,21 @@ public class TestAttempt
     {
         if (correctAnswers < 0 || correctAnswers > TotalQuestions)
             return Result.Failure<TestAttempt>("Некорректное количество правильных ответов.");
-        
+
         if (!IsActive())
             return Result.Failure("Попытка не может быть завершена.");
 
         CorrectAnswers = correctAnswers;
-        
+
         return Complete(TestAttemptStatus.Finished);
     }
 
     public Result Expired() => Complete(TestAttemptStatus.Expired);
+
     public Result Abandoned() => Complete(TestAttemptStatus.Abandoned);
+
     public Result Cancelled() => Complete(TestAttemptStatus.Cancelled);
-    
+
     private bool IsActive()
     {
         return TestAttemptStatus == TestAttemptStatus.Started;
@@ -84,13 +94,13 @@ public class TestAttempt
     {
         if (!IsActive())
             return Result.Failure("Попытка уже завершена.");
-        
+
         if (status == TestAttemptStatus.Finished && CorrectAnswers is null)
             return Result.Failure("Невозможно завершить попытку без результата.");
 
         TestAttemptStatus = status;
         FinishedAt = DateTime.UtcNow;
-        
+
         return Result.Success();
     }
 }

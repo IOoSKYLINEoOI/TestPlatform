@@ -24,50 +24,58 @@ public class Test
     }
 
     public Guid Id { get; }
+
     public string Name { get; }
+
     public string Description { get; }
+
     public int? TimeLimitSeconds { get; }
+
     public string? CoverImageUrl { get; }
-    
+
     public Guid AuthorId { get; }
+
     public IReadOnlyCollection<Question> Questions => _questions.AsReadOnly();
-    private int TotalQuestions => _questions.Count;
+
     public IReadOnlyCollection<Guid> Categories => _categories.AsReadOnly();
 
+    private int TotalQuestions => _questions.Count;
 
     public static Result<Test> Create(
-        string name, 
-        int? timeLimitSeconds, 
-        string description, 
-        Guid userId, 
+        string name,
+        int? timeLimitSeconds,
+        string description,
+        Guid userId,
         string? coverImageUrl)
     {
         if (string.IsNullOrWhiteSpace(name) || name.Length > MaxLengthName)
             return Result.Failure<Test>($"'{nameof(name)}' не может быть null или пустым, длиннее {MaxLengthName} символов.");
         if (string.IsNullOrWhiteSpace(description) || description.Length > MaxLengthDescription)
-            return Result.Failure<Test>(
-                $"'{nameof(description)}' не может быть null или пустым, длиннее {MaxLengthDescription} символов.");
+            return Result.Failure<Test>($"'{nameof(description)}' не может быть null или пустым, длиннее {MaxLengthDescription} символов.");
         if (timeLimitSeconds is < MinTimeLimitSeconds or > MaxTimeLimitSeconds)
+        {
             return Result.Failure<Test>(
                 $"'{nameof(timeLimitSeconds)}' должно быть от {MinTimeLimitSeconds} до {MaxTimeLimitSeconds} секунд.");
-        if(userId == Guid.Empty)
+        }
+
+        if (userId == Guid.Empty)
             return Result.Failure<Test>("Автор теста не задан.");
 
         return Result.Success(new Test(Guid.NewGuid(), name, timeLimitSeconds, description, userId, coverImageUrl));
     }
 
     public static Test FromPersistence(
-        Guid id, 
-        string name, 
-        int? timeLimitSeconds, 
-        string description, 
-        Guid userId, 
-        string? coverImageUrl, 
-        IEnumerable<Question> questions, 
+        Guid id,
+        string name,
+        int? timeLimitSeconds,
+        string description,
+        Guid userId,
+        string? coverImageUrl,
+        IEnumerable<Question> questions,
         IEnumerable<Guid> categories)
     {
         var test = new Test(id, name, timeLimitSeconds, description, userId, coverImageUrl);
-        
+
         test._questions.AddRange(questions);
 
         test.AddCategories(categories);

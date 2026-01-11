@@ -7,11 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="CSharpFunctionalExtensions" Version="3.6.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\TestPlatform.Contracts\TestPlatform.Contracts.csproj" />
+      <ProjectReference Include="..\TestPlatform.Core\TestPlatform.Core.csproj" />
     </ItemGroup>
 
 </Project>
