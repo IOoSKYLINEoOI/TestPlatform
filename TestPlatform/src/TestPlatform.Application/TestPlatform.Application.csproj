@@ -10,8 +10,4 @@
       <ProjectReference Include="..\TestPlatform.Core\TestPlatform.Core.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Tests\" />
-    </ItemGroup>
-
 </Project>

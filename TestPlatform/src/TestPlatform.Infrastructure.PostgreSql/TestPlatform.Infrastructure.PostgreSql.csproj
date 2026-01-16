@@ -7,11 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\TestPlatform.Core\TestPlatform.Core.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Tests\" />
+      <ProjectReference Include="..\TestPlatform.Application\TestPlatform.Application.csproj" />
     </ItemGroup>
 
 </Project>
