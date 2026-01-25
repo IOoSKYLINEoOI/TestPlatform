@@ -1,7 +1,8 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
+using TestPlatform.Contracts.Categories.DTOs;
 using TestPlatform.Contracts.CategoryDTOs;
-using TestPlatform.Core.Models.Category;
+using TestPlatform.Core.Categories;
 
 namespace TestPlatform.Application.Categories;
 
@@ -23,54 +24,61 @@ public class CategoriesService
         if(categoryResult.IsFailure)
             return Result.Failure<Guid>(categoryResult.Error);
 
-        var categoryId = await _categoriesRepository.AddAsync(categoryResult.Value, cancellationToken);
+        var categoryIdResult = await _categoriesRepository.AddAsync(categoryResult.Value, cancellationToken);
 
-        _logger.LogInformation("Added Category with id {categoryId}", categoryId);
+        _logger.LogInformation("Added Category with id {categoryId}", categoryIdResult.Value);
 
-        return Result.Success(categoryId.Value);
+        return Result.Success(categoryIdResult.Value);
     }
 
-    public async Task<Result<Category>> GetCategoryById(int categoryId)
+    public async Task<Result<Category>> GetCategoryById(Guid categoryId,  CancellationToken cancellationToken)
     {
-        var categoryResult = await _categoriesRepository.GetByIdAsync(categoryId);
+        var categoryResult = await _categoriesRepository.GetByIdAsync(categoryId, cancellationToken);
 
         if (categoryResult.IsFailure)
             return Result.Failure<Category>(categoryResult.Error);
 
+        _logger.LogInformation("Getting category with id {categoryId}", categoryId);
+
         return Result.Success(categoryResult.Value);
     }
 
-    public async Task<List<Category>> GetAllCategories()
+    public async Task<IReadOnlyCollection<Category>> GetAllCategories(CancellationToken cancellationToken)
     {
-        var categories = await _categoriesRepository.GetAllAsync();
+        var categories = await _categoriesRepository.GetAllAsync(cancellationToken);
+
+        _logger.LogInformation("Getting all categories");
 
         return categories;
     }
 
-    public async Task<Result> Update(int id, string name, string description)
+    public async Task<Result> Update(Guid id, string name, string description, CancellationToken cancellationToken)
     {
-        var categoryResult = await _categoriesRepository.GetByIdAsync(id);
+        var categoryResult = await _categoriesRepository.GetByIdAsync(id, cancellationToken);
 
         if (categoryResult.IsFailure)
             return Result.Failure(categoryResult.Error);
 
-        var updatedCategory = Category.Create(name, description);
+        var updateResult = categoryResult.Value.Update(name, description);
+        if(updateResult.IsFailure)
+            return Result.Failure(updateResult.Error);
 
-        if (updatedCategory.IsFailure)
-            return Result.Failure(updatedCategory.Error);
+        var updatedResult = await _categoriesRepository.UpdateAsync(categoryResult.Value, cancellationToken);
 
-        var updatedResult = await _categoriesRepository.UpdateAsync(id, updatedCategory.Value);
+        _logger.LogInformation("Updated Category with id {categoryId}", categoryResult.Value.Id);
 
         return updatedResult;
     }
 
-    public async Task<Result> Delete(int categoryId)
+    public async Task<Result> Delete(Guid categoryId, CancellationToken cancellationToken)
     {
-        var categoryResult = await _categoriesRepository.GetByIdAsync(categoryId);
+        var categoryResult = await _categoriesRepository.GetByIdAsync(categoryId, cancellationToken);
 
         if (categoryResult.IsFailure)
             return Result.Failure(categoryResult.Error);
 
-        return await _categoriesRepository.DeleteAsync(categoryId);
+        _logger.LogInformation("Delete Category with id {categoryId}", categoryResult.Value.Id);
+
+        return await _categoriesRepository.DeleteAsync(categoryId, cancellationToken);
     }
 }
