@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace TestPlatform.Contracts.CategoryDTOs;
+namespace TestPlatform.Contracts.Categories.DTOs;
 
 public record CategoryRequest(
-    [Required] string Name,
-    [Required] string Description);
+    string Name,
+    string Description);

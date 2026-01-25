@@ -10,4 +10,8 @@
       <ProjectReference Include="..\TestPlatform.Core\TestPlatform.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    </ItemGroup>
+
 </Project>
