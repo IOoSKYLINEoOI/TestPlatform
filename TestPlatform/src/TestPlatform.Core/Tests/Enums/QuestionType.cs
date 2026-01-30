@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Core.Enums;
+﻿namespace TestPlatform.Core.Tests.Enums;
 
 public enum QuestionType
 {

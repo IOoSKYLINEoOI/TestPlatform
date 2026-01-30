@@ -31,16 +31,15 @@ public class Category
         return Result.Success(category);
     }
 
-    public Result Update(string name, string description)
+    public static Result<Category> CreateWithId(Guid id, string name, string description)
     {
         var validation = Validate(name, description);
         if (validation.IsFailure)
             return Result.Failure<Category>(validation.Error);
 
-        Name = name;
-        Description = description;
+        var category = new Category(id, name, description);
 
-        return Result.Success();
+        return Result.Success(category);
     }
 
     public static Category FromPersistence(Guid id, string name, string description)
@@ -52,12 +51,12 @@ public class Category
     {
         if (string.IsNullOrWhiteSpace(name) || name.Length > MaxLengthName)
         {
-            return Result.Failure<Category>($"'{nameof(name)}' не может быть null или пустым, длиннее чем {MaxLengthName} символов.");
+            return Result.Failure($"'{nameof(name)}' не может быть null или пустым, длиннее чем {MaxLengthName} символов.");
         }
 
         if (string.IsNullOrWhiteSpace(description) || description.Length > MaxLengthDescription)
         {
-            return Result.Failure<Category>($"'{nameof(description)}' не может быть null или пустым, длиннее чем {MaxLengthDescription} символов.");
+            return Result.Failure($"'{nameof(description)}' не может быть null или пустым, длиннее чем {MaxLengthDescription} символов.");
         }
 
         return Result.Success();

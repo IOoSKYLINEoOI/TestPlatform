@@ -1,6 +1,6 @@
 ﻿using CSharpFunctionalExtensions;
 
-namespace TestPlatform.Core.Models.Test;
+namespace TestPlatform.Core.Tests;
 
 public class Test
 {

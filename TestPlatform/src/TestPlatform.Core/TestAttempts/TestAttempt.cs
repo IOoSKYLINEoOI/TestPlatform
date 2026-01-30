@@ -1,7 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
-using TestPlatform.Core.Enums;
+using TestPlatform.Core.TestAttempts.Enums;
 
-namespace TestPlatform.Core.Models.TestAttempt;
+namespace TestPlatform.Core.TestAttempts;
 
 public class TestAttempt
 {

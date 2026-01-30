@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Core.Enums;
+﻿namespace TestPlatform.Core.TestAttempts.Enums;
 
 public enum TestAttemptStatus
 {

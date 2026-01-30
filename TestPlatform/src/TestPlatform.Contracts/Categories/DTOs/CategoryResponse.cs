@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Contracts.CategoryDTOs;
+﻿namespace TestPlatform.Contracts.Categories.DTOs;
 
 public record CategoryResponse(
     int Id,

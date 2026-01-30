@@ -12,6 +12,12 @@
 
     <ItemGroup>
       <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+      <PackageReference Include="Scrutor" Version="7.0.0" />
+      <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Categories\Features\" />
     </ItemGroup>
 
 </Project>
