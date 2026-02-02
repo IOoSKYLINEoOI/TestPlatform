@@ -4,7 +4,7 @@ using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Extensions;
 using TestPlatform.Core.Categories;
 
-namespace TestPlatform.Application.Categories.Features.CreateCategory;
+namespace TestPlatform.Application.Categories.Features.CreateCategoryCommand;
 
 public record CreateCategoryCommand(string Name, string Description) : ICommand;
 

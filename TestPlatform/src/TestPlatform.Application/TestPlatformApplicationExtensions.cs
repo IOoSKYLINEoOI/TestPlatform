@@ -19,6 +19,12 @@ public static class TestPlatformApplicationExtensions
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
+        services.Scan(scan => scan.FromAssemblies(assembly)
+            .AddClasses(classes => classes
+                .AssignableToAny(typeof(IQueryHandler<,>)))
+            .AsImplementedInterfaces()
+            .WithScopedLifetime());
+
         return services;
     }
 }

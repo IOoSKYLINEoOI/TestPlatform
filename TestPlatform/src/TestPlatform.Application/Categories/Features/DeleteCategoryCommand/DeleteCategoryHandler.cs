@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Extensions;
 
-namespace TestPlatform.Application.Categories.Features.DeleteCategory;
+namespace TestPlatform.Application.Categories.Features.DeleteCategoryCommand;
 
 public record DeleteCategoryCommand(Guid Id) : ICommand;
 

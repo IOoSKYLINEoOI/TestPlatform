@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Categories.Features.CreateCategory;
-using TestPlatform.Application.Categories.Features.DeleteCategory;
-using TestPlatform.Application.Categories.Features.UpdateCategory;
+using TestPlatform.Application.Categories.Features.CreateCategoryCommand;
+using TestPlatform.Application.Categories.Features.DeleteCategoryCommand;
+using TestPlatform.Application.Categories.Features.GetAllQuery;
+using TestPlatform.Application.Categories.Features.GetByIdCategoryQuery;
+using TestPlatform.Application.Categories.Features.UpdateCategoryCommand;
 using TestPlatform.Contracts.Categories.DTOs;
 
 namespace TestPlatform.Presenters.Categories;
@@ -45,41 +47,36 @@ public class CategoriesController : ControllerBase
         return result.IsSuccess ? Ok() : BadRequest(result.Error);
     }
 
-    /*[HttpGet("{id:int}")]
+    [HttpGet("{id:guid}")]
     [SwaggerOperation(
-        OperationId = "GetCategory",
+        OperationId = "GetByIdCategory",
         Summary = "Получить категорию по Id.",
         Description = "Возвращает название категории и ее описание по ее Id")]
-    public async Task<IActionResult> GetCategory([FromRoute] int id)
+    public async Task<IActionResult> GetById(
+        [FromServices] IQueryHandler<CategoryResponse, GetByIdCategoryQuery> handler,
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
     {
-        var categoryResult = await _categoryService.GetCategoryById(id);
-        if (categoryResult.IsFailure)
-            return NotFound(categoryResult.Error);
+        var query = new GetByIdCategoryQuery(id);
 
-        var response = new CategoryResponse(
-            categoryResult.Value.Id,
-            categoryResult.Value.Name, 
-            categoryResult.Value.Description);
+        var category = await handler.Handle(query, cancellationToken);
+        return category is not null ? Ok(category) : NotFound();
+    }
 
-        return Ok(response);
-    }*/
-
-    /*[HttpGet("all")]
+    [HttpGet("all")]
     [SwaggerOperation(
         OperationId = "GetAllCategories",
         Summary = "Получить все категории",
         Description = "Возвращает название и описание все категорий.")]
-    public async Task<IActionResult> GetAllCategories()
+    public async Task<IActionResult> GetAll(
+        [FromServices] IQueryHandler<List<CategoryResponse>, GetAllQuery> handler,
+        CancellationToken cancellationToken)
     {
-        var categories = await _categoryService.GetAllCategories();
-        var response = categories.Select(t => new CategoryResponse(
-            t.Id, 
-            t.Name, 
-            t.Description
-        )).ToList();
+        var query = new GetAllQuery();
 
-        return Ok(response);
-    }*/
+        var categories = await handler.Handle(query, cancellationToken);
+        return Ok(categories);
+    }
 
     [HttpDelete("{id:guid}")]
     [SwaggerOperation(

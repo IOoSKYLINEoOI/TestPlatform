@@ -4,7 +4,7 @@ using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Extensions;
 using TestPlatform.Core.Categories;
 
-namespace TestPlatform.Application.Categories.Features.UpdateCategory;
+namespace TestPlatform.Application.Categories.Features.UpdateCategoryCommand;
 
 public record UpdateCategoryCommand(Guid Id, string Name, string Description) : ICommand;
 
