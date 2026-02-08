@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestPlatform.Contracts", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestPlatform.Application", "src\TestPlatform.Application\TestPlatform.Application.csproj", "{75D63BFE-DB0A-42C0-B458-63E07E1C5B5B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestPlatform.Infrastructure.PostgreSql", "src\TestPlatform.Infrastructure.PostgreSql\TestPlatform.Infrastructure.PostgreSql.csproj", "{0E8F3852-F1A6-4772-B78B-FD90A22E81CB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestPlatform.Infrastructure.Postgres", "src\TestPlatform.Infrastructure.Postgres\TestPlatform.Infrastructure.Postgres.csproj", "{0E8F3852-F1A6-4772-B78B-FD90A22E81CB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

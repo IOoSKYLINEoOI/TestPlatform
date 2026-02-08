@@ -1,7 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
-using TestPlatform.Core.Enums;
+using TestPlatform.Core.Tests.Enums;
 
-namespace TestPlatform.Core.Models.Test;
+namespace TestPlatform.Core.Tests;
 
 public class Question
 {

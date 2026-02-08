@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Contracts.TestAttemptDTOs;
+﻿namespace TestPlatform.Contracts.TestAttempts.DTOs;
 
 public record TestAttemptResponse(
     int Id,

@@ -7,11 +7,7 @@ public interface ICategoriesRepository
 {
     Task<Result<Guid>> AddAsync(Category category, CancellationToken cancellationToken);
 
-    Task<Result<Category>> GetByIdAsync(Guid categoryId, CancellationToken cancellationToken);
-
-    Task<IReadOnlyCollection<Category>> GetAllAsync(CancellationToken cancellationToken);
-
-    Task<Result> UpdateAsync(Category category, CancellationToken cancellationToken);
+    Task<Result> UpdateAsync(Guid id, string name, string description, CancellationToken cancellationToken);
 
     Task<Result> DeleteAsync(Guid categoryId, CancellationToken cancellationToken);
 }
