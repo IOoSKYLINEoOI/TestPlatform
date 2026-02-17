@@ -8,12 +8,17 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.0" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\TestPlatform.Application\TestPlatform.Application.csproj" />
       <ProjectReference Include="..\TestPlatform.Core\TestPlatform.Core.csproj" />
+      <ProjectReference Include="..\TestPlatform.Infrastructure.Postgres\TestPlatform.Infrastructure.Postgres.csproj" />
       <ProjectReference Include="..\TestPlatform.Presenters\TestPlatform.Presenters.csproj" />
     </ItemGroup>
 

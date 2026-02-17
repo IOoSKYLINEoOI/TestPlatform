@@ -9,19 +9,18 @@ public record GetByIdCategoryQuery(Guid Id) : IQuery;
 
 public class GetByICategoryHandler : IQueryHandler<CategoryResponse, GetByIdCategoryQuery>
 {
-    private readonly IReadCategoriesDbContext _categoriesDbContext;
+    private readonly IReadCategoriesRepository _repository;
     private readonly ILogger<GetByICategoryHandler> _logger;
 
-    public GetByICategoryHandler(IReadCategoriesDbContext categoriesDbContext, ILogger<GetByICategoryHandler> logger)
+    public GetByICategoryHandler(IReadCategoriesRepository repository, ILogger<GetByICategoryHandler> logger)
     {
-        _categoriesDbContext = categoriesDbContext;
+        _repository = repository;
         _logger = logger;
     }
 
     public async Task<CategoryResponse?> Handle(GetByIdCategoryQuery query, CancellationToken cancellationToken)
     {
-        var category = await _categoriesDbContext.ReadCategories
-            .FirstOrDefaultAsync(x => x.Id == query.Id, cancellationToken);
+        var category = await _repository.ReadCategoryByIdAsync(query.Id, cancellationToken);
 
         if (category == null)
             _logger.LogWarning("Category with id {Id} not found", query.Id);

@@ -1,4 +1,5 @@
-﻿using TestPlatform.Infrastructure.Postgres.Entities;
+﻿using TestPlatform.Infrastructure.Postgres.Tests;
+using TestPlatform.Infrastructure.Postgres.Tests.Entities;
 
 namespace TestPlatform.Infrastructure.Postgres.Categories;
 

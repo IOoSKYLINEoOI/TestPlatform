@@ -1,10 +1,11 @@
 ﻿using TestPlatform.Infrastructure.Postgres.Categories;
+using TestPlatform.Infrastructure.Postgres.TestAttempts.Entities;
 
-namespace TestPlatform.Infrastructure.Postgres.Entities;
+namespace TestPlatform.Infrastructure.Postgres.Tests.Entities;
 
 public class TestEntity
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     public string Name { get; set; } = null!;
 

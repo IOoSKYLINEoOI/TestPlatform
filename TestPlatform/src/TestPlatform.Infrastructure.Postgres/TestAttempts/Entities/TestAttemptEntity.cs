@@ -1,9 +1,11 @@
-﻿namespace TestPlatform.Infrastructure.Postgres.Entities;
+﻿using TestPlatform.Infrastructure.Postgres.Tests.Entities;
+
+namespace TestPlatform.Infrastructure.Postgres.TestAttempts.Entities;
 
 public class TestAttemptEntity
 {
 
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     public int TotalQuestions { get; set; }
 
@@ -15,7 +17,7 @@ public class TestAttemptEntity
 
     public DateTime? FinishedAt { get; set; }
 
-    public int TestId { get; set; }
+    public Guid TestId { get; set; }
 
     public TestEntity Test { get; set; } = null!;
 }

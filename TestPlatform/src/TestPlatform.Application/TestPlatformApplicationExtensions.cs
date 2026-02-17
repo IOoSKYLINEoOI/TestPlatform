@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Contracts.Categories.Validators;
+using TestPlatform.Application.Categories.Validators;
 
 namespace TestPlatform.Application;
 

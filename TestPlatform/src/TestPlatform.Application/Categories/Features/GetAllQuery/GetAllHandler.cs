@@ -9,19 +9,18 @@ public record GetAllQuery() : IQuery;
 
 public class GetAllHandler : IQueryHandler<List<CategoryResponse>, GetAllQuery>
 {
-    private readonly IReadCategoriesDbContext _categoriesDbContext;
+    private readonly IReadCategoriesRepository _repository;
     private readonly ILogger<GetAllHandler> _logger;
 
-    public GetAllHandler(IReadCategoriesDbContext categoriesDbContext, ILogger<GetAllHandler> logger)
+    public GetAllHandler(IReadCategoriesRepository repository, ILogger<GetAllHandler> logger)
     {
-        _categoriesDbContext = categoriesDbContext;
+        _repository = repository;
         _logger = logger;
     }
 
     public async Task<List<CategoryResponse>?> Handle(GetAllQuery query, CancellationToken cancellationToken)
     {
-        var categories = await _categoriesDbContext.ReadCategories
-            .ToListAsync(cancellationToken);
+        var categories = await _repository.ReadAllCategoriesAsync(cancellationToken);
 
         _logger.LogInformation("Retrieved {Count} categories", categories.Count);
 

@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using TestPlatform.Contracts.Categories.DTOs;
 
-namespace TestPlatform.Contracts.Categories.Validators;
+namespace TestPlatform.Application.Categories.Validators;
 
 public class CreateCategoryRequestValidator : AbstractValidator<CategoryRequest>
 {
