@@ -1,9 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TestPlatform.Application.Categories;
-using TestPlatform.Contracts.Categories.DTOs;
-using TestPlatform.Infrastructure.Postgres.Categories;
-using TestPlatform.Infrastructure.Postgres.TestAttempts.Entities;
-using TestPlatform.Infrastructure.Postgres.Tests;
+using TestPlatform.Infrastructure.Postgres.Attempts.Configurations;
+using TestPlatform.Infrastructure.Postgres.Attempts.Entities;
+using TestPlatform.Infrastructure.Postgres.Exams.Configuration;
+using TestPlatform.Infrastructure.Postgres.Exams.Entities;
+using TestPlatform.Infrastructure.Postgres.Questions.Configurations;
+using TestPlatform.Infrastructure.Postgres.Questions.Entities;
+using TestPlatform.Infrastructure.Postgres.Tags.Configurations;
+using TestPlatform.Infrastructure.Postgres.Tags.Entities;
 using TestPlatform.Infrastructure.Postgres.Tests.Configurations;
 using TestPlatform.Infrastructure.Postgres.Tests.Entities;
 
@@ -11,18 +14,27 @@ namespace TestPlatform.Infrastructure.Postgres;
 
 public class TestPlatformDbContext(DbContextOptions<TestPlatformDbContext> options) : DbContext(options)
 {
-    public DbSet<CategoryEntity> Categories { get; set; }
+    public DbSet<AttemptEntity> Attempts { get; set; }
+
+    public DbSet<ExamEntity> Exams { get; set; }
+
+    public DbSet<QuestionEntity> Questions { get; set; }
+
+    public DbSet<TagEntity> Tags { get; set; }
 
     public DbSet<TestEntity> Tests { get; set; }
 
-    public DbSet<TestAttemptEntity> TestAttempts { get; set; }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new CategoriesConfiguration());
+        modelBuilder.ApplyConfiguration(new AttemptsConfiguration());
+
+        modelBuilder.ApplyConfiguration(new ExamsConfiguration());
+
+        modelBuilder.ApplyConfiguration(new QuestionsConfiguration());
+        modelBuilder.ApplyConfiguration(new AnswerOptionsConfiguration());
+
+        modelBuilder.ApplyConfiguration(new TagsConfiguration());
 
         modelBuilder.ApplyConfiguration(new TestsConfiguration());
-        modelBuilder.ApplyConfiguration(new QuestionsConfiguration());
-        modelBuilder.ApplyConfiguration(new AnswersConfiguration());
     }
 }

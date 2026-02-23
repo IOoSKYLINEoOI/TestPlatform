@@ -34,7 +34,8 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TestPlatformDbContext>();
     db.Database.Migrate();
-    //await DbInitializer.InitializeAsync(db);
+
+    // await DbInitializer.InitializeAsync(db);
 }
 
 if (app.Environment.IsDevelopment())
@@ -44,7 +45,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();

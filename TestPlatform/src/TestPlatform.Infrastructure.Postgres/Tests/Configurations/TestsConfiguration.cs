@@ -8,7 +8,7 @@ public class TestsConfiguration : IEntityTypeConfiguration<TestEntity>
 {
     public void Configure(EntityTypeBuilder<TestEntity> builder)
     {
-        builder.ToTable("Tests");
+        builder.ToTable("tests");
 
         builder.HasKey(x => x.Id);
 
@@ -21,11 +21,7 @@ public class TestsConfiguration : IEntityTypeConfiguration<TestEntity>
             .IsRequired();
 
         builder.HasMany(x => x.Questions)
-            .WithOne(x => x.Test)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasMany(x => x.TestAttempts)
-            .WithOne(x => x.Test)
-            .OnDelete(DeleteBehavior.Cascade);
+            .WithMany(x => x.Tests)
+            .UsingEntity(x => x.ToTable("tests_questions"));
     }
 }

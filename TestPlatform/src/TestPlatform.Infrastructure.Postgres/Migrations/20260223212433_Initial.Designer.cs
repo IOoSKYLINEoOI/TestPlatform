@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TestPlatform.Infrastructure.Postgres;
@@ -11,9 +12,11 @@ using TestPlatform.Infrastructure.Postgres;
 namespace TestPlatform.Infrastructure.Postgres.Migrations
 {
     [DbContext(typeof(TestPlatformDbContext))]
-    partial class TestPlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260223212433_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -6,4 +6,4 @@ public record TestResponse(
     int? TimeLimitSeconds,
     string Description,
     int TotalQuestions,
-    List<int> CategoryIds);
+    List<Guid> TagIds);

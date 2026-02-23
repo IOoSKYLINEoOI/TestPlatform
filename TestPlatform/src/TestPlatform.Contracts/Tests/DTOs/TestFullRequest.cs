@@ -4,7 +4,7 @@ public record TestFullRequest(
     string Name,
     int? TimeLimitSeconds,
     string Description,
-    List<int> CategoriesIds,
+    List<int> tagsIds,
     List<QuestionFullRequest> Questions);
 
 public record QuestionFullRequest(

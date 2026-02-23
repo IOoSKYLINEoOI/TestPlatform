@@ -1,4 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
+using TestPlatform.Core.Questions;
 
 namespace TestPlatform.Core.Tests;
 
@@ -11,7 +12,7 @@ public class Test
     private const int MaxTimeLimitSeconds = 14100;
 
     private readonly List<Question> _questions = new();
-    private readonly List<Guid> _categories = new();
+    private readonly List<Guid> _tags = new();
 
     private Test(Guid id, string name, int? timeLimitSeconds, string description, Guid authorId, string? coverImageUrl)
     {
@@ -37,7 +38,7 @@ public class Test
 
     public IReadOnlyCollection<Question> Questions => _questions.AsReadOnly();
 
-    public IReadOnlyCollection<Guid> Categories => _categories.AsReadOnly();
+    public IReadOnlyCollection<Guid> Tags => _tags.AsReadOnly();
 
     private int TotalQuestions => _questions.Count;
 
@@ -72,13 +73,13 @@ public class Test
         Guid userId,
         string? coverImageUrl,
         IEnumerable<Question> questions,
-        IEnumerable<Guid> categories)
+        IEnumerable<Guid> tags)
     {
         var test = new Test(id, name, timeLimitSeconds, description, userId, coverImageUrl);
 
         test._questions.AddRange(questions);
 
-        test.AddCategories(categories);
+        test.AddTags(tags);
 
         return test;
     }
@@ -92,14 +93,14 @@ public class Test
         return Result.Success();
     }
 
-    private Result AddCategories(IEnumerable<Guid> categoryIds)
+    private Result AddTags(IEnumerable<Guid> tagsIds)
     {
-        foreach (var id in categoryIds)
+        foreach (var id in tagsIds)
         {
-            if (_categories.Contains(id))
+            if (_tags.Contains(id))
                 continue;
 
-            _categories.Add(id);
+            _tags.Add(id);
         }
 
         return Result.Success();
