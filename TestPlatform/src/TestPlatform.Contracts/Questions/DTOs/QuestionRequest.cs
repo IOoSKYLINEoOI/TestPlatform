@@ -3,11 +3,13 @@
 public record QuestionRequest(
     string Text,
     int QuestionTypeId,
+    int Points,
     string? ImageUrl,
-    int? Points,
-    List<AnswerOptionRequest> AnswerOptions);
+    List<Guid> TagIds,
+    List<CreateAnswerOptionRequest> CreateAnswerOptions);
 
-public record AnswerOptionRequest(
+public record CreateAnswerOptionRequest(
+    Guid Id,
     string Text,
     bool IsCorrect,
     string? ImageUrl);

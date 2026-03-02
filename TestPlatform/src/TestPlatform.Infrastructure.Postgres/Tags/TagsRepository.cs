@@ -36,6 +36,9 @@ public class TagsRepository : ITagsRepository
         return Result.Success();
     }
 
+    public async Task<bool> ExistsAsync(Guid tagId, CancellationToken cancellationToken)
+        => await _context.Tags.AnyAsync(q => q.Id == tagId, cancellationToken);
+
     public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var tagEntity = await FindTagAsync(id, cancellationToken);

@@ -8,18 +8,18 @@ public record GetAllTagsQuery() : IQuery;
 
 public class GetAllTagsHandler : IQueryHandler<List<TagResponse>, GetAllTagsQuery>
 {
-    private readonly IReadTagsRepository _readTagsRepository;
+    private readonly ITagsReadRepository _tagsReadRepository;
     private readonly ILogger<GetAllTagsHandler> _logger;
 
-    public GetAllTagsHandler(IReadTagsRepository readTagsRepository, ILogger<GetAllTagsHandler> logger)
+    public GetAllTagsHandler(ITagsReadRepository tagsReadRepository, ILogger<GetAllTagsHandler> logger)
     {
-        _readTagsRepository = readTagsRepository;
+        _tagsReadRepository = tagsReadRepository;
         _logger = logger;
     }
 
-    public async Task<List<TagResponse>?> Handle(GetAllTagsQuery query, CancellationToken cancellationToken)
+    public async Task<List<TagResponse>> Handle(GetAllTagsQuery query, CancellationToken cancellationToken)
     {
-        var tags = await _readTagsRepository.ReadAllTagsAsync(cancellationToken);
+        var tags = await _tagsReadRepository.ReadAllTagsAsync(cancellationToken);
 
         _logger.LogInformation("Retrieved {Count} tags", tags.Count);
 

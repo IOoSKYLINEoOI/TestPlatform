@@ -1,6 +1,4 @@
-﻿using TestPlatform.Core.Questions;
-using TestPlatform.Infrastructure.Postgres.Exams.Entities;
-using TestPlatform.Infrastructure.Postgres.Tags;
+﻿using TestPlatform.Infrastructure.Postgres.Exams.Entities;
 using TestPlatform.Infrastructure.Postgres.Tags.Entities;
 using TestPlatform.Infrastructure.Postgres.Tests.Entities;
 
@@ -18,7 +16,7 @@ public class QuestionEntity
 
     public string? ImageUrl { get; set; }
 
-    public ICollection<AnswerOptionEntity> Answers { get; set; } = new List<AnswerOptionEntity>();
+    public ICollection<AnswerOptionEntity> AnswersOptions { get; set; } = new List<AnswerOptionEntity>();
 
     public ICollection<TagEntity> Tags { get; set; } = new List<TagEntity>();
 

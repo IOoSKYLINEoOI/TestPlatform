@@ -20,12 +20,12 @@ public class CreateQuestionRequestValidator : AbstractValidator<QuestionRequest>
 
         When(IsChoiceQuestion, () =>
         {
-            RuleFor(x => x.AnswerOptions)
+            RuleFor(x => x.CreateAnswerOptions)
                 .NotNull().WithMessage("Варианты ответа обязательны.")
                 .Must(x => x.Count > 0).WithMessage("Должен быть хотя бы один вариант ответа.")
                 .Must(x => x.Count <= MaxAnswers).WithMessage($"Нельзя добавить больше {MaxAnswers} вариантов ответа.");
 
-            RuleForEach(x => x.AnswerOptions)
+            RuleForEach(x => x.CreateAnswerOptions)
                 .ChildRules(answer =>
                 {
                     answer.RuleFor(a => a.Text)
@@ -33,13 +33,13 @@ public class CreateQuestionRequestValidator : AbstractValidator<QuestionRequest>
                         .MaximumLength(MaxLengthText).WithMessage($"Текст варианта не должен превышать {MaxLengthText} символов.");
                 });
 
-            RuleFor(x => x.AnswerOptions)
+            RuleFor(x => x.CreateAnswerOptions)
                 .Must(HaveCorrectAnswer).WithMessage("Должен быть выбран правильный вариант ответа.");
         });
 
         When(IsSingleChoice, () =>
         {
-            RuleFor(x => x.AnswerOptions)
+            RuleFor(x => x.CreateAnswerOptions)
                 .Must(HaveExactlyOneCorrect).WithMessage("Для вопроса с одним вариантом должен быть ровно один правильный ответ.");
         });
     }
@@ -55,12 +55,12 @@ public class CreateQuestionRequestValidator : AbstractValidator<QuestionRequest>
         return request.QuestionTypeId == (int)QuestionType.SingleChoice;
     }
 
-    private static bool HaveCorrectAnswer(List<AnswerOptionRequest> answers)
+    private static bool HaveCorrectAnswer(List<CreateAnswerOptionRequest> answers)
     {
         return answers.Any(a => a.IsCorrect);
     }
 
-    private static bool HaveExactlyOneCorrect(List<AnswerOptionRequest> answers)
+    private static bool HaveExactlyOneCorrect(List<CreateAnswerOptionRequest> answers)
     {
         return answers.Count(a => a.IsCorrect) == 1;
     }

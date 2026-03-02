@@ -1,5 +1,4 @@
-﻿using TestPlatform.Infrastructure.Postgres.Attempts.Entities;
-using TestPlatform.Infrastructure.Postgres.Questions.Entities;
+﻿using TestPlatform.Infrastructure.Postgres.Questions.Entities;
 
 namespace TestPlatform.Infrastructure.Postgres.Tests.Entities;
 
@@ -9,11 +8,13 @@ public class TestEntity
 
     public string Name { get; set; } = null!;
 
-    public int? TimeLimitSeconds { get; set; }
-
     public string Description { get; set; } = null!;
 
-    public Guid? UserId { get; set; }
+    public int? TimeLimitSeconds { get; set; }
+
+    public Guid? AuthorId { get; set; }
+
+    public string CoverImageUrl { get; set; } = null!;
 
     public ICollection<QuestionEntity> Questions { get; set; } = new List<QuestionEntity>();
 }

@@ -14,6 +14,37 @@ namespace TestPlatform.Presenters.Tags;
 [Route("[controller]")]
 public class TagsController : ControllerBase
 {
+    [HttpGet("{id:guid}")]
+    [SwaggerOperation(
+        OperationId = "GetByIdTag",
+        Summary = "Получить тэг по Id.",
+        Description = "Возвращает название тэга и ее описание по его Id")]
+    public async Task<IActionResult> GetById(
+        [FromServices] IQueryHandler<TagResponse, GetByIdTagQuery> handler,
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetByIdTagQuery(id);
+
+        var tag = await handler.Handle(query, cancellationToken);
+        return Ok(tag);
+    }
+
+    [HttpGet("all")]
+    [SwaggerOperation(
+        OperationId = "GetAllTags",
+        Summary = "Получить все тэги",
+        Description = "Возвращает название и описание всех тэгов.")]
+    public async Task<IActionResult> GetAll(
+        [FromServices] IQueryHandler<List<TagResponse>, GetAllTagsQuery> handler,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetAllTagsQuery();
+
+        var tags = await handler.Handle(query, cancellationToken);
+        return Ok(tags);
+    }
+
     [HttpPost]
     [SwaggerOperation(
         OperationId = "CreateTag",
@@ -45,37 +76,6 @@ public class TagsController : ControllerBase
 
         var result = await handler.Handle(command, cancellationToken);
         return result.IsSuccess ? Ok() : BadRequest(result.Error);
-    }
-
-    [HttpGet("{id:guid}")]
-    [SwaggerOperation(
-        OperationId = "GetByIdTag",
-        Summary = "Получить тэг по Id.",
-        Description = "Возвращает название тэга и ее описание по его Id")]
-    public async Task<IActionResult> GetById(
-        [FromServices] IQueryHandler<TagResponse, GetByIdTagQuery> handler,
-        [FromRoute] Guid id,
-        CancellationToken cancellationToken)
-    {
-        var query = new GetByIdTagQuery(id);
-
-        var tag = await handler.Handle(query, cancellationToken);
-        return tag is not null ? Ok(tag) : NotFound();
-    }
-
-    [HttpGet("all")]
-    [SwaggerOperation(
-        OperationId = "GetAllTags",
-        Summary = "Получить все тэги",
-        Description = "Возвращает название и описание всех тэгов.")]
-    public async Task<IActionResult> GetAll(
-        [FromServices] IQueryHandler<List<TagResponse>, GetAllTagsQuery> handler,
-        CancellationToken cancellationToken)
-    {
-        var query = new GetAllTagsQuery();
-
-        var tags = await handler.Handle(query, cancellationToken);
-        return Ok(tags);
     }
 
     [HttpDelete("{id:guid}")]

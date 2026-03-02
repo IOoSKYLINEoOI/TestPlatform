@@ -11,10 +11,10 @@ public class Test
     private const int MinTimeLimitSeconds = 100;
     private const int MaxTimeLimitSeconds = 14100;
 
-    private readonly List<Question> _questions = new();
+    private readonly List<Guid> _questionsIds = new();
     private readonly List<Guid> _tags = new();
 
-    private Test(Guid id, string name, int? timeLimitSeconds, string description, Guid authorId, string? coverImageUrl)
+    private Test(Guid id, string name, int? timeLimitSeconds, string description, Guid? authorId, string? coverImageUrl)
     {
         Id = id;
         Name = name;
@@ -34,20 +34,55 @@ public class Test
 
     public string? CoverImageUrl { get; }
 
-    public Guid AuthorId { get; }
+    public Guid? AuthorId { get; }
 
-    public IReadOnlyCollection<Question> Questions => _questions.AsReadOnly();
+    public IReadOnlyCollection<Guid> QuestionsIds => _questionsIds.AsReadOnly();
 
-    public IReadOnlyCollection<Guid> Tags => _tags.AsReadOnly();
-
-    private int TotalQuestions => _questions.Count;
+    private int TotalQuestions => _questionsIds.Count;
 
     public static Result<Test> Create(
         string name,
         int? timeLimitSeconds,
         string description,
-        Guid userId,
+        Guid? authorId,
         string? coverImageUrl)
+    {
+        var validation = Validate(name, timeLimitSeconds, description, authorId);
+        if (validation.IsFailure)
+            return Result.Failure<Test>(validation.Error);
+
+        return Result.Success(new Test(Guid.NewGuid(), name, timeLimitSeconds, description, authorId, coverImageUrl));
+    }
+
+    public static Result<Test> CreateWithId(
+        Guid id,
+        string name,
+        int? timeLimitSeconds,
+        string description,
+        Guid? authorId,
+        string? coverImageUrl)
+    {
+        var validation = Validate(name, timeLimitSeconds, description, authorId);
+        if (validation.IsFailure)
+            return Result.Failure<Test>(validation.Error);
+
+        return Result.Success(new Test(id, name, timeLimitSeconds, description, authorId, coverImageUrl));
+    }
+
+    public Result AddQuestion(Guid questionId)
+    {
+        if (TotalQuestions >= MaxQuestions)
+            return Result.Failure($"Нельзя добавить больше {MaxQuestions} вопросов.");
+
+        _questionsIds.Add(questionId);
+        return Result.Success();
+    }
+
+    private static Result Validate(
+        string name,
+        int? timeLimitSeconds,
+        string description,
+        Guid? authorId)
     {
         if (string.IsNullOrWhiteSpace(name) || name.Length > MaxLengthName)
             return Result.Failure<Test>($"'{nameof(name)}' не может быть null или пустым, длиннее {MaxLengthName} символов.");
@@ -59,49 +94,8 @@ public class Test
                 $"'{nameof(timeLimitSeconds)}' должно быть от {MinTimeLimitSeconds} до {MaxTimeLimitSeconds} секунд.");
         }
 
-        if (userId == Guid.Empty)
+        if (authorId == Guid.Empty)
             return Result.Failure<Test>("Автор теста не задан.");
-
-        return Result.Success(new Test(Guid.NewGuid(), name, timeLimitSeconds, description, userId, coverImageUrl));
-    }
-
-    public static Test FromPersistence(
-        Guid id,
-        string name,
-        int? timeLimitSeconds,
-        string description,
-        Guid userId,
-        string? coverImageUrl,
-        IEnumerable<Question> questions,
-        IEnumerable<Guid> tags)
-    {
-        var test = new Test(id, name, timeLimitSeconds, description, userId, coverImageUrl);
-
-        test._questions.AddRange(questions);
-
-        test.AddTags(tags);
-
-        return test;
-    }
-
-    public Result AddQuestion(Question question)
-    {
-        if (TotalQuestions >= MaxQuestions)
-            return Result.Failure($"Нельзя добавить больше {MaxQuestions} вопросов.");
-
-        _questions.Add(question);
-        return Result.Success();
-    }
-
-    private Result AddTags(IEnumerable<Guid> tagsIds)
-    {
-        foreach (var id in tagsIds)
-        {
-            if (_tags.Contains(id))
-                continue;
-
-            _tags.Add(id);
-        }
 
         return Result.Success();
     }

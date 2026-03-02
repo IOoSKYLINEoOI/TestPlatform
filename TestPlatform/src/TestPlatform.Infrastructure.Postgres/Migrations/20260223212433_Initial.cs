@@ -22,7 +22,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     StartedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     FinishedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ParentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ParentType = table.Column<int>(type: "integer", nullable: false)
+                    ParentType = table.Column<int>(type: "integer", nullable: false),
                 },
                 constraints: table =>
                 {
@@ -36,7 +36,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
-                    TimeLimitSeconds = table.Column<int>(type: "integer", nullable: true)
+                    TimeLimitSeconds = table.Column<int>(type: "integer", nullable: true),
                 },
                 constraints: table =>
                 {
@@ -51,7 +51,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     Text = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     QuestionTypeId = table.Column<int>(type: "integer", nullable: false),
                     Points = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
-                    ImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
+                    ImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                 },
                 constraints: table =>
                 {
@@ -64,7 +64,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: true)
+                    Description = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: true),
                 },
                 constraints: table =>
                 {
@@ -79,7 +79,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     TimeLimitSeconds = table.Column<int>(type: "integer", nullable: true),
                     Description = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: true)
+                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
                 },
                 constraints: table =>
                 {
@@ -94,7 +94,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     Text = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     IsCorrect = table.Column<bool>(type: "boolean", nullable: false),
                     ImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    QuestionId = table.Column<Guid>(type: "uuid", nullable: false)
+                    QuestionId = table.Column<Guid>(type: "uuid", nullable: false),
                 },
                 constraints: table =>
                 {
@@ -112,7 +112,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                 columns: table => new
                 {
                     ExamsId = table.Column<Guid>(type: "uuid", nullable: false),
-                    QuestionsId = table.Column<Guid>(type: "uuid", nullable: false)
+                    QuestionsId = table.Column<Guid>(type: "uuid", nullable: false),
                 },
                 constraints: table =>
                 {
@@ -136,7 +136,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                 columns: table => new
                 {
                     QuestionsId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TagsId = table.Column<Guid>(type: "uuid", nullable: false)
+                    TagsId = table.Column<Guid>(type: "uuid", nullable: false),
                 },
                 constraints: table =>
                 {
@@ -160,7 +160,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                 columns: table => new
                 {
                     QuestionsId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TestsId = table.Column<Guid>(type: "uuid", nullable: false)
+                    TestsId = table.Column<Guid>(type: "uuid", nullable: false),
                 },
                 constraints: table =>
                 {

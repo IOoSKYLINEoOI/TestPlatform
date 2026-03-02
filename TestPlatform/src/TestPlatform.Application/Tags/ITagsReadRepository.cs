@@ -2,9 +2,11 @@
 
 namespace TestPlatform.Application.Tags;
 
-public interface IReadTagsRepository
+public interface ITagsReadRepository
 {
     Task<TagResponse?> ReadTagByIdAsync(Guid id, CancellationToken cancellationToken);
 
     Task<List<TagResponse>> ReadAllTagsAsync(CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<Guid>> GetExistingIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
 }

@@ -9,5 +9,7 @@ public interface ITagsRepository
 
     Task<Result> UpdateAsync(Guid id, string name, string description, CancellationToken cancellationToken);
 
+    Task<bool> ExistsAsync(Guid tagId, CancellationToken cancellationToken);
+
     Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken);
 }

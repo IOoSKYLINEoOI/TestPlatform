@@ -4,11 +4,11 @@ using TestPlatform.Contracts.Tags.DTOs;
 
 namespace TestPlatform.Infrastructure.Postgres.Tags;
 
-public class ReadTagsRepository : IReadTagsRepository
+public class TagsReadRepository : ITagsReadRepository
 {
     private readonly TestPlatformDbContext _context;
 
-    public ReadTagsRepository(TestPlatformDbContext context) => _context = context;
+    public TagsReadRepository(TestPlatformDbContext context) => _context = context;
 
     public Task<TagResponse?> ReadTagByIdAsync(Guid id, CancellationToken cancellationToken)
         => _context.Tags
@@ -22,4 +22,12 @@ public class ReadTagsRepository : IReadTagsRepository
             .AsNoTracking()
             .Select(t => new TagResponse(t.Id, t.Name, t.Description))
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyCollection<Guid>> GetExistingIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken)
+        => await _context.Tags
+            .AsNoTracking()
+            .Where(t => ids.Contains(t.Id))
+            .Select(t => t.Id)
+            .ToListAsync(cancellationToken);
+
 }

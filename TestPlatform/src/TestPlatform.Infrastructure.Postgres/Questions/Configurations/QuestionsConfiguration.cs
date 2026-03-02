@@ -26,7 +26,7 @@ public class QuestionsConfiguration: IEntityTypeConfiguration<QuestionEntity>
         builder.Property(x => x.ImageUrl)
             .HasMaxLength(500);
 
-        builder.HasMany(x => x.Answers)
+        builder.HasMany(x => x.AnswersOptions)
             .WithOne(x => x.Question)
             .HasForeignKey(x => x.QuestionId)
             .IsRequired()

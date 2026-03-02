@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Extensions;
+using TestPlatform.Application.Tags;
 using TestPlatform.Contracts.Questions.DTOs;
 using TestPlatform.Core.Questions;
 
@@ -9,14 +10,16 @@ namespace TestPlatform.Application.Questions.Features.CreateQuestionCommand;
 
 public record CreateQuestionCommand(QuestionRequest Request) : ICommand;
 
-public class CreateQuestionHandler
+public class CreateQuestionHandler: ICommandHandler<Guid, CreateQuestionCommand>
 {
     private readonly IQuestionsRepository _questionsRepository;
+    private readonly ITagsReadRepository _tagsReadRepository;
     private readonly ILogger<CreateQuestionHandler> _logger;
 
-    public CreateQuestionHandler(IQuestionsRepository questionsRepository, ILogger<CreateQuestionHandler> logger)
+    public CreateQuestionHandler(IQuestionsRepository questionsRepository, ITagsReadRepository tagsReadRepository, ILogger<CreateQuestionHandler> logger)
     {
         _questionsRepository = questionsRepository;
+        _tagsReadRepository = tagsReadRepository;
         _logger = logger;
     }
 
@@ -25,7 +28,7 @@ public class CreateQuestionHandler
         var questionResult = Question.Create(
             command.Request.Text,
             (QuestionType)command.Request.QuestionTypeId,
-            command.Request.Points ?? 1,
+            command.Request.Points,
             command.Request.ImageUrl);
 
         if (questionResult.IsFailure)
@@ -36,7 +39,7 @@ public class CreateQuestionHandler
         // SingleChoice Question
         if (question.QuestionType == QuestionType.SingleChoice)
         {
-            if (command.Request.AnswerOptions.Count(x => x.IsCorrect) != 1)
+            if (command.Request.CreateAnswerOptions.Count(x => x.IsCorrect) != 1)
             {
                 _logger.LogError("Failed to create Question. Invalid count of correct answers.");
 
@@ -47,14 +50,14 @@ public class CreateQuestionHandler
         // MultiChoice Question
         if (question.QuestionType == QuestionType.MultipleChoice)
         {
-            if (command.Request.AnswerOptions.Count(x => x.IsCorrect) < 1)
+            if (command.Request.CreateAnswerOptions.Count(x => x.IsCorrect) < 1)
             {
                 _logger.LogError("Failed to create Question. No correct answer provided.");
                 return Result.Failure<Guid>("MultipleChoice question must have at least one correct answer.");
             }
         }
 
-        var answerResults = command.Request.AnswerOptions
+        var answerResults = command.Request.CreateAnswerOptions
             .Select(o => AnswerOption.Create(o.Text, o.IsCorrect, o.ImageUrl))
             .ToList();
 
@@ -67,6 +70,30 @@ public class CreateQuestionHandler
 
         foreach (var answer in answerResults)
             question.AddAnswerOption(answer.Value);
+
+        var tagIds = command.Request.TagIds
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToList();
+
+        if (tagIds.Any())
+        {
+            var existingTagIds = await _tagsReadRepository.GetExistingIdsAsync(tagIds, cancellationToken);
+
+            var missingTagIds = tagIds
+                .Except(existingTagIds)
+                .ToList();
+
+            if (missingTagIds.Any())
+            {
+                _logger.LogWarning("Some tags do not exist: {TagIds}", missingTagIds);
+                return Result.Failure<Guid>("One or more tags do not exist.");
+            }
+
+            var tagResult = question.AddTags(existingTagIds);
+            if (tagResult.IsFailure)
+                return Result.Failure<Guid>(tagResult.Error);
+        }
 
         var questionIdResult = await _questionsRepository.AddAsync(question, cancellationToken);
         if (questionIdResult.IsFailure)

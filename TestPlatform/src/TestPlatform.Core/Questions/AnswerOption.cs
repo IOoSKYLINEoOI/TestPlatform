@@ -31,9 +31,13 @@ public class AnswerOption
         return Result.Success(new AnswerOption(Guid.NewGuid(), text, isCorrect, imageUrl));
     }
 
-    public static AnswerOption FromPersistence(Guid id, string text, bool isCorrect, string? imageUrl)
+    public static Result<AnswerOption> CreateWithId(Guid id, string text, bool isCorrect, string? imageUrl)
     {
-        return new AnswerOption(id, text, isCorrect, imageUrl);
+        var validator = Validate(text);
+        if(validator.IsFailure)
+            return Result.Failure<AnswerOption>(validator.Error);
+
+        return Result.Success(new AnswerOption(id, text, isCorrect, imageUrl));
     }
 
     private static Result Validate(string text)

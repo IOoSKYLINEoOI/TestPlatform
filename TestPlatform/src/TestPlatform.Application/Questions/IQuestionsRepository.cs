@@ -7,9 +7,9 @@ public interface IQuestionsRepository
 {
     Task<Result<Guid>> AddAsync(Question question, CancellationToken cancellationToken);
 
-    Task<Result<Guid>> AddTextQuestionAsync(Question question, CancellationToken cancellationToken);
-
     Task<Result> UpdateAsync(Question question, CancellationToken cancellationToken);
 
-    Task<Result> DeleteAsync(Question question, CancellationToken cancellationToken);
+    Task<bool> ExistsAsync(Guid questionId, CancellationToken cancellationToken);
+
+    Task<Result> DeleteAsync(Guid questionId, CancellationToken cancellationToken);
 }

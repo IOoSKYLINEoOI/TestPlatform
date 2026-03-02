@@ -8,18 +8,18 @@ public record GetByIdTagQuery(Guid Id) : IQuery;
 
 public class GetByIdTagHandler : IQueryHandler<TagResponse, GetByIdTagQuery>
 {
-    private readonly IReadTagsRepository _readTagsRepository;
+    private readonly ITagsReadRepository _tagsReadRepository;
     private readonly ILogger<GetByIdTagHandler> _logger;
 
-    public GetByIdTagHandler(IReadTagsRepository readTagsRepository, ILogger<GetByIdTagHandler> logger)
+    public GetByIdTagHandler(ITagsReadRepository tagsReadRepository, ILogger<GetByIdTagHandler> logger)
     {
-        _readTagsRepository = readTagsRepository;
+        _tagsReadRepository = tagsReadRepository;
         _logger = logger;
     }
 
     public async Task<TagResponse?> Handle(GetByIdTagQuery query, CancellationToken cancellationToken)
     {
-        var tag = await _readTagsRepository.ReadTagByIdAsync(query.Id, cancellationToken);
+        var tag = await _tagsReadRepository.ReadTagByIdAsync(query.Id, cancellationToken);
 
         if (tag == null)
             _logger.LogWarning("Tag with id {Id} not found", query.Id);

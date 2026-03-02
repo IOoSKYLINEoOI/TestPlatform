@@ -20,6 +20,8 @@ public class TestPlatformDbContext(DbContextOptions<TestPlatformDbContext> optio
 
     public DbSet<QuestionEntity> Questions { get; set; }
 
+    public DbSet<AnswerOptionEntity> AnswerOptions { get; set; }
+
     public DbSet<TagEntity> Tags { get; set; }
 
     public DbSet<TestEntity> Tests { get; set; }

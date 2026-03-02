@@ -1,6 +1,4 @@
-﻿using CSharpFunctionalExtensions;
-
-namespace TestPlatform.Application.Abstractions;
+﻿namespace TestPlatform.Application.Abstractions;
 
 public interface IQuery;
 
