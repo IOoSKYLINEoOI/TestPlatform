@@ -24,7 +24,7 @@ public class TestsRepository : ITestsRepository
             Name = test.Name,
             Description = test.Description,
             AuthorId = test.AuthorId,
-            CoverImageUrl = test.CoverImageUrl,
+            CoverImageName = test.CoverImageName,
             TimeLimitSeconds = test.TimeLimitSeconds,
             Questions = questions,
         };
@@ -47,7 +47,7 @@ public class TestsRepository : ITestsRepository
         testEntity.Name = test.Name;
         testEntity.Description = test.Description;
         testEntity.AuthorId = test.AuthorId;
-        testEntity.CoverImageUrl = test.CoverImageUrl;
+        testEntity.CoverImageName = test.CoverImageName;
         testEntity.TimeLimitSeconds = test.TimeLimitSeconds;
 
         var incomingQuestionIds = test.QuestionsIds.ToHashSet();

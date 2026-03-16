@@ -10,13 +10,13 @@ public class Question
     private readonly List<AnswerOption> _answersOptions = new();
     private readonly List<Guid> _tagIds = new();
 
-    private Question(Guid id, string text, QuestionType questionType, int points, string? imageUrl)
+    private Question(Guid id, string text, QuestionType questionType, int points, string? imageName)
     {
         Id = id;
         Text = text;
         QuestionType = questionType;
         Points = points;
-        ImageUrl = imageUrl;
+        ImageName = imageName;
     }
 
     public Guid Id { get; }
@@ -27,33 +27,31 @@ public class Question
 
     public int Points { get; private set; }
 
-    public string? ImageUrl { get; private set; }
+    public string? ImageName { get; private set; }
 
     public IReadOnlyCollection<AnswerOption> AnswersOptions => _answersOptions.AsReadOnly();
 
     public IReadOnlyCollection<Guid> TagIds => _tagIds.AsReadOnly();
 
-    // -------------------- CREATE --------------------
-    public static Result<Question> Create(string text, QuestionType questionType, int points, string? imageUrl)
+    public static Result<Question> Create(string text, QuestionType questionType, int points, string? imageName)
     {
         var validation = Validate(text);
         if (validation.IsFailure)
             return Result.Failure<Question>(validation.Error);
 
-        return Result.Success(new Question(Guid.NewGuid(), text, questionType, points, imageUrl));
+        return Result.Success(new Question(Guid.NewGuid(), text, questionType, points, imageName));
     }
 
-    public static Result<Question> CreateWithId(Guid id, string text, QuestionType questionType, int points, string? imageUrl)
+    public static Result<Question> CreateWithId(Guid id, string text, QuestionType questionType, int points, string? imageName)
     {
         var validation = Validate(text);
         if (validation.IsFailure)
             return Result.Failure<Question>(validation.Error);
 
-        return Result.Success(new Question(id, text, questionType, points, imageUrl));
+        return Result.Success(new Question(id, text, questionType, points, imageName));
     }
 
-    // -------------------- UPDATE --------------------
-    public Result Update(string text, QuestionType questionType, int points, string? imageUrl)
+    public Result Update(string text, QuestionType questionType, int points, string? imageName)
     {
         var validation = Validate(text);
         if (validation.IsFailure)
@@ -62,12 +60,11 @@ public class Question
         Text = text;
         QuestionType = questionType;
         Points = points;
-        ImageUrl = imageUrl;
+        ImageName = imageName;
 
         return Result.Success();
     }
 
-    // -------------------- ANSWERS --------------------
     public Result AddAnswerOption(AnswerOption answerOption)
     {
         if (_answersOptions.Count >= MaxAnswers)
@@ -105,7 +102,6 @@ public class Question
         return Result.Success();
     }
 
-    // -------------------- TAGS --------------------
     public Result AddTag(Guid tagId)
     {
         if (_tagIds.Contains(tagId))
@@ -142,7 +138,6 @@ public class Question
         _tagIds.AddRange(tagIds.Distinct());
     }
 
-    // -------------------- VALIDATION --------------------
     private static Result Validate(string text)
     {
         if (string.IsNullOrWhiteSpace(text) || text.Length > MaxLengthText)

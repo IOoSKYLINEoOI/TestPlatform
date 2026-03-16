@@ -10,13 +10,10 @@ public class TestsReadRepository : ITestsReadRepository
 {
     private readonly TestPlatformDbContext _context;
 
-    public TestsReadRepository(TestPlatformDbContext context)
-    {
-        _context = context;
-    }
+    public TestsReadRepository(TestPlatformDbContext context) => _context = context;
 
     public async Task<TestFullResponse?> ReadTestByIdAsync(
-        Guid id,
+        Guid? id,
         bool includeCorrectAnswer,
         CancellationToken cancellationToken)
     {
@@ -30,6 +27,7 @@ public class TestsReadRepository : ITestsReadRepository
                 t.TimeLimitSeconds,
                 t.Description,
                 t.AuthorId,
+                t.CoverImageName,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -39,21 +37,21 @@ public class TestsReadRepository : ITestsReadRepository
         var questions = await _context.Questions
             .AsNoTracking()
             .Where(q => q.Tests.Any(t => t.Id == id))
-            .Select(q => new QuestionFullResponse(
+            .Select(q => new QuestionResponse(
                 q.Id,
                 q.Text,
                 q.QuestionTypeId,
                 q.Points,
-                q.ImageUrl,
+                q.ImageName,
                 q.Tags.Select(tag => new TagResponse(
                     tag.Id,
                     tag.Name,
                     tag.Description)).ToList(),
-                q.AnswersOptions.Select(a => new AnswerOptionFullResponse(
+                q.AnswersOptions.Select(a => new AnswerOptionResponse(
                     a.Id,
                     a.Text,
                     includeCorrectAnswer ? a.IsCorrect : null,
-                    a.ImageUrl)).ToList()
+                    a.ImageName)).ToList()
             ))
             .ToListAsync(cancellationToken);
 
@@ -69,6 +67,7 @@ public class TestsReadRepository : ITestsReadRepository
             test.Description,
             test.AuthorId,
             questions.Count,
+            test.CoverImageName,
             tags,
             questions);
     }

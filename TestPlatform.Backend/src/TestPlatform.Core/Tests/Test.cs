@@ -11,16 +11,15 @@ public class Test
     private const int MaxTimeLimitSeconds = 14100;
 
     private readonly List<Guid> _questionsIds = new();
-    private readonly List<Guid> _tags = new();
 
-    private Test(Guid id, string name, int? timeLimitSeconds, string description, Guid? authorId, string? coverImageUrl)
+    private Test(Guid id, string name, int? timeLimitSeconds, string description, Guid? authorId, string? coverImageName)
     {
         Id = id;
         Name = name;
         TimeLimitSeconds = timeLimitSeconds;
         Description = description;
         AuthorId = authorId;
-        CoverImageUrl = coverImageUrl;
+        CoverImageName = coverImageName;
     }
 
     public Guid Id { get; }
@@ -31,7 +30,7 @@ public class Test
 
     public int? TimeLimitSeconds { get; }
 
-    public string? CoverImageUrl { get; }
+    public string? CoverImageName { get; }
 
     public Guid? AuthorId { get; }
 

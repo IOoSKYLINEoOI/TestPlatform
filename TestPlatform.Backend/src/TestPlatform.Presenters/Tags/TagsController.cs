@@ -11,7 +11,7 @@ using TestPlatform.Contracts.Tags.DTOs;
 namespace TestPlatform.Presenters.Tags;
 
 [ApiController]
-[Route("[controller]")]
+[Route("tags")]
 public class TagsController : ControllerBase
 {
     [HttpGet("{id:guid}")]

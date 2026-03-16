@@ -19,7 +19,7 @@ public class AnswerOptionsConfiguration : IEntityTypeConfiguration<AnswerOptionE
         builder.Property(x => x.IsCorrect)
             .IsRequired();
 
-        builder.Property(x => x.ImageUrl)
+        builder.Property(x => x.ImageName)
             .HasMaxLength(500);
     }
 }

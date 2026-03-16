@@ -11,7 +11,7 @@ using TestPlatform.Contracts.Tests.DTOs;
 namespace TestPlatform.Presenters.Tests;
 
 [ApiController]
-[Route("[controller]")]
+[Route("tests")]
 public class TestsController : ControllerBase
 {
     [HttpGet("{id:guid}")]

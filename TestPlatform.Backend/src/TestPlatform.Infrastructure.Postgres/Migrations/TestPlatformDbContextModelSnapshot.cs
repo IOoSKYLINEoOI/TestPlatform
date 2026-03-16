@@ -17,7 +17,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "10.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -76,29 +76,44 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     b.Property<int>("CorrectAnswers")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("EarnedPoints")
+                        .HasColumnType("numeric(5,2)");
+
                     b.Property<DateTime?>("FinishedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("ParentId")
+                    b.Property<decimal>("MaxPoints")
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<Guid>("SourceId")
                         .HasColumnType("uuid");
-
-                    b.Property<int>("ParentType")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("Score")
-                        .HasColumnType("double precision");
 
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("TotalQuestions")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentType", "ParentId");
+                    b.HasIndex("UserId");
 
-                    b.ToTable("attempts", (string)null);
+                    b.HasIndex("Type", "SourceId");
+
+                    b.ToTable("attempts", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Attempt_Parent", "(\"TestId\" IS NOT NULL AND \"ExamId\" IS NULL) OR (\"TestId\" IS NULL AND \"ExamId\" IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Exams.Entities.ExamEntity", b =>
@@ -131,7 +146,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("ImageName")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
@@ -159,7 +174,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("ImageName")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
@@ -213,7 +228,7 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     b.Property<Guid?>("AuthorId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CoverImageUrl")
+                    b.Property<string>("CoverImageName")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 

@@ -14,7 +14,7 @@ public class TestEntity
 
     public Guid? AuthorId { get; set; }
 
-    public string? CoverImageUrl { get; set; } = null!;
+    public string? CoverImageName { get; set; } = null!;
 
     public ICollection<QuestionEntity> Questions { get; set; } = new List<QuestionEntity>();
 }

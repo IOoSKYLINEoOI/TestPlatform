@@ -1,7 +1,9 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
+using TestPlatform.Application.Abstractions.Enums;
 using TestPlatform.Application.Extensions;
+using TestPlatform.Application.Questions;
 
 namespace TestPlatform.Application.Tests.Features.DeleteTestCommand;
 
@@ -10,17 +12,36 @@ public record DeleteTestCommand(Guid Id) : ICommand;
 public class DeleteTestHandler : ICommandHandler<DeleteTestCommand>
 {
     private readonly ITestsRepository _testsRepository;
+    private readonly ITestsReadRepository _testsReadRepository;
+    private readonly IImageStorageService _imageStorageService;
     private readonly ILogger<DeleteTestHandler> _logger;
 
-    public DeleteTestHandler(ITestsRepository testsRepository, ILogger<DeleteTestHandler> logger)
+    public DeleteTestHandler(
+        ITestsRepository testsRepository,
+        ITestsReadRepository testsReadRepository,
+        IImageStorageService imageStorageService,
+        ILogger<DeleteTestHandler> logger)
     {
         _testsRepository = testsRepository;
+        _testsReadRepository = testsReadRepository;
+        _imageStorageService = imageStorageService;
         _logger = logger;
     }
 
     public async Task<Result> Handle(DeleteTestCommand command, CancellationToken cancellationToken)
     {
+        var testExisting = await _testsReadRepository.ReadTestByIdAsync(command.Id, false, cancellationToken);
+        if(testExisting == null)
+            return Result.Failure($"Could not find test with id {command.Id}");
+
         var result = await _testsRepository.DeleteAsync(command.Id, cancellationToken);
+
+        if (testExisting.CoverImageName != null)
+        {
+            await _imageStorageService.DeletePermanentAsync(ImageFolder.TESTS, testExisting.CoverImageName);
+
+            _logger.LogInformation("Deleted CoverImage {testExisting.CoverImageName}", testExisting.CoverImageName);
+        }
 
         _logger.LogResult("Delete Test", command.Id, result);
 

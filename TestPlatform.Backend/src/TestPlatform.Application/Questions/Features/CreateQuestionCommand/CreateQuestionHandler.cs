@@ -1,6 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
+using TestPlatform.Application.Abstractions.Enums;
 using TestPlatform.Application.Extensions;
 using TestPlatform.Application.Tags;
 using TestPlatform.Contracts.Questions.DTOs;
@@ -14,12 +15,18 @@ public class CreateQuestionHandler: ICommandHandler<Guid, CreateQuestionCommand>
 {
     private readonly IQuestionsRepository _questionsRepository;
     private readonly ITagsReadRepository _tagsReadRepository;
+    private readonly IImageStorageService _imageStorageService;
     private readonly ILogger<CreateQuestionHandler> _logger;
 
-    public CreateQuestionHandler(IQuestionsRepository questionsRepository, ITagsReadRepository tagsReadRepository, ILogger<CreateQuestionHandler> logger)
+    public CreateQuestionHandler(
+        IQuestionsRepository questionsRepository,
+        ITagsReadRepository tagsReadRepository,
+        IImageStorageService imageStorageService,
+        ILogger<CreateQuestionHandler> logger)
     {
         _questionsRepository = questionsRepository;
         _tagsReadRepository = tagsReadRepository;
+        _imageStorageService = imageStorageService;
         _logger = logger;
     }
 
@@ -29,7 +36,7 @@ public class CreateQuestionHandler: ICommandHandler<Guid, CreateQuestionCommand>
             command.Request.Text,
             (QuestionType)command.Request.QuestionTypeId,
             command.Request.Points,
-            command.Request.ImageUrl);
+            command.Request.ImageName);
 
         if (questionResult.IsFailure)
             return Result.Failure<Guid>(questionResult.Error);
@@ -101,6 +108,13 @@ public class CreateQuestionHandler: ICommandHandler<Guid, CreateQuestionCommand>
             _logger.LogWarning("Failed to create Question: {Error}", questionIdResult.Error);
 
             return Result.Failure<Guid>(questionIdResult.Error);
+        }
+
+        if (question.ImageName != null)
+        {
+            await _imageStorageService.MoveToPermanentAsync(question.ImageName, ImageFolder.QUESTIONS, cancellationToken);
+
+            _logger.LogInformation("Successfully moved image to {ImageName}", question.ImageName);
         }
 
         _logger.LogResult("Create Question", questionIdResult.Value, questionIdResult);

@@ -2,7 +2,7 @@
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Questions.DTOs;
 
-namespace TestPlatform.Application.Questions.Features.GetAllAllQuestionsByTagsQuery;
+namespace TestPlatform.Application.Questions.Features.GetAllQuestionsByTagsQuery;
 
 public record GetAllQuestionsByTagsQuery(IReadOnlyList<Guid> TagIds, bool IncludeCorrectAnswer) : IQuery;
 

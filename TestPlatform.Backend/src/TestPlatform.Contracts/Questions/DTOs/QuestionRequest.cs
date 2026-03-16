@@ -4,7 +4,7 @@ public record QuestionRequest(
     string Text,
     int QuestionTypeId,
     int Points,
-    string? ImageUrl,
+    string? ImageName,
     List<Guid> TagIds,
     List<CreateAnswerOptionRequest> CreateAnswerOptions);
 

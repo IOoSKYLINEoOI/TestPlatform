@@ -6,7 +6,7 @@ public record UpdateQuestionRequest(
     string Text,
     int QuestionTypeId,
     int Points,
-    string? ImageUrl,
+    string? ImageName,
     List<Guid> TagIds,
     List<UpdateAnswerOptionRequest> AnswerOptions);
 
@@ -14,4 +14,4 @@ public record UpdateAnswerOptionRequest(
     Guid? Id,
     string Text,
     bool IsCorrect,
-    string? ImageUrl);
+    string? ImageName);

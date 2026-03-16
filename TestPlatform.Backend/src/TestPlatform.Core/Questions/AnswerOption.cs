@@ -6,12 +6,12 @@ public class AnswerOption
 {
     private const int MaxLengthText = 200;
 
-    private AnswerOption(Guid id, string text, bool isCorrect, string? imageUrl)
+    private AnswerOption(Guid id, string text, bool isCorrect, string? imageName)
     {
         Id = id;
         Text = text;
         IsCorrect = isCorrect;
-        ImageUrl = imageUrl;
+        ImageName = imageName;
     }
 
     public Guid Id { get; }
@@ -20,24 +20,24 @@ public class AnswerOption
 
     public bool IsCorrect { get; }
 
-    public string? ImageUrl { get; }
+    public string? ImageName { get; }
 
-    public static Result<AnswerOption> Create(string text, bool isCorrect, string? imageUrl)
+    public static Result<AnswerOption> Create(string text, bool isCorrect, string? imageName)
     {
         var validator = Validate(text);
         if(validator.IsFailure)
             return Result.Failure<AnswerOption>(validator.Error);
 
-        return Result.Success(new AnswerOption(Guid.NewGuid(), text, isCorrect, imageUrl));
+        return Result.Success(new AnswerOption(Guid.NewGuid(), text, isCorrect, imageName));
     }
 
-    public static Result<AnswerOption> CreateWithId(Guid id, string text, bool isCorrect, string? imageUrl)
+    public static Result<AnswerOption> CreateWithId(Guid id, string text, bool isCorrect, string? imageName)
     {
         var validator = Validate(text);
         if(validator.IsFailure)
             return Result.Failure<AnswerOption>(validator.Error);
 
-        return Result.Success(new AnswerOption(id, text, isCorrect, imageUrl));
+        return Result.Success(new AnswerOption(id, text, isCorrect, imageName));
     }
 
     private static Result Validate(string text)

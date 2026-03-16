@@ -1,6 +1,9 @@
 ﻿using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using TestPlatform.Application.Abstractions;
+using TestPlatform.Application.Attempts.CheckQuestionsService;
+using TestPlatform.Application.Attempts.Features.FinishAttemptCommand;
+using TestPlatform.Application.Attempts.Interfaces;
 using TestPlatform.Application.Questions.Validators;
 using TestPlatform.Application.Tags.Validators;
 
@@ -13,7 +16,7 @@ public static class TestPlatformApplicationExtensions
         services.AddValidatorsFromAssemblyContaining<CreateTagRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<CreateQuestionRequestValidator>();
 
-        var assembly = typeof(CreateTagRequestValidator).Assembly;
+        var assembly = typeof(TestPlatformApplicationExtensions).Assembly;
 
         services.Scan(scan => scan.FromAssemblies(assembly)
             .AddClasses(classes => classes
@@ -26,6 +29,9 @@ public static class TestPlatformApplicationExtensions
                 .AssignableToAny(typeof(IQueryHandler<,>)))
             .AsImplementedInterfaces()
             .WithScopedLifetime());
+
+        services.AddScoped<IAttemptSourceService, AttemptSourceService>();
+        services.AddScoped<IQuestionCheckerFactory, QuestionCheckerFactory>();
 
         return services;
     }

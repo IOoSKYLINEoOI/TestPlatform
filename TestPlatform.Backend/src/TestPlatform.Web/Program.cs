@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using TestPlatform.Application;
+using TestPlatform.Infrastructure.FileStorage;
 using TestPlatform.Infrastructure.Postgres;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,14 +20,15 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services
     .AddTestPlatformPersistence(builder.Configuration)
-    .AddTestPlatformApplication();
+    .AddTestPlatformApplication()
+    .AddTestPlatformFileStorage(builder.Configuration);
 
 builder.Services.AddProblemDetails();
 
-/*builder.WebHost.ConfigureKestrel(options =>
+builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(5195); // только HTTP
-});*/
+    options.ListenAnyIP(5062); // только HTTP
+});
 
 var app = builder.Build();
 
@@ -35,7 +37,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<TestPlatformDbContext>();
     db.Database.Migrate();
 
-    // await DbInitializer.InitializeAsync(db);
+    await DbInitializer.InitializeAsync(db);
 }
 
 if (app.Environment.IsDevelopment())
@@ -45,7 +47,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();

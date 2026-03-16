@@ -3,7 +3,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Questions.Features.CreateQuestionCommand;
 using TestPlatform.Application.Questions.Features.DeleteQuestionCommand;
-using TestPlatform.Application.Questions.Features.GetAllAllQuestionsByTagsQuery;
+using TestPlatform.Application.Questions.Features.GetAllQuestionsByTagsQuery;
 using TestPlatform.Application.Questions.Features.GetByIdQuestionQuery;
 using TestPlatform.Application.Questions.Features.UpdateQuestionCommand;
 using TestPlatform.Contracts.Questions.DTOs;
@@ -11,7 +11,7 @@ using TestPlatform.Contracts.Questions.DTOs;
 namespace TestPlatform.Presenters.Questions;
 
 [ApiController]
-[Route("[controller]")]
+[Route("questions")]
 public class QuestionsController : ControllerBase
 {
     [HttpGet("{id:guid}")]

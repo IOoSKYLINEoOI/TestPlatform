@@ -1,4 +1,5 @@
-﻿using TestPlatform.Contracts.Tags.DTOs;
+﻿using TestPlatform.Contracts.Questions.DTOs;
+using TestPlatform.Contracts.Tags.DTOs;
 
 namespace TestPlatform.Contracts.Tests.DTOs;
 
@@ -9,20 +10,6 @@ public record TestFullResponse(
     string Description,
     Guid? AuthorId,
     int TotalQuestions,
+    string? CoverImageName,
     List<TagResponse> Tags,
-    List<QuestionFullResponse> Questions);
-
-public record QuestionFullResponse(
-    Guid Id,
-    string Text,
-    int QuestionTypeId,
-    int Points,
-    string? ImageUrl,
-    IReadOnlyList<TagResponse>? Tags,
-    IReadOnlyList<AnswerOptionFullResponse> AnswerOptions);
-
-public record AnswerOptionFullResponse(
-    Guid Id,
-    string Text,
-    bool? IsCorrect,
-    string? ImageUrl);
+    List<QuestionResponse> Questions);

@@ -22,7 +22,7 @@ public class QuestionsReadRepository : IQuestionsReadRepository
            q.Text,
            q.QuestionTypeId,
            q.Points,
-           q.ImageUrl,
+           q.ImageName,
            q.Tags.Select(z => new TagResponse(
                z.Id,
                z.Name,
@@ -32,7 +32,7 @@ public class QuestionsReadRepository : IQuestionsReadRepository
                a.Id,
                a.Text,
                includeCorrectAnswer ? a.IsCorrect : null,
-               a.ImageUrl))
+               a.ImageName))
                .ToList()))
        .SingleOrDefaultAsync(cancellationToken);
 
@@ -45,7 +45,7 @@ public class QuestionsReadRepository : IQuestionsReadRepository
                 q.Text,
                 q.QuestionTypeId,
                 q.Points,
-                q.ImageUrl,
+                q.ImageName,
                 q.Tags
                     .Select(t => new TagResponse(
                         t.Id,
@@ -57,7 +57,7 @@ public class QuestionsReadRepository : IQuestionsReadRepository
                         a.Id,
                         a.Text,
                         includeCorrectAnswer ? a.IsCorrect : null,
-                        a.ImageUrl))
+                        a.ImageName))
                     .ToList()))
             .ToListAsync(cancellationToken);
 }

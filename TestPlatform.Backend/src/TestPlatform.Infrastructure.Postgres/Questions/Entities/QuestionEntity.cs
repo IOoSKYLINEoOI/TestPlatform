@@ -14,7 +14,7 @@ public class QuestionEntity
 
     public int Points { get; set; }
 
-    public string? ImageUrl { get; set; }
+    public string? ImageName { get; set; }
 
     public ICollection<AnswerOptionEntity> AnswersOptions { get; set; } = new List<AnswerOptionEntity>();
 

@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456789
+      POSTGRES_DB: testPlatformDb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    container_name: testplatform_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5062:5062"   # HTTP
+      - "7257:7257"   # HTTPS
+    depends_on:
+      - postgres
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:5062;https://+:7257"
+      ConnectionStrings__TestPlatformContextPostgreSQL: "Host=postgres;Port=5432;Database=testPlatformDb;Username=postgres;Password=123456789"
+
+volumes:
+  pgdata:

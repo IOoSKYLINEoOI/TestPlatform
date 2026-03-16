@@ -18,7 +18,12 @@ public class AttemptsConfiguration : IEntityTypeConfiguration<AttemptEntity>
         builder.Property(a => a.CorrectAnswers)
             .IsRequired();
 
-        builder.Property(a => a.Score)
+        builder.Property(a => a.EarnedPoints)
+            .HasColumnType("numeric(5,2)")
+            .IsRequired();
+
+        builder.Property(a => a.MaxPoints)
+            .HasColumnType("numeric(5,2)")
             .IsRequired();
 
         builder.Property(a => a.StartedAt)
@@ -26,12 +31,19 @@ public class AttemptsConfiguration : IEntityTypeConfiguration<AttemptEntity>
 
         builder.Property(a => a.FinishedAt);
 
-        builder.Property(a => a.ParentId)
+        builder
+            .Property(x => x.Status)
+            .HasConversion<string>();
+
+        builder.Property(a => a.UserId)
             .IsRequired();
 
-        builder.Property(a => a.ParentType)
-            .IsRequired();
+        builder.HasIndex(a => a.UserId);
+        builder.HasIndex(e => new { e.Type, e.SourceId });
 
-        builder.HasIndex(a => new { a.ParentType, a.ParentId });
+        builder.ToTable(t =>
+            t.HasCheckConstraint(
+                "CK_Attempt_Parent",
+                "(\"TestId\" IS NOT NULL AND \"ExamId\" IS NULL) OR (\"TestId\" IS NULL AND \"ExamId\" IS NOT NULL)"));
     }
 }

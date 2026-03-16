@@ -35,7 +35,7 @@ public class QuestionsRepository : IQuestionsRepository
     questionEntity.Text = question.Text;
     questionEntity.Points = question.Points;
     questionEntity.QuestionTypeId = (int)question.QuestionType;
-    questionEntity.ImageUrl = question.ImageUrl;
+    questionEntity.ImageName = question.ImageName;
 
     var incomingAnswers = question.AnswersOptions.ToDictionary(a => a.Id);
     var existingAnswers = questionEntity.AnswersOptions.ToDictionary(a => a.Id);
@@ -53,7 +53,7 @@ public class QuestionsRepository : IQuestionsRepository
         {
             existing.Text = incoming.Text;
             existing.IsCorrect = incoming.IsCorrect;
-            existing.ImageUrl = incoming.ImageUrl;
+            existing.ImageName = incoming.ImageName;
         }
         else
         {
@@ -62,7 +62,7 @@ public class QuestionsRepository : IQuestionsRepository
                 Id = incoming.Id,
                 Text = incoming.Text,
                 IsCorrect = incoming.IsCorrect,
-                ImageUrl = incoming.ImageUrl,
+                ImageName = incoming.ImageName,
                 QuestionId = questionEntity.Id,
             };
 
@@ -121,14 +121,14 @@ public class QuestionsRepository : IQuestionsRepository
             Text = question.Text,
             QuestionTypeId = (int)question.QuestionType,
             Points = question.Points,
-            ImageUrl = question.ImageUrl,
+            ImageName = question.ImageName,
             AnswersOptions = question.AnswersOptions
                 .Select(x => new AnswerOptionEntity
                 {
                     Id = x.Id,
                     Text = x.Text,
                     IsCorrect = x.IsCorrect,
-                    ImageUrl = x.ImageUrl,
+                    ImageName = x.ImageName,
                 }).ToList(),
         };
 

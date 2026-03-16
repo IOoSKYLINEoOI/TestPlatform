@@ -8,7 +8,7 @@ public class AnswerOptionEntity
 
     public bool IsCorrect { get; set; }
 
-    public string? ImageUrl { get; set; }
+    public string? ImageName { get; set; }
 
     public Guid QuestionId { get; set; }
 

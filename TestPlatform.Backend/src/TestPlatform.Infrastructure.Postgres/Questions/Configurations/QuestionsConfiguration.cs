@@ -23,7 +23,7 @@ public class QuestionsConfiguration: IEntityTypeConfiguration<QuestionEntity>
             .HasDefaultValue(1)
             .IsRequired();
 
-        builder.Property(x => x.ImageUrl)
+        builder.Property(x => x.ImageName)
             .HasMaxLength(500);
 
         builder.HasMany(x => x.AnswersOptions)

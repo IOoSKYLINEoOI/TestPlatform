@@ -20,7 +20,7 @@ public class TestsConfiguration : IEntityTypeConfiguration<TestEntity>
             .HasMaxLength(250)
             .IsRequired();
 
-        builder.Property(x => x.CoverImageUrl)
+        builder.Property(x => x.CoverImageName)
             .HasMaxLength(500);
 
         builder.HasMany(x => x.Questions)

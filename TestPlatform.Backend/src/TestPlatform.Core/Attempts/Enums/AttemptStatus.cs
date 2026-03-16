@@ -1,29 +1,34 @@
-﻿namespace TestPlatform.Core.TestAttempts.Enums;
+﻿namespace TestPlatform.Core.Attempts.Enums;
 
-public enum TestAttemptStatus
+public enum AttemptStatus
 {
     /// <summary>
     /// Попытка создана и находится в процессе прохождения.
     /// </summary>
-    Started = 1,
+    STARTED = 1,
 
     /// <summary>
     /// Тест завершён пользователем с сохранением результата.
     /// </summary>
-    Finished = 2,
+    FINISHED = 2,
 
     /// <summary>
     /// Попытка завершена автоматически по истечении времени.
     /// </summary>
-    Expired = 3,
+    EXPIRED = 3,
 
     /// <summary>
     /// Пользователь покинул тест, не завершив его.
     /// </summary>
-    Abandoned = 4,
+    ABANDONED = 4,
 
     /// <summary>
     /// Попытка была отменена системой или администратором.
     /// </summary>
-    Cancelled = 5,
+    CANCELLED = 5,
+
+    /// <summary>
+    /// Попытка создана, но не начата.
+    /// </summary>
+    NOT_STARTED = 6,
 }
