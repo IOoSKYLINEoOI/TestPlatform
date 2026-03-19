@@ -8,7 +8,7 @@ public record AttemptResponse(
     int? CorrectAnswers,
     decimal EarnedPoints,
     decimal MaxPoints,
-    Guid? UserId,
+    Guid UserId,
     DateTime? StartedAt,
     DateTime? FinishedAt,
     AttemptStatusDto Status,

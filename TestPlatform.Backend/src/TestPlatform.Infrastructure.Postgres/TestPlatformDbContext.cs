@@ -9,6 +9,8 @@ using TestPlatform.Infrastructure.Postgres.Tags.Configurations;
 using TestPlatform.Infrastructure.Postgres.Tags.Entities;
 using TestPlatform.Infrastructure.Postgres.Tests.Configurations;
 using TestPlatform.Infrastructure.Postgres.Tests.Entities;
+using TestPlatform.Infrastructure.Postgres.Users.Configurations;
+using TestPlatform.Infrastructure.Postgres.Users.Entities;
 
 namespace TestPlatform.Infrastructure.Postgres;
 
@@ -26,6 +28,8 @@ public class TestPlatformDbContext(DbContextOptions<TestPlatformDbContext> optio
 
     public DbSet<TestEntity> Tests { get; set; }
 
+    public DbSet<UserEntity> Users { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new AttemptsConfiguration());
@@ -38,5 +42,7 @@ public class TestPlatformDbContext(DbContextOptions<TestPlatformDbContext> optio
         modelBuilder.ApplyConfiguration(new TagsConfiguration());
 
         modelBuilder.ApplyConfiguration(new TestsConfiguration());
+
+        modelBuilder.ApplyConfiguration(new UsersConfiguration());
     }
 }

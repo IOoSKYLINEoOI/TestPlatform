@@ -6,11 +6,13 @@ using TestPlatform.Application.Exams;
 using TestPlatform.Application.Questions;
 using TestPlatform.Application.Tags;
 using TestPlatform.Application.Tests;
+using TestPlatform.Application.Users;
 using TestPlatform.Infrastructure.Postgres.Attempts;
 using TestPlatform.Infrastructure.Postgres.Exams;
 using TestPlatform.Infrastructure.Postgres.Questions;
 using TestPlatform.Infrastructure.Postgres.Tags;
 using TestPlatform.Infrastructure.Postgres.Tests;
+using TestPlatform.Infrastructure.Postgres.Users;
 
 namespace TestPlatform.Infrastructure.Postgres;
 
@@ -35,6 +37,8 @@ public static class TestPlatformPersistenceExtensions
         services.AddScoped<IAttemptsReadRepository, AttemptsReadRepository>();
 
         services.AddScoped<IExamsReadRepository, ExamsReadRepository>();
+
+        services.AddScoped<IUsersReadRepository, UsersReadRepository>();
 
         return services;
     }

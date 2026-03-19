@@ -2,4 +2,4 @@
 
 namespace TestPlatform.Contracts.Attempts.DTOs;
 
-public record StartRequest(Guid? UserId, AttemptTypeDto Type, Guid SourceId);
+public record StartRequest(Guid UserId, AttemptTypeDto Type, Guid SourceId);

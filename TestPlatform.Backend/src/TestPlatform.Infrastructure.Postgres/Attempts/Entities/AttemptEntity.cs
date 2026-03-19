@@ -1,4 +1,5 @@
 ﻿using TestPlatform.Core.Attempts.Enums;
+using TestPlatform.Infrastructure.Postgres.Users.Entities;
 
 namespace TestPlatform.Infrastructure.Postgres.Attempts.Entities;
 
@@ -14,8 +15,6 @@ public class AttemptEntity
 
     public decimal MaxPoints { get; set; }
 
-    public Guid? UserId { get; set; }
-
     public DateTime? StartedAt { get; set; }
 
     public DateTime? FinishedAt { get; set; }
@@ -25,4 +24,8 @@ public class AttemptEntity
     public AttemptType Type { get; set; }
 
     public Guid SourceId { get; set; }
+
+    public Guid UserId { get; set; }
+
+    public UserEntity User { get; set; } = null!;
 }

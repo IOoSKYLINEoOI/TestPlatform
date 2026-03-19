@@ -3,6 +3,7 @@ using Microsoft.OpenApi;
 using TestPlatform.Application;
 using TestPlatform.Infrastructure.FileStorage;
 using TestPlatform.Infrastructure.Postgres;
+using TestPlatform.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,7 @@ builder.Services.AddProblemDetails();
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(5062); // только HTTP
+    options.ListenAnyIP(5062);
 });
 
 var app = builder.Build();
@@ -61,8 +62,9 @@ app.UseCors(policy =>
 });
 
 
-/*app.UseAuthentication();
-app.UseAuthorization();*/
+app.UseAuthentication();
+app.UseMiddleware<EnsureUserMiddleware>();
+app.UseAuthorization();
 
 app.MapControllers();
 

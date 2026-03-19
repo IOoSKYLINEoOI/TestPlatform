@@ -5,7 +5,7 @@ namespace TestPlatform.Core.Attempts;
 
 public class Attempt
 {
-    private Attempt(Guid id, int totalQuestions, decimal maxPoints, Guid? userId, AttemptType type, Guid sourceId)
+    private Attempt(Guid id, int totalQuestions, decimal maxPoints, Guid userId, AttemptType type, Guid sourceId)
     {
         Id = id;
         TotalQuestions = totalQuestions;
@@ -29,7 +29,7 @@ public class Attempt
 
     public AttemptStatus Status { get; private set; }
 
-    public Guid? UserId { get; }
+    public Guid UserId { get; }
 
     public DateTime? StartedAt { get; private set; }
 
@@ -39,10 +39,9 @@ public class Attempt
 
     public Guid SourceId { get; }
 
-
     public decimal Score => MaxPoints > 0 ? EarnedPoints / MaxPoints : 0m;
 
-    public static Result<Attempt> Create(int totalQuestions, decimal maxPoints, Guid? userId, AttemptType type, Guid sourceId)
+    public static Result<Attempt> Create(int totalQuestions, decimal maxPoints, Guid userId, AttemptType type, Guid sourceId)
     {
         if (totalQuestions <= 0)
             return Result.Failure<Attempt>("Количество вопросов должно быть больше 0.");
@@ -56,7 +55,7 @@ public class Attempt
         decimal maxPoints,
         decimal earnedPoints,
         int? correctAnswers,
-        Guid? userId,
+        Guid userId,
         AttemptStatus status,
         DateTime? startedAt,
         DateTime? finishedAt,

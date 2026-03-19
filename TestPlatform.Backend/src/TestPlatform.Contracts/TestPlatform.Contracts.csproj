@@ -8,7 +8,7 @@
 
     <ItemGroup>
       <PackageReference Include="FluentValidation" Version="12.1.1" />
-      <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="10.0.4" />
+      <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
     </ItemGroup>
 
 </Project>
