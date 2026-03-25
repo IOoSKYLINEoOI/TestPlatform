@@ -31,16 +31,18 @@ public class DeleteTestHandler : ICommandHandler<DeleteTestCommand>
     public async Task<Result> Handle(DeleteTestCommand command, CancellationToken cancellationToken)
     {
         var testExisting = await _testsReadRepository.ReadTestByIdAsync(command.Id, false, cancellationToken);
-        if(testExisting == null)
+        if (testExisting == null)
             return Result.Failure($"Could not find test with id {command.Id}");
 
         var result = await _testsRepository.DeleteAsync(command.Id, cancellationToken);
 
-        if (testExisting.CoverImageName != null)
+        if (!string.IsNullOrWhiteSpace(testExisting.CoverImageName))
         {
-            await _imageStorageService.DeletePermanentAsync(ImageFolder.TESTS, testExisting.CoverImageName);
-
-            _logger.LogInformation("Deleted CoverImage {testExisting.CoverImageName}", testExisting.CoverImageName);
+            var deleteResult = await _imageStorageService.DeletePermanentAsync(ImageFolder.TESTS, testExisting.CoverImageName);
+            if (deleteResult.IsFailure)
+                _logger.LogWarning("Failed to delete test cover image {ImageName}: {Error}", testExisting.CoverImageName, deleteResult.Error);
+            else
+                _logger.LogInformation("Deleted test cover image {ImageName}", testExisting.CoverImageName);
         }
 
         _logger.LogResult("Delete Test", command.Id, result);

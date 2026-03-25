@@ -11,7 +11,7 @@ namespace TestPlatform.Application.Questions.Features.CreateQuestionCommand;
 
 public record CreateQuestionCommand(QuestionRequest Request) : ICommand;
 
-public class CreateQuestionHandler: ICommandHandler<Guid, CreateQuestionCommand>
+public class CreateQuestionHandler : ICommandHandler<Guid, CreateQuestionCommand>
 {
     private readonly IQuestionsRepository _questionsRepository;
     private readonly ITagsReadRepository _tagsReadRepository;
@@ -43,25 +43,18 @@ public class CreateQuestionHandler: ICommandHandler<Guid, CreateQuestionCommand>
 
         var question = questionResult.Value;
 
-        // SingleChoice Question
-        if (question.QuestionType == QuestionType.SingleChoice)
+        if (question.QuestionType == QuestionType.SingleChoice &&
+            command.Request.CreateAnswerOptions.Count(x => x.IsCorrect) != 1)
         {
-            if (command.Request.CreateAnswerOptions.Count(x => x.IsCorrect) != 1)
-            {
-                _logger.LogError("Failed to create Question. Invalid count of correct answers.");
-
-                return Result.Failure<Guid>("SingleChoice question must have exactly one correct answer.");
-            }
+            _logger.LogError("SingleChoice question must have exactly one correct answer.");
+            return Result.Failure<Guid>("SingleChoice question must have exactly one correct answer.");
         }
 
-        // MultiChoice Question
-        if (question.QuestionType == QuestionType.MultipleChoice)
+        if (question.QuestionType == QuestionType.MultipleChoice &&
+            command.Request.CreateAnswerOptions.Count(x => x.IsCorrect) < 1)
         {
-            if (command.Request.CreateAnswerOptions.Count(x => x.IsCorrect) < 1)
-            {
-                _logger.LogError("Failed to create Question. No correct answer provided.");
-                return Result.Failure<Guid>("MultipleChoice question must have at least one correct answer.");
-            }
+            _logger.LogError("MultipleChoice question must have at least one correct answer.");
+            return Result.Failure<Guid>("MultipleChoice question must have at least one correct answer.");
         }
 
         var answerResults = command.Request.CreateAnswerOptions
@@ -75,8 +68,8 @@ public class CreateQuestionHandler: ICommandHandler<Guid, CreateQuestionCommand>
             return Result.Failure<Guid>(combined.Error);
         }
 
-        foreach (var answer in answerResults)
-            question.AddAnswerOption(answer.Value);
+        foreach (var answer in answerResults.Select(r => r.Value))
+            question.AddAnswerOption(answer);
 
         var tagIds = command.Request.TagIds
             .Where(id => id != Guid.Empty)
@@ -86,10 +79,7 @@ public class CreateQuestionHandler: ICommandHandler<Guid, CreateQuestionCommand>
         if (tagIds.Any())
         {
             var existingTagIds = await _tagsReadRepository.GetExistingIdsAsync(tagIds, cancellationToken);
-
-            var missingTagIds = tagIds
-                .Except(existingTagIds)
-                .ToList();
+            var missingTagIds = tagIds.Except(existingTagIds).ToList();
 
             if (missingTagIds.Any())
             {
@@ -102,23 +92,29 @@ public class CreateQuestionHandler: ICommandHandler<Guid, CreateQuestionCommand>
                 return Result.Failure<Guid>(tagResult.Error);
         }
 
+        if (!string.IsNullOrWhiteSpace(question.ImageName))
+        {
+            var moveResult = await _imageStorageService.MoveToPermanent(
+                question.ImageName,
+                ImageFolder.QUESTIONS);
+
+            if (moveResult.IsFailure)
+            {
+                _logger.LogWarning("Failed to move image {ImageName} to permanent storage: {Error}", question.ImageName, moveResult.Error);
+                return Result.Failure<Guid>(moveResult.Error);
+            }
+
+            _logger.LogInformation("Successfully moved image to permanent storage: {ImageName}", question.ImageName);
+        }
+
         var questionIdResult = await _questionsRepository.AddAsync(question, cancellationToken);
         if (questionIdResult.IsFailure)
         {
             _logger.LogWarning("Failed to create Question: {Error}", questionIdResult.Error);
-
             return Result.Failure<Guid>(questionIdResult.Error);
         }
 
-        if (question.ImageName != null)
-        {
-            await _imageStorageService.MoveToPermanentAsync(question.ImageName, ImageFolder.QUESTIONS, cancellationToken);
-
-            _logger.LogInformation("Successfully moved image to {ImageName}", question.ImageName);
-        }
-
         _logger.LogResult("Create Question", questionIdResult.Value, questionIdResult);
-
         return Result.Success(questionIdResult.Value);
     }
 }

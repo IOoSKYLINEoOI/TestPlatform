@@ -1,4 +1,6 @@
-﻿using TestPlatform.Application.Users;
+﻿using System.Security.Claims;
+using TestPlatform.Application.Users;
+using TestPlatform.Contracts.Users.DTOs;
 using TestPlatform.Core.Users;
 
 namespace TestPlatform.Web.Middleware;
@@ -14,7 +16,7 @@ public class EnsureUserMiddleware
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context, IUsersReadRepository readRepository, IUsersRepository writeRepository)
+    public async Task InvokeAsync(HttpContext context, IUsersReadRepository usersReadRepository, IUsersRepository usersRepository)
     {
         var claims = context.User;
 
@@ -24,46 +26,47 @@ public class EnsureUserMiddleware
             return;
         }
 
-        var keycloakId = claims.FindFirst("sub")?.Value;
+        var keycloakId = claims.FindFirst("sub")?.Value ?? claims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var tabNumber = claims.FindFirst("preferred_username")?.Value;
 
         if (string.IsNullOrEmpty(keycloakId) || string.IsNullOrEmpty(tabNumber))
         {
-            _logger.LogWarning("Missing Keycloak claims for authenticated user.");
-
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-
             await context.Response.WriteAsync("Unauthorized: missing claims.");
             return;
         }
 
-        var existingResult = await readRepository.ExistingAsync(keycloakId, context.RequestAborted);
+        var userDto = await usersReadRepository.GetByKeycloakIdAsync(keycloakId, context.RequestAborted);
 
-        if (existingResult.IsFailure)
+        if (userDto == null)
         {
             var newUserResult = User.Create(keycloakId, tabNumber);
 
             if (newUserResult.IsFailure)
             {
-                _logger.LogError("Failed to create user entity for KeycloakId {KeycloakId}: {Error}", keycloakId, newUserResult.Error);
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await context.Response.WriteAsync("Failed to create user.");
                 return;
             }
 
-            var addResult = await writeRepository.AddAsync(newUserResult.Value, context.RequestAborted);
+            var addResult = await usersRepository.AddAsync(newUserResult.Value, context.RequestAborted);
 
             if (addResult.IsFailure)
             {
-                _logger.LogError("Failed to save new user {KeycloakId}: {Error}", keycloakId, addResult.Error);
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await context.Response.WriteAsync("Failed to save new user.");
                 return;
             }
 
-            _logger.LogInformation("Created new user with KeycloakId {KeycloakId}", keycloakId);
+            userDto = new CurrentUserResponse(
+                Id: newUserResult.Value.Id,
+                KeycloakId: newUserResult.Value.KeycloakId,
+                TabNumber: newUserResult.Value.TabNumber);
         }
+
+        context.Items["CurrentUser"] = userDto;
 
         await _next(context);
     }
+
 }

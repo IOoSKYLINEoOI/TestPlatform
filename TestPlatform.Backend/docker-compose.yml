@@ -27,6 +27,34 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://+:5062;https://+:7257"
       ConnectionStrings__TestPlatformContextPostgreSQL: "Host=postgres;Port=5432;Database=testPlatformDb;Username=postgres;Password=123456789"
+      
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.6
+    container_name: keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: true
+    volumes:
+      - ./containers/identity:/opt/keycloak/data
+      - ./containers/identity/themes:/opt/keycloak/themes
+    ports:
+      - "8080:8080"
+      - "9000:9000"
+    user: root #development only
+    
+  pgadmin:
+    image: dpage/pgadmin4:7
+    container_name: testplatform_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8081:80"
+    depends_on:
+      - postgres
 
 volumes:
   pgdata:
+  pgadmin_data:

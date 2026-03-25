@@ -7,5 +7,5 @@ public interface IUsersReadRepository
 {
     Task<CurrentUserResponse?> GetByKeycloakIdAsync(string keycloakId, CancellationToken cancellationToken);
 
-    Task<Result> ExistingAsync(string keycloakId, CancellationToken cancellationToken);
+    Task<bool> ExistsAsync(string keycloakId, CancellationToken cancellationToken);
 }

@@ -29,29 +29,57 @@ public class DeleteQuestionHandler : ICommandHandler<DeleteQuestionCommand>
 
     public async Task<Result> Handle(DeleteQuestionCommand command, CancellationToken cancellationToken)
     {
+        if (command.Id == Guid.Empty)
+            return Result.Failure("Invalid question Id");
+
         var question = await _questionsReadRepository.ReadQuestionByIdAsync(command.Id, false, cancellationToken);
-        if(question == null)
+        if (question == null)
             return Result.Failure("Question not found");
 
-        if (question.ImageName is not null)
+        if (!string.IsNullOrWhiteSpace(question.ImageName))
         {
-            await _imageStorageService.DeletePermanentAsync(ImageFolder.QUESTIONS, question.ImageName);
-            _logger.LogInformation("Deleting image {QuestionImageName}", question.ImageName);
-        }
+            var deleteQuestionImageResult = await _imageStorageService.DeletePermanentAsync(
+                ImageFolder.QUESTIONS, question.ImageName);
 
-        foreach (var answer in question.AnswerOptions)
-        {
-            if (!string.IsNullOrEmpty(answer.ImageName))
+            if (deleteQuestionImageResult.IsFailure)
             {
-                await _imageStorageService.DeletePermanentAsync(ImageFolder.ANSWERS, answer.ImageName);
-                _logger.LogInformation("Deleting answer image {AnswerImageName}", answer.ImageName);
+                _logger.LogWarning(
+                    "Failed to delete question image {QuestionImageName}: {Error}",
+                    question.ImageName,
+                    deleteQuestionImageResult.Error);
+            }
+            else
+            {
+                _logger.LogInformation("Deleted question image {QuestionImageName}", question.ImageName);
             }
         }
 
-        var result = await _questionsRepository.DeleteAsync(command.Id, cancellationToken);
+        var answerDeleteTasks = question.AnswerOptions
+            .Where(a => !string.IsNullOrWhiteSpace(a.ImageName))
+            .Select(async answer =>
+            {
+                if (answer.ImageName != null)
+                {
+                    var result = await _imageStorageService.DeletePermanentAsync(
+                        ImageFolder.ANSWERS,
+                        answer.ImageName);
+                    if (result.IsFailure)
+                    {
+                        _logger.LogWarning("Failed to delete answer image {AnswerImageName}: {Error}", answer.ImageName, result.Error);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Deleted answer image {AnswerImageName}", answer.ImageName);
+                    }
+                }
+            });
 
-        _logger.LogResult("Delete Question", command.Id, result);
+        await Task.WhenAll(answerDeleteTasks);
 
-        return result;
+        var deleteResult = await _questionsRepository.DeleteAsync(command.Id, cancellationToken);
+
+        _logger.LogResult("Delete Question", command.Id, deleteResult);
+
+        return deleteResult;
     }
 }

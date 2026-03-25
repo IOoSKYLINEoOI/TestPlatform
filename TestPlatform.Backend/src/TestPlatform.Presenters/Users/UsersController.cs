@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TestPlatform.Application.Abstractions;
@@ -21,7 +22,9 @@ public class UsersController : ControllerBase
         [FromServices] IQueryHandler<CurrentUserResponse, GetCurrentUserQuery> handler,
         CancellationToken cancellationToken)
     {
-        var keycloakId = User.FindFirst("sub")?.Value;
+        var keycloakId =
+            User.FindFirst("sub")?.Value ??
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(keycloakId))
             return Unauthorized();
@@ -33,5 +36,12 @@ public class UsersController : ControllerBase
             return Problem("User not found. Middleware failure.");
 
         return Ok(currentUser);
+    }
+
+    [HttpGet("me2")]
+    public IActionResult Me2()
+    {
+        var claims = User.Claims.ToDictionary(c => c.Type, c => c.Value);
+        return Ok(claims);
     }
 }

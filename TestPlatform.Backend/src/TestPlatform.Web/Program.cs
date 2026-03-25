@@ -1,8 +1,15 @@
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi;
+using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using TestPlatform.Application;
 using TestPlatform.Infrastructure.FileStorage;
 using TestPlatform.Infrastructure.Postgres;
+using TestPlatform.Web.Extensions;
 using TestPlatform.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,13 +18,59 @@ builder.Configuration.AddUserSecrets<Program>();
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "TestPlatform", Version = "v1" });
+builder.Services.AddSwaggerGenWithAuthSupport(builder.Configuration);
 
-    options.EnableAnnotations();
-    options.UseInlineDefinitionsForEnums();
-});
+builder.Services.AddAuthorization();
+
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.Audience = builder.Configuration["Authentication:Audience"];
+        options.MetadataAddress = builder.Configuration["Authentication:MetadataAddress"]!;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidIssuer = builder.Configuration["Authentication:ValidIssuer"],
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError(context.Exception, "Authentication failed.");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation("Token validated successfully for {User}", context.Principal?.Identity?.Name);
+                return Task.CompletedTask;
+            },
+        };
+    });
+
+/*builder.Services.AddControllers(config =>
+{
+    var policy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+    config.Filters.Add(new AuthorizeFilter(policy));
+});*/
+
+builder.Services
+    .AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("TestPlatform"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation();
+
+        tracing.AddOtlpExporter();
+    });
 
 builder.Services
     .AddTestPlatformPersistence(builder.Configuration)
@@ -45,26 +98,29 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.OAuthClientId("public-client");
+        c.OAuthUsePkce();
+    });
 }
 
 app.UseStaticFiles();
 
 app.UseRouting();
 
-
 app.UseCors(policy =>
 {
     policy.AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials()
-        .WithOrigins("https://localhost:5173");
+        .WithOrigins("http://localhost:5173");
 });
 
-
 app.UseAuthentication();
-app.UseMiddleware<EnsureUserMiddleware>();
 app.UseAuthorization();
+
+app.UseMiddleware<EnsureUserMiddleware>();
 
 app.MapControllers();
 

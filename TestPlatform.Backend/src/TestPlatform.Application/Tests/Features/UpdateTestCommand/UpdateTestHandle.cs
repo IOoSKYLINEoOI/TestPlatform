@@ -10,18 +10,18 @@ namespace TestPlatform.Application.Tests.Features.UpdateTestCommand;
 
 public record UpdateTestCommand(Guid Id, TestRequest Request) : ICommand;
 
-public class UpdateTestHandle : ICommandHandler<UpdateTestCommand>
+public class UpdateTestHandler : ICommandHandler<UpdateTestCommand>
 {
     private readonly ITestsRepository _testsRepository;
     private readonly ITestsReadRepository _testsReadRepository;
     private readonly IImageStorageService _imageStorageService;
-    private readonly ILogger<UpdateTestHandle> _logger;
+    private readonly ILogger<UpdateTestHandler> _logger;
 
-    public UpdateTestHandle(
+    public UpdateTestHandler(
         ITestsRepository testsRepository,
         ITestsReadRepository testsReadRepository,
         IImageStorageService imageStorageService,
-        ILogger<UpdateTestHandle> logger)
+        ILogger<UpdateTestHandler> logger)
     {
         _testsRepository = testsRepository;
         _testsReadRepository = testsReadRepository;
@@ -32,8 +32,8 @@ public class UpdateTestHandle : ICommandHandler<UpdateTestCommand>
     public async Task<Result> Handle(UpdateTestCommand command, CancellationToken cancellationToken)
     {
         var testExisting = await _testsReadRepository.ReadTestByIdAsync(command.Id, false, cancellationToken);
-        if(testExisting is null)
-            return Result.Failure($"Test with id {command.Id} NOT Found");
+        if (testExisting is null)
+            return Result.Failure($"Test with id {command.Id} not found");
 
         var testUpdatedResult = Test.CreateWithId(
             command.Id,
@@ -42,35 +42,35 @@ public class UpdateTestHandle : ICommandHandler<UpdateTestCommand>
             command.Request.Description,
             command.Request.AuthorId,
             command.Request.CoverImageUrl);
-        if(testUpdatedResult.IsFailure)
+
+        if (testUpdatedResult.IsFailure)
             return Result.Failure(testUpdatedResult.Error);
 
         var testUpdated = testUpdatedResult.Value;
 
-        foreach (var question in command.Request.QuestionsIds.ToHashSet())
-            testUpdated.AddQuestion(question);
+        foreach (var questionId in command.Request.QuestionsIds.ToHashSet())
+            testUpdated.AddQuestion(questionId);
 
         var updateResult = await _testsRepository.UpdateAsync(testUpdated, cancellationToken);
+        if (updateResult.IsFailure)
+            return Result.Failure(updateResult.Error);
 
         if (testExisting.CoverImageName != testUpdated.CoverImageName)
         {
-            if (testUpdated.CoverImageName is not null)
+            if (!string.IsNullOrWhiteSpace(testUpdated.CoverImageName))
             {
-                await _imageStorageService.MoveToPermanentAsync(testUpdated.CoverImageName, ImageFolder.TESTS, cancellationToken);
-
-                _logger.LogInformation("Moved CoverImage {testUpdated.CoverImageName}", testUpdated.CoverImageName);
+                await _imageStorageService.MoveToPermanent(testUpdated.CoverImageName, ImageFolder.TESTS);
+                _logger.LogInformation("Moved CoverImage {CoverImage}", testUpdated.CoverImageName);
             }
 
-            if (testExisting.CoverImageName is not null)
+            if (!string.IsNullOrWhiteSpace(testExisting.CoverImageName))
             {
                 await _imageStorageService.DeletePermanentAsync(ImageFolder.TESTS, testExisting.CoverImageName);
-
-                _logger.LogInformation("Deleted CoverImage {testExisting.CoverImageName}", testExisting.CoverImageName);
+                _logger.LogInformation("Deleted CoverImage {CoverImage}", testExisting.CoverImageName);
             }
         }
 
         _logger.LogResult("Update Test", command.Id, updateResult);
-
         return updateResult;
     }
 }

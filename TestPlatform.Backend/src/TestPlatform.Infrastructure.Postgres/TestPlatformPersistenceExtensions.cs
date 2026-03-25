@@ -38,6 +38,7 @@ public static class TestPlatformPersistenceExtensions
 
         services.AddScoped<IExamsReadRepository, ExamsReadRepository>();
 
+        services.AddScoped<IUsersRepository, UsersRepository>();
         services.AddScoped<IUsersReadRepository, UsersReadRepository>();
 
         return services;

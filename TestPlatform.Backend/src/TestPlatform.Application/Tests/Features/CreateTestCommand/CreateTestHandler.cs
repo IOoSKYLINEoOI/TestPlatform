@@ -35,7 +35,8 @@ public class CreateTestHandler : ICommandHandler<Guid, CreateTestCommand>
             command.Request.Description,
             command.Request.AuthorId,
             command.Request.CoverImageUrl);
-        if(testResult.IsFailure)
+
+        if (testResult.IsFailure)
             return Result.Failure<Guid>(testResult.Error);
 
         var test = testResult.Value;
@@ -47,17 +48,22 @@ public class CreateTestHandler : ICommandHandler<Guid, CreateTestCommand>
         if (testIdResult.IsFailure)
         {
             _logger.LogWarning("Failed to create Test: {Error}", testIdResult.Error);
-
             return Result.Failure<Guid>(testIdResult.Error);
         }
 
-        if (command.Request.CoverImageUrl != null)
+        if (!string.IsNullOrWhiteSpace(command.Request.CoverImageUrl))
         {
-            await _imageStorageService.MoveToPermanentAsync(command.Request.CoverImageUrl, ImageFolder.TESTS, cancellationToken);
+            var moveResult = await _imageStorageService.MoveToPermanent(command.Request.CoverImageUrl, ImageFolder.TESTS);
+            if (moveResult.IsFailure)
+            {
+                _logger.LogWarning("Failed to move test cover image {Image}: {Error}", command.Request.CoverImageUrl, moveResult.Error);
+                return Result.Failure<Guid>(moveResult.Error);
+            }
+
+            _logger.LogInformation("Moved test cover image {Image}", command.Request.CoverImageUrl);
         }
 
         _logger.LogResult("Create Test", testIdResult.Value, testIdResult);
-
         return Result.Success(testIdResult.Value);
     }
 }

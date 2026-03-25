@@ -21,14 +21,8 @@ public class UsersReadRepository : IUsersReadRepository
                 TabNumber: x.TabNumber))
             .FirstOrDefaultAsync(cancellationToken);
 
-    public async Task<Result> ExistingAsync(string keycloakId, CancellationToken cancellationToken)
-    {
-        var user = await _context.Users
+    public async Task<bool> ExistsAsync(string keycloakId, CancellationToken cancellationToken)
+        => await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.KeycloakId == keycloakId, cancellationToken);
-
-        return user == null
-            ? Result.Failure("User not found")
-            : Result.Success();
-    }
+            .AnyAsync(x => x.KeycloakId == keycloakId, cancellationToken);
 }

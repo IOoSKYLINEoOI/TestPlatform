@@ -21,9 +21,12 @@ public class ImageController : ControllerBase
         Description = "Сохраняет изображение во временную папку и возвращает имя файла.")]
     public async Task<IActionResult> UploadTemp(IFormFile file)
     {
-        string tempFileName = await _imageStorage.SaveTempAsync(file, CancellationToken.None);
+        var result = await _imageStorage.SaveTempAsync(file, CancellationToken.None);
 
-        return Ok(new { tempFileName });
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.Error });
+
+        return Ok(new { tempFileName = result.Value });
     }
 
     [HttpDelete("temp/{fileName}")]
@@ -33,7 +36,11 @@ public class ImageController : ControllerBase
         Description = "Удаляет изображение из временного хранилища.")]
     public async Task<IActionResult> DeleteTemp(string fileName)
     {
-        await _imageStorage.DeleteTempAsync(fileName);
+        var result = await _imageStorage.DeleteTempAsync(fileName);
+
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.Error });
+
         return NoContent();
     }
 
@@ -44,7 +51,11 @@ public class ImageController : ControllerBase
         Description = "Удаляет изображение из постоянного хранилища.")]
     public async Task<IActionResult> DeletePermanent(ImageFolder folder, string fileName)
     {
-        await _imageStorage.DeletePermanentAsync(folder, fileName);
+        var result = await _imageStorage.DeletePermanentAsync(folder, fileName);
+
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.Error });
+
         return NoContent();
     }
 
@@ -55,15 +66,17 @@ public class ImageController : ControllerBase
         Description = "Возвращает изображение из постоянного хранилища.")]
     public async Task<IActionResult> GetPermanent(ImageFolder folder, string fileName)
     {
-        try
+        var result = await _imageStorage.GetPermanentImageStreamAsync(folder, fileName, CancellationToken.None);
+
+        if (!result.IsSuccess)
         {
-            await using var stream = await _imageStorage.GetPermanentImageStreamAsync(folder, fileName, CancellationToken.None);
-            return File(stream, "image/webp");
+            if (result.Error == "file.not_found")
+                return NotFound();
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = result.Error });
         }
-        catch (FileNotFoundException)
-        {
-            return NotFound();
-        }
+
+        await using var stream = result.Value;
+        return File(stream, "image/webp");
     }
 
     [HttpGet("url/permanent/{folder}/{fileName}")]
@@ -73,7 +86,11 @@ public class ImageController : ControllerBase
         Description = "Возвращает публичный URL изображения.")]
     public IActionResult GetPermanentUrl(ImageFolder folder, string fileName)
     {
-        var url = _imageStorage.GetPermanentImageUrl(folder, fileName);
-        return Ok(new { url });
+        var result = _imageStorage.GetPermanentImageUrl(folder, fileName);
+
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.Error });
+
+        return Ok(new { url = result.Value });
     }
 }

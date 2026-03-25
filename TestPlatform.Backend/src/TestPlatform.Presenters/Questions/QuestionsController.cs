@@ -37,7 +37,7 @@ public class QuestionsController : ControllerBase
         Summary = "Получить все вопросы с определенными тэгами",
         Description = "Возвращает вопросы с ответами по определенным тэгам.")]
     public async Task<IActionResult> GetAll(
-        [FromServices] IQueryHandler<List<QuestionResponse>, GetAllQuestionsByTagsQuery> handler,
+        [FromServices] IQueryHandler<IReadOnlyList<QuestionResponse>, GetAllQuestionsByTagsQuery> handler,
         [FromQuery] List<Guid> tagIds,
         CancellationToken cancellationToken,
         [FromQuery] bool includeCorrectAnswer = false)

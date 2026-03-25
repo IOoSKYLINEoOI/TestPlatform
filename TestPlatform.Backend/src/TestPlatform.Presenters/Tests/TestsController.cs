@@ -20,7 +20,7 @@ public class TestsController : ControllerBase
         Summary = "Получить тест по Id.",
         Description = "Возвращает тест с названием, ограничением времени, описанием, ид автора, количеством вопросов и тэгами по его Id")]
     public async Task<IActionResult> GetById(
-        [FromServices] IQueryHandler<TestResponse, GetByIdTestQuery> handler,
+        [FromServices] IQueryHandler<TestFullResponse, GetByIdTestQuery> handler,
         [FromRoute] Guid id,
         CancellationToken cancellationToken,
         [FromQuery] bool includeCorrectAnswer = false)
