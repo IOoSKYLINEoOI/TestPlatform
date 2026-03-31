@@ -19,7 +19,7 @@ public class UsersController : ControllerBase
         Summary = "Получить текущего пользователя",
         Description = "Возвращает текущего пользователя")]
     public async Task<IActionResult> GetCurrentUser(
-        [FromServices] IQueryHandler<CurrentUserResponse, GetCurrentUserQuery> handler,
+        [FromServices] IQueryHandler<CurrentUserDto, GetCurrentUserQuery> handler,
         CancellationToken cancellationToken)
     {
         var keycloakId =
@@ -38,10 +38,15 @@ public class UsersController : ControllerBase
         return Ok(currentUser);
     }
 
+    [Authorize(Roles = "User")]
     [HttpGet("me2")]
     public IActionResult Me2()
     {
-        var claims = User.Claims.ToDictionary(c => c.Type, c => c.Value);
+        var claims = User.Claims
+            .GroupBy(c => c.Type)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => x.Value).ToList());
         return Ok(claims);
     }
 }

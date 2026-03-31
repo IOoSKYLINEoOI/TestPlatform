@@ -9,7 +9,7 @@ using TestPlatform.Core.Tests;
 
 namespace TestPlatform.Application.Tests.Features.CreateTestCommand;
 
-public record CreateTestCommand(TestRequest Request) : ICommand;
+public record CreateTestCommand(TestRequest Request, Guid AuthorId) : ICommand;
 
 public class CreateTestHandler : ICommandHandler<Guid, CreateTestCommand>
 {
@@ -33,7 +33,7 @@ public class CreateTestHandler : ICommandHandler<Guid, CreateTestCommand>
             command.Request.Name,
             command.Request.TimeLimitSeconds,
             command.Request.Description,
-            command.Request.AuthorId,
+            command.AuthorId,
             command.Request.CoverImageUrl);
 
         if (testResult.IsFailure)

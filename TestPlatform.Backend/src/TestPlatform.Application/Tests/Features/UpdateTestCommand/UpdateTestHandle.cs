@@ -4,11 +4,12 @@ using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Abstractions.Enums;
 using TestPlatform.Application.Extensions;
 using TestPlatform.Contracts.Tests.DTOs;
+using TestPlatform.Contracts.Users.DTOs;
 using TestPlatform.Core.Tests;
 
 namespace TestPlatform.Application.Tests.Features.UpdateTestCommand;
 
-public record UpdateTestCommand(Guid Id, TestRequest Request) : ICommand;
+public record UpdateTestCommand(Guid Id, TestRequest Request, CurrentUserDto CurrentUser) : ICommand;
 
 public class UpdateTestHandler : ICommandHandler<UpdateTestCommand>
 {
@@ -35,12 +36,15 @@ public class UpdateTestHandler : ICommandHandler<UpdateTestCommand>
         if (testExisting is null)
             return Result.Failure($"Test with id {command.Id} not found");
 
+        if (!command.CurrentUser.IsAdmin && command.CurrentUser.Id != testExisting.AuthorId)
+            return Result.Failure("Forbidden");
+
         var testUpdatedResult = Test.CreateWithId(
             command.Id,
             command.Request.Name,
             command.Request.TimeLimitSeconds,
             command.Request.Description,
-            command.Request.AuthorId,
+            command.CurrentUser.Id,
             command.Request.CoverImageUrl);
 
         if (testUpdatedResult.IsFailure)

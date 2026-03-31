@@ -4,10 +4,11 @@ using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Abstractions.Enums;
 using TestPlatform.Application.Extensions;
 using TestPlatform.Application.Questions;
+using TestPlatform.Contracts.Users.DTOs;
 
 namespace TestPlatform.Application.Tests.Features.DeleteTestCommand;
 
-public record DeleteTestCommand(Guid Id) : ICommand;
+public record DeleteTestCommand(Guid Id, CurrentUserDto CurrentUser) : ICommand;
 
 public class DeleteTestHandler : ICommandHandler<DeleteTestCommand>
 {
@@ -33,6 +34,9 @@ public class DeleteTestHandler : ICommandHandler<DeleteTestCommand>
         var testExisting = await _testsReadRepository.ReadTestByIdAsync(command.Id, false, cancellationToken);
         if (testExisting == null)
             return Result.Failure($"Could not find test with id {command.Id}");
+
+        if (!command.CurrentUser.IsAdmin && command.CurrentUser.Id != testExisting.AuthorId)
+            return Result.Failure("Forbidden");
 
         var result = await _testsRepository.DeleteAsync(command.Id, cancellationToken);
 

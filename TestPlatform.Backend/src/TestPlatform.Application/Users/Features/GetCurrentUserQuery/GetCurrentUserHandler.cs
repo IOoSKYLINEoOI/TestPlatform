@@ -6,7 +6,7 @@ namespace TestPlatform.Application.Users.Features.GetCurrentUserQuery;
 
 public record GetCurrentUserQuery(string KeycloakId) : IQuery;
 
-public class GetCurrentUserHandler : IQueryHandler<CurrentUserResponse, GetCurrentUserQuery>
+public class GetCurrentUserHandler : IQueryHandler<CurrentUserDto, GetCurrentUserQuery>
 {
     private readonly IUsersReadRepository _usersReadRepository;
     private readonly ILogger<GetCurrentUserHandler> _logger;
@@ -17,7 +17,7 @@ public class GetCurrentUserHandler : IQueryHandler<CurrentUserResponse, GetCurre
         _logger = logger;
     }
 
-    public async Task<CurrentUserResponse?> Handle(GetCurrentUserQuery query, CancellationToken cancellationToken)
+    public async Task<CurrentUserDto?> Handle(GetCurrentUserQuery query, CancellationToken cancellationToken)
     {
         var user = await _usersReadRepository.GetByKeycloakIdAsync(query.KeycloakId,  cancellationToken);
 

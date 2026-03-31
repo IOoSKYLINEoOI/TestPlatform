@@ -1,6 +1,8 @@
 ﻿
 
 using Microsoft.OpenApi;
+using TestPlatform.Application.Abstractions;
+using TestPlatform.Infrastructure.Identity;
 
 namespace TestPlatform.Web.Extensions;
 
@@ -48,6 +50,14 @@ public static class TestPlatformWebApiExtensions
                 },
             });
         });
+        return services;
+    }
+
+    public static IServiceCollection AddCurrentUser(this IServiceCollection services)
+    {
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+
         return services;
     }
 }

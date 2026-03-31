@@ -4,6 +4,5 @@ public record TestRequest(
     string Name,
     int? TimeLimitSeconds,
     string Description,
-    Guid? AuthorId,
     string? CoverImageUrl,
     List<Guid> QuestionsIds);

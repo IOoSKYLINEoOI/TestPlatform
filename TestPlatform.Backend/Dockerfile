@@ -11,8 +11,10 @@ COPY src/TestPlatform.Contracts/*.csproj ./src/TestPlatform.Contracts/
 COPY src/TestPlatform.Core/*.csproj ./src/TestPlatform.Core/
 COPY src/TestPlatform.Infrastructure.FileStorage/*.csproj ./src/TestPlatform.Infrastructure.FileStorage/
 COPY src/TestPlatform.Infrastructure.Postgres/*.csproj ./src/TestPlatform.Infrastructure.Postgres/
+COPY src/TestPlatform.Infrastructure.Identity/*.csproj ./src/TestPlatform.Infrastructure.Identity/
 COPY src/TestPlatform.Presenters/*.csproj ./src/TestPlatform.Presenters/
 COPY src/TestPlatform.Web/*.csproj ./src/TestPlatform.Web/
+
 
 # Восстанавливаем зависимости
 RUN dotnet restore TestPlatform.sln

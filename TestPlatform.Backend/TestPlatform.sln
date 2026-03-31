@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestPlatform.Infrastructure
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestPlatform.Infrastructure.FileStorage", "src\TestPlatform.Infrastructure.FileStorage\TestPlatform.Infrastructure.FileStorage.csproj", "{078A4D64-55D2-4124-907E-19880DE8D9C8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestPlatform.Infrastructure.Identity", "src\TestPlatform.Infrastructure.Identity\TestPlatform.Infrastructure.Identity.csproj", "{6CA62FE5-8FD3-4FB6-A78E-D02FC0151473}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,10 @@ Global
 		{078A4D64-55D2-4124-907E-19880DE8D9C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{078A4D64-55D2-4124-907E-19880DE8D9C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{078A4D64-55D2-4124-907E-19880DE8D9C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CA62FE5-8FD3-4FB6-A78E-D02FC0151473}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CA62FE5-8FD3-4FB6-A78E-D02FC0151473}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CA62FE5-8FD3-4FB6-A78E-D02FC0151473}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CA62FE5-8FD3-4FB6-A78E-D02FC0151473}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{07F40D2D-BCB0-4AD2-B1AB-537F32F5AED5} = {B533D148-43EF-45A3-9EF0-A10DCFAC7A13}
@@ -66,5 +72,6 @@ Global
 		{75D63BFE-DB0A-42C0-B458-63E07E1C5B5B} = {B533D148-43EF-45A3-9EF0-A10DCFAC7A13}
 		{0E8F3852-F1A6-4772-B78B-FD90A22E81CB} = {B533D148-43EF-45A3-9EF0-A10DCFAC7A13}
 		{078A4D64-55D2-4124-907E-19880DE8D9C8} = {B533D148-43EF-45A3-9EF0-A10DCFAC7A13}
+		{6CA62FE5-8FD3-4FB6-A78E-D02FC0151473} = {B533D148-43EF-45A3-9EF0-A10DCFAC7A13}
 	EndGlobalSection
 EndGlobal

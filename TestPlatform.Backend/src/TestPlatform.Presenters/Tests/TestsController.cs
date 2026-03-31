@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Tests.Features.CreateTestCommand;
@@ -7,6 +8,7 @@ using TestPlatform.Application.Tests.Features.GetAllTestsQuery;
 using TestPlatform.Application.Tests.Features.GetByIdTestQuery;
 using TestPlatform.Application.Tests.Features.UpdateTestCommand;
 using TestPlatform.Contracts.Tests.DTOs;
+using TestPlatform.Contracts.Users.DTOs;
 
 namespace TestPlatform.Presenters.Tests;
 
@@ -56,7 +58,11 @@ public class TestsController : ControllerBase
         [FromBody] TestRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new CreateTestCommand(request);
+        var authorIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(authorIdClaim, out var authorId))
+            return Forbid();
+
+        var command = new CreateTestCommand(request, authorId);
 
         var result = await handler.Handle(command, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
@@ -73,10 +79,14 @@ public class TestsController : ControllerBase
         [FromBody] TestRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateTestCommand(id, request);
+        var currentUser = HttpContext.Items["CurrentUser"] as CurrentUserDto;
+        if (currentUser == null)
+            return Forbid();
+
+        var command = new UpdateTestCommand(id, request, currentUser);
 
         var result = await handler.Handle(command, cancellationToken);
-        return result.IsSuccess ? Ok() : BadRequest(result.Error);
+        return result.IsSuccess ? Ok() : result.Error == "Forbidden" ? Forbid() : BadRequest(result.Error);
     }
 
     [HttpDelete("{id:guid}")]
@@ -89,9 +99,13 @@ public class TestsController : ControllerBase
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
-        var command = new DeleteTestCommand(id);
+        var currentUser = HttpContext.Items["CurrentUser"] as CurrentUserDto;
+        if (currentUser == null)
+            return Forbid();
+
+        var command = new DeleteTestCommand(id, currentUser);
 
         var result = await handler.Handle(command, cancellationToken);
-        return result.IsSuccess ? NoContent() : NotFound(result.Error);
+        return result.IsSuccess ? NoContent() : result.Error == "Forbidden" ? Forbid() : NotFound(result.Error);
     }
 }

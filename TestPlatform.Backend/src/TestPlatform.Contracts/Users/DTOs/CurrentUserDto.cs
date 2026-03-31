@@ -1,6 +1,7 @@
 ﻿namespace TestPlatform.Contracts.Users.DTOs;
 
-public record CurrentUserResponse(
+public record CurrentUserDto(
     Guid Id,
     string KeycloakId,
-    string TabNumber);
+    string TabNumber,
+    bool IsAdmin);

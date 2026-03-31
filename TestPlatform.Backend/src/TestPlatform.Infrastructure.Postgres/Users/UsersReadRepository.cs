@@ -11,11 +11,11 @@ public class UsersReadRepository : IUsersReadRepository
 
     public UsersReadRepository(TestPlatformDbContext context) => _context = context;
 
-    public async Task<CurrentUserResponse?> GetByKeycloakIdAsync(string keycloakId, CancellationToken cancellationToken)
+    public async Task<CurrentUserDto?> GetByKeycloakIdAsync(string keycloakId, CancellationToken cancellationToken)
         => await _context.Users
             .AsNoTracking()
             .Where(x => x.KeycloakId == keycloakId)
-            .Select(x => new CurrentUserResponse(
+            .Select(x => new CurrentUserDto(
                 Id: x.Id,
                 KeycloakId: x.KeycloakId,
                 TabNumber: x.TabNumber))
