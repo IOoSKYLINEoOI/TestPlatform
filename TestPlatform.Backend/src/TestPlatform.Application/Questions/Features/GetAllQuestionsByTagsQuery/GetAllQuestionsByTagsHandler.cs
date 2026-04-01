@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CSharpFunctionalExtensions;
+using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Questions.DTOs;
 
@@ -17,12 +18,18 @@ public class GetAllQuestionsByTagsHandler : IQueryHandler<IReadOnlyList<Question
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<QuestionResponse>?> Handle(GetAllQuestionsByTagsQuery query, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<QuestionResponse>>> Handle(
+        GetAllQuestionsByTagsQuery query,
+        CancellationToken cancellationToken)
     {
-        var questions = await _questionsReadRepository.ReadAllQuestionsByTagsAsync(query.TagIds, query.IncludeCorrectAnswer, cancellationToken);
+        var questions = await _questionsReadRepository
+            .ReadAllQuestionsByTagsAsync(query.TagIds, query.IncludeCorrectAnswer, cancellationToken);
 
-        _logger.LogInformation("Retrieved {Count} Questions for tags {Tags}", questions.Count, string.Join(", ", query.TagIds));
+        _logger.LogInformation(
+            "Retrieved {Count} Questions for tags {Tags}",
+            questions.Count,
+            string.Join(", ", query.TagIds));
 
-        return questions;
+        return Result.Success((IReadOnlyList<QuestionResponse>)questions);
     }
 }

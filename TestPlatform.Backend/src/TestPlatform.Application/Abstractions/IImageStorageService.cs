@@ -14,7 +14,7 @@ public interface IImageStorageService
 
     Task<Result> DeletePermanentAsync(ImageFolder folder, string fileName);
 
-    Task<Result<Stream>> GetPermanentImageStreamAsync(ImageFolder folder, string fileName, CancellationToken cancellationToken);
+    Task<Result<FileStream>> GetPermanentImageStreamAsync(ImageFolder folder, string fileName, CancellationToken cancellationToken);
 
     Result<string> GetPermanentImageUrl(ImageFolder folder, string fileName);
 

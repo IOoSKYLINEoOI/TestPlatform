@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TestPlatform.Application.Abstractions;
@@ -29,6 +30,7 @@ public class ImageController : ControllerBase
         return Ok(new { tempFileName = result.Value });
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("temp/{fileName}")]
     [SwaggerOperation(
         OperationId = "DeleteTempImage",
@@ -44,6 +46,7 @@ public class ImageController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("permanent/{folder}/{fileName}")]
     [SwaggerOperation(
         OperationId = "DeletePermanentImage",
@@ -75,8 +78,8 @@ public class ImageController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, new { error = result.Error });
         }
 
-        await using var stream = result.Value;
-        return File(stream, "image/webp");
+        var stream = result.Value;
+        return File(stream, "image/webp", fileName);
     }
 
     [HttpGet("url/permanent/{folder}/{fileName}")]

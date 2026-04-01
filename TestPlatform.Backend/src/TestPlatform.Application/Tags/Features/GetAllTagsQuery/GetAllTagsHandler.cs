@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CSharpFunctionalExtensions;
+using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Tags.DTOs;
 
@@ -6,7 +7,7 @@ namespace TestPlatform.Application.Tags.Features.GetAllTagsQuery;
 
 public record GetAllTagsQuery() : IQuery;
 
-public class GetAllTagsHandler : IQueryHandler<List<TagResponse>, GetAllTagsQuery>
+public class GetAllTagsHandler : IQueryHandler<IReadOnlyList<TagResponse>, GetAllTagsQuery>
 {
     private readonly ITagsReadRepository _tagsReadRepository;
     private readonly ILogger<GetAllTagsHandler> _logger;
@@ -17,12 +18,12 @@ public class GetAllTagsHandler : IQueryHandler<List<TagResponse>, GetAllTagsQuer
         _logger = logger;
     }
 
-    public async Task<List<TagResponse>?> Handle(GetAllTagsQuery query, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<TagResponse>>> Handle(GetAllTagsQuery query, CancellationToken cancellationToken)
     {
         var tags = await _tagsReadRepository.ReadAllTagsAsync(cancellationToken);
 
         _logger.LogInformation("Retrieved {Count} tags", tags.Count);
 
-        return tags;
+        return Result.Success((IReadOnlyList<TagResponse>)tags);
     }
 }

@@ -18,7 +18,8 @@ public class UsersReadRepository : IUsersReadRepository
             .Select(x => new CurrentUserDto(
                 Id: x.Id,
                 KeycloakId: x.KeycloakId,
-                TabNumber: x.TabNumber))
+                TabNumber: x.TabNumber,
+                IsAdmin: false))
             .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<bool> ExistsAsync(string keycloakId, CancellationToken cancellationToken)

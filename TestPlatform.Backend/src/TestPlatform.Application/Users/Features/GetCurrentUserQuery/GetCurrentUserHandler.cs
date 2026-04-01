@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CSharpFunctionalExtensions;
+using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Users.DTOs;
 
@@ -17,15 +18,17 @@ public class GetCurrentUserHandler : IQueryHandler<CurrentUserDto, GetCurrentUse
         _logger = logger;
     }
 
-    public async Task<CurrentUserDto?> Handle(GetCurrentUserQuery query, CancellationToken cancellationToken)
+    public async Task<Result<CurrentUserDto>> Handle(GetCurrentUserQuery query, CancellationToken cancellationToken)
     {
         var user = await _usersReadRepository.GetByKeycloakIdAsync(query.KeycloakId,  cancellationToken);
 
-        if(user == null)
-            _logger.LogError("User with KeycloadId {Id} not found", query.KeycloakId);
-        else
-            _logger.LogInformation("Get User with KeycloadId {Id}", query.KeycloakId);
+        if (user == null)
+        {
+            _logger.LogWarning("CurrentUser with KeycloakId {Id} not found", query.KeycloakId);
+            return Result.Failure<CurrentUserDto>("Question not found");
+        }
 
-        return user;
+        _logger.LogInformation("Get CurrentUser with KeycloakId {Id}", query.KeycloakId);
+        return Result.Success(user);
     }
 }

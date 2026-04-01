@@ -4,6 +4,7 @@ using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Attempts.Features.FinishAttemptCommand;
 using TestPlatform.Application.Attempts.Features.GetByIdAttemptQuery;
 using TestPlatform.Application.Attempts.Features.StartAttemptCommand;
+using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Attempts.DTOs;
 
 namespace TestPlatform.Presenters.Attempts;
@@ -12,6 +13,13 @@ namespace TestPlatform.Presenters.Attempts;
 [Route("attempts")]
 public class AttemptsController : ControllerBase
 {
+    private readonly ICurrentUserAccessor _currentUserAccessor;
+
+    public AttemptsController(ICurrentUserAccessor currentUserAccessor)
+    {
+        _currentUserAccessor = currentUserAccessor;
+    }
+
     [HttpGet("{id:guid}")]
     [SwaggerOperation(
         OperationId = "GetByIdAttempt",
@@ -22,10 +30,25 @@ public class AttemptsController : ControllerBase
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
-        var query = new GetByIdAttemptQuery(id);
+        var currentUser = _currentUserAccessor.User;
+        if (currentUser == null)
+            return Forbid();
 
-        var attempt = await handler.Handle(query, cancellationToken);
-        return Ok(attempt);
+        var query = new GetByIdAttemptQuery(id,  currentUser);
+
+        var result = await handler.Handle(query, cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return result.Error switch
+            {
+                "unauthorized" => Forbid(),
+                "attempt.not_found" => NotFound(),
+                _ => BadRequest(result.Error)
+            };
+        }
+
+        return Ok(result.Value);
     }
 
     [HttpPost("start")]
@@ -38,7 +61,11 @@ public class AttemptsController : ControllerBase
         [FromBody] StartRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new StartAttemptCommand(request);
+        var currentUser = _currentUserAccessor.User;
+        if (currentUser == null)
+            return Forbid();
+
+        var command = new StartAttemptCommand(request, currentUser);
 
         var response = await handler.Handle(command, cancellationToken);
         return Ok(response);
@@ -55,7 +82,11 @@ public class AttemptsController : ControllerBase
         [FromBody] FinishRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new FinishAttemptCommand(id, request);
+        var currentUser = _currentUserAccessor.User;
+        if (currentUser == null)
+            return Forbid();
+
+        var command = new FinishAttemptCommand(id, request,  currentUser);
 
         var response = await handler.Handle(command, cancellationToken);
         return Ok(response);

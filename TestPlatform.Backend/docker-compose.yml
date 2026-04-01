@@ -27,6 +27,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://+:5062;https://+:7257"
       ConnectionStrings__TestPlatformContextPostgreSQL: "Host=postgres;Port=5432;Database=testPlatformDb;Username=postgres;Password=123456789"
+    volumes:
+      - images_data:/app/wwwroot/images
       
   keycloak:
     image: quay.io/keycloak/keycloak:26.5.6
@@ -54,7 +56,21 @@ services:
       - "8081:80"
     depends_on:
       - postgres
+  
+  filebrowser:
+    image: filebrowser/filebrowser:s6
+    ports:
+      - "8090:80"
+    volumes:
+      - images_data:/srv
+      - filebrowser_db:/database
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - FB_DATABASE=/database/filebrowser.db
 
 volumes:
   pgdata:
   pgadmin_data:
+  filebrowser_db:
+  images_data:

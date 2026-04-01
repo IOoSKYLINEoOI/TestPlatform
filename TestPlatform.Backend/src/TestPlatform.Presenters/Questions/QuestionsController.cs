@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Questions.Features.CreateQuestionCommand;
@@ -27,8 +28,10 @@ public class QuestionsController : ControllerBase
     {
         var query = new GetByIdQuestionQuery(id,  includeCorrectAnswer);
 
-        var question = await handler.Handle(query, cancellationToken);
-        return Ok(question);
+        var result = await handler.Handle(query, cancellationToken);
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : NotFound(new { error = result.Error });
     }
 
     [HttpGet("by-tags")]
@@ -44,10 +47,14 @@ public class QuestionsController : ControllerBase
     {
         var query = new GetAllQuestionsByTagsQuery(tagIds, includeCorrectAnswer);
 
-        var questions = await handler.Handle(query, cancellationToken);
-        return Ok(questions);
+        var result = await handler.Handle(query, cancellationToken);
+
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : NotFound(new { error = result.Error });
     }
 
+    [Authorize(Roles = "Teacher,Admin")]
     [HttpPost]
     [SwaggerOperation(
         OperationId = "CreateQuestion",
@@ -64,6 +71,7 @@ public class QuestionsController : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
     }
 
+    [Authorize(Roles = "Teacher,Admin")]
     [HttpPut("{id:guid}")]
     [SwaggerOperation(
         OperationId = "UpdateQuestion",
@@ -81,6 +89,7 @@ public class QuestionsController : ControllerBase
         return result.IsSuccess ? Ok() : BadRequest(result.Error);
     }
 
+    [Authorize(Roles = "Teacher,Admin")]
     [HttpDelete("{id:guid}")]
     [SwaggerOperation(
         OperationId = "DeleteQuestion",

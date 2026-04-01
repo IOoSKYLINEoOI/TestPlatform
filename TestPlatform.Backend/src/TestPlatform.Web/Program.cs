@@ -1,13 +1,14 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using TestPlatform.Application;
+using TestPlatform.Application.Users;
 using TestPlatform.Infrastructure.FileStorage;
 using TestPlatform.Infrastructure.Identity;
 using TestPlatform.Infrastructure.Postgres;
@@ -38,7 +39,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Authentication:ValidIssuer"],
 
             NameClaimType = "preferred_username",
-            RoleClaimType = ClaimTypes.Role,
+            RoleClaimType = "role",
         };
 
         options.Events = new JwtBearerEvents
@@ -52,78 +53,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
             OnTokenValidated = context =>
             {
-                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-
-                var identity = (ClaimsIdentity)context.Principal?.Identity!;
-                var claims = context.Principal?.Claims.ToList();
-
-                if (claims != null)
-                {
-                    string? sub = claims.FirstOrDefault(x => x.Type == "sub")?.Value;
-                    if (!string.IsNullOrEmpty(sub))
-                    {
-                        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, sub));
-                    }
-                }
-
-                if (claims != null)
-                {
-                    string? resourceAccess = claims
-                        .FirstOrDefault(x => x.Type == "resource_access")?.Value;
-
-                    if (!string.IsNullOrEmpty(resourceAccess))
-                    {
-                        try
-                        {
-                            var json = JsonDocument.Parse(resourceAccess);
-
-                            if (json.RootElement.TryGetProperty("public-client", out var client))
-                            {
-                                if (client.TryGetProperty("roles", out var roles))
-                                {
-                                    foreach (var role in roles.EnumerateArray())
-                                    {
-                                        string? roleValue = role.GetString();
-                                        if (!string.IsNullOrEmpty(roleValue))
-                                        {
-                                            identity.AddClaim(new Claim(ClaimTypes.Role, roleValue));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.LogError(ex, "Failed to parse roles from resource_access");
-                        }
-                    }
-                }
-
-                logger.LogInformation(
-                    "Token validated. UserId: {UserId}, Username: {Username}",
-                    identity.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-                    context.Principal?.Identity?.Name);
+                var identity = (ClaimsIdentity)context.Principal!.Identity!;
+                var sub = context.Principal!.FindFirst("sub")?.Value;
+                if (sub != null)
+                    identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, sub));
 
                 return Task.CompletedTask;
             },
         };
     });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdminOrOwner", policy =>
-        policy.Requirements.Add(new AdminOrOwnerRequirement()));
-});
-
-builder.Services.AddScoped<IAuthorizationHandler, AdminOrOwnerHandler>();
-
-/*builder.Services.AddControllers(config =>
+builder.Services.AddControllers(config =>
 {
     var policy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
     config.Filters.Add(new AuthorizeFilter(policy));
-});*/
+});
 
 builder.Services
     .AddOpenTelemetry()
@@ -144,6 +90,9 @@ builder.Services
     .AddCurrentUser();
 
 builder.Services.AddProblemDetails();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
 
 builder.WebHost.ConfigureKestrel(options =>
 {

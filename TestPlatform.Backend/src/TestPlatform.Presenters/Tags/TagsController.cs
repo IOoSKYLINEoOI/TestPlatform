@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Tags.Features.CreateTagCommand;
@@ -26,8 +27,10 @@ public class TagsController : ControllerBase
     {
         var query = new GetByIdTagQuery(id);
 
-        var tag = await handler.Handle(query, cancellationToken);
-        return Ok(tag);
+        var result = await handler.Handle(query, cancellationToken);
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : NotFound(new { error = result.Error });
     }
 
     [HttpGet("all")]
@@ -36,15 +39,19 @@ public class TagsController : ControllerBase
         Summary = "Получить все тэги",
         Description = "Возвращает название и описание всех тэгов.")]
     public async Task<IActionResult> GetAll(
-        [FromServices] IQueryHandler<List<TagResponse>, GetAllTagsQuery> handler,
+        [FromServices] IQueryHandler<IReadOnlyList<TagResponse>, GetAllTagsQuery> handler,
         CancellationToken cancellationToken)
     {
         var query = new GetAllTagsQuery();
 
-        var tags = await handler.Handle(query, cancellationToken);
-        return Ok(tags);
+        var result = await handler.Handle(query, cancellationToken);
+
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : NotFound(new { error = result.Error });
     }
 
+    [Authorize(Roles = "Teacher")]
     [HttpPost]
     [SwaggerOperation(
         OperationId = "CreateTag",
@@ -61,6 +68,7 @@ public class TagsController : ControllerBase
        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:guid}")]
     [SwaggerOperation(
         OperationId = "UpdateTag",
@@ -78,6 +86,7 @@ public class TagsController : ControllerBase
         return result.IsSuccess ? Ok() : BadRequest(result.Error);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:guid}")]
     [SwaggerOperation(
         OperationId = "DeleteTag",

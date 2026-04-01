@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CSharpFunctionalExtensions;
+using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Tests.DTOs;
 
@@ -6,7 +7,7 @@ namespace TestPlatform.Application.Tests.Features.GetAllTestsQuery;
 
 public record GetAllTestsQuery() : IQuery;
 
-public class GetAllTestsHandler : IQueryHandler<List<TestResponse>, GetAllTestsQuery>
+public class GetAllTestsHandler : IQueryHandler<IReadOnlyList<TestResponse>, GetAllTestsQuery>
 {
     private readonly ITestsReadRepository _testsReadRepository;
     private readonly ILogger<GetAllTestsHandler> _logger;
@@ -17,12 +18,14 @@ public class GetAllTestsHandler : IQueryHandler<List<TestResponse>, GetAllTestsQ
         _logger = logger;
     }
 
-    public async Task<List<TestResponse>?> Handle(GetAllTestsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<TestResponse>>> Handle(
+        GetAllTestsQuery request,
+        CancellationToken cancellationToken)
     {
         var tests = await _testsReadRepository.ReadAllTestAsync(cancellationToken);
 
         _logger.LogInformation("Retrieved {Count} tags", tests.Count);
 
-        return tests;
+        return Result.Success((IReadOnlyList<TestResponse>)tests);
     }
 }

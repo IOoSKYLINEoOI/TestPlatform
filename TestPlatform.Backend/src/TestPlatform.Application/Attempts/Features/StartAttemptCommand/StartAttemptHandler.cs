@@ -5,12 +5,13 @@ using TestPlatform.Application.Attempts.Interfaces;
 using TestPlatform.Contracts.Attempts.DTOs;
 using TestPlatform.Contracts.Questions.DTOs;
 using TestPlatform.Contracts.Tags.DTOs;
+using TestPlatform.Contracts.Users.DTOs;
 using TestPlatform.Core.Attempts;
 using TestPlatform.Core.Attempts.Enums;
 
 namespace TestPlatform.Application.Attempts.Features.StartAttemptCommand;
 
-public record StartAttemptCommand(StartRequest Request) : ICommand;
+public record StartAttemptCommand(StartRequest Request, CurrentUserDto CurrentUser) : ICommand;
 
 public class StartAttemptHandler : ICommandHandler<StartResponse, StartAttemptCommand>
 {
@@ -45,7 +46,7 @@ public class StartAttemptHandler : ICommandHandler<StartResponse, StartAttemptCo
         var attemptResult = Attempt.Create(
             source.Questions.Count,
             source.Questions.Sum(q => q.Points),
-            request.UserId,
+            command.CurrentUser.Id,
             (AttemptType)request.Type,
             request.SourceId);
 

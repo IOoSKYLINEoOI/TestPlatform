@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CSharpFunctionalExtensions;
+using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Questions.DTOs;
 
@@ -17,16 +18,17 @@ public class GetByIdQuestionHandler : IQueryHandler<QuestionResponse, GetByIdQue
         _logger = logger;
     }
 
-    public async Task<QuestionResponse?> Handle(GetByIdQuestionQuery query, CancellationToken cancellationToken)
+    public async Task<Result<QuestionResponse>> Handle(GetByIdQuestionQuery query, CancellationToken cancellationToken)
     {
-        var question =
-            await _questionsReadRepository.ReadQuestionByIdAsync(query.Id, query.IncludeCorrectAnswer, cancellationToken);
+        var question = await _questionsReadRepository.ReadQuestionByIdAsync(query.Id, query.IncludeCorrectAnswer, cancellationToken);
 
         if (question == null)
+        {
             _logger.LogWarning("Question with id {Id} not found", query.Id);
-        else
-            _logger.LogInformation("Get Question with id {Id}", query.Id);
+            return Result.Failure<QuestionResponse>("Question not found");
+        }
 
-        return question;
+        _logger.LogInformation("Get Question with id {Id}", query.Id);
+        return Result.Success(question);
     }
 }

@@ -4,13 +4,14 @@ using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Attempts.Interfaces;
 using TestPlatform.Contracts.Attempts.DTOs;
 using TestPlatform.Contracts.Attempts.Enums;
+using TestPlatform.Contracts.Users.DTOs;
 using TestPlatform.Core.Attempts;
 using TestPlatform.Core.Attempts.Enums;
 using TestPlatform.Core.Questions;
 
 namespace TestPlatform.Application.Attempts.Features.FinishAttemptCommand;
 
-public record FinishAttemptCommand(Guid Id, FinishRequest FinishRequest) : ICommand;
+public record FinishAttemptCommand(Guid Id, FinishRequest FinishRequest, CurrentUserDto CurrentUser) : ICommand;
 
 public class FinishAttemptHandler : ICommandHandler<AttemptResponse, FinishAttemptCommand>
 {

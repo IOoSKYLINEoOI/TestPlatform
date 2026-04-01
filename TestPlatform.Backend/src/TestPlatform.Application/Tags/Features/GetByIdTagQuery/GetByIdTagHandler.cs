@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CSharpFunctionalExtensions;
+using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Tags.DTOs;
 
@@ -17,15 +18,17 @@ public class GetByIdTagHandler : IQueryHandler<TagResponse, GetByIdTagQuery>
         _logger = logger;
     }
 
-    public async Task<TagResponse?> Handle(GetByIdTagQuery query, CancellationToken cancellationToken)
+    public async Task<Result<TagResponse>> Handle(GetByIdTagQuery query, CancellationToken cancellationToken)
     {
         var tag = await _tagsReadRepository.ReadTagByIdAsync(query.Id, cancellationToken);
 
         if (tag == null)
+        {
             _logger.LogWarning("Tag with id {Id} not found", query.Id);
-        else
-            _logger.LogInformation("Get Tag with id {Id}", query.Id);
+            return Result.Failure<TagResponse>("Question not found");
+        }
 
-        return tag;
+        _logger.LogInformation("Get Tag with id {Id}", query.Id);
+        return Result.Success(tag);
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TestPlatform.Application.Abstractions;
+using TestPlatform.Application.Users;
 using TestPlatform.Application.Users.Features.GetCurrentUserQuery;
 using TestPlatform.Contracts.Users.DTOs;
 
@@ -13,6 +14,13 @@ namespace TestPlatform.Presenters.Users;
 [Authorize]
 public class UsersController : ControllerBase
 {
+    private readonly ICurrentUserAccessor _currentUserAccessor;
+
+    public UsersController(ICurrentUserAccessor currentUserAccessor)
+    {
+        _currentUserAccessor = currentUserAccessor;
+    }
+
     [HttpGet("me")]
     [SwaggerOperation(
         OperationId = "GetCurrentUser",
@@ -22,23 +30,19 @@ public class UsersController : ControllerBase
         [FromServices] IQueryHandler<CurrentUserDto, GetCurrentUserQuery> handler,
         CancellationToken cancellationToken)
     {
-        var keycloakId =
-            User.FindFirst("sub")?.Value ??
-            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var keycloakId = _currentUserAccessor.User?.KeycloakId;
 
         if (string.IsNullOrEmpty(keycloakId))
             return Unauthorized();
 
         var query = new GetCurrentUserQuery(keycloakId);
 
-        var currentUser = await handler.Handle(query, cancellationToken);
-        if (currentUser == null)
-            return Problem("User not found. Middleware failure.");
-
-        return Ok(currentUser);
+        var result = await handler.Handle(query, cancellationToken);
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : NotFound(new { error = result.Error });
     }
 
-    [Authorize(Roles = "User")]
     [HttpGet("me2")]
     public IActionResult Me2()
     {

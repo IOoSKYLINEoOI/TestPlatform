@@ -3,13 +3,13 @@ using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Abstractions.Enums;
 using TestPlatform.Application.Extensions;
-using TestPlatform.Application.Questions;
 using TestPlatform.Contracts.Tests.DTOs;
+using TestPlatform.Contracts.Users.DTOs;
 using TestPlatform.Core.Tests;
 
 namespace TestPlatform.Application.Tests.Features.CreateTestCommand;
 
-public record CreateTestCommand(TestRequest Request, Guid AuthorId) : ICommand;
+public record CreateTestCommand(TestRequest Request, CurrentUserDto CurrentUser) : ICommand;
 
 public class CreateTestHandler : ICommandHandler<Guid, CreateTestCommand>
 {
@@ -33,7 +33,7 @@ public class CreateTestHandler : ICommandHandler<Guid, CreateTestCommand>
             command.Request.Name,
             command.Request.TimeLimitSeconds,
             command.Request.Description,
-            command.AuthorId,
+            command.CurrentUser.Id,
             command.Request.CoverImageUrl);
 
         if (testResult.IsFailure)

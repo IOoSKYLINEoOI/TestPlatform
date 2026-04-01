@@ -193,14 +193,14 @@ public class ImageStorageService : IImageStorageService
         }
     }
 
-    public async Task<Result<Stream>> GetPermanentImageStreamAsync(
+    public async Task<Result<FileStream>> GetPermanentImageStreamAsync(
         ImageFolder folder,
         string fileName,
         CancellationToken cancellationToken)
     {
         var validation = ValidateFileName(fileName);
         if (!validation.IsSuccess)
-            return Result.Failure<Stream>(validation.Error);
+            return Result.Failure<FileStream>(validation.Error);
 
         var path = Path.Combine(
             _options.RootPath,
@@ -209,33 +209,24 @@ public class ImageStorageService : IImageStorageService
             fileName);
 
         if (!File.Exists(path))
-            return Result.Failure<Stream>("file.not_found");
+            return Result.Failure<FileStream>("file.not_found");
 
         try
         {
-            var memory = new MemoryStream();
-
-            await using var stream = new FileStream(
+            var stream = new FileStream(
                 path,
                 FileMode.Open,
                 FileAccess.Read,
-                FileShare.Read);
+                FileShare.Read,
+                bufferSize: 81920,
+                useAsync: true);
 
-            await stream.CopyToAsync(memory, cancellationToken);
-
-            memory.Position = 0;
-
-            return Result.Success<Stream>(memory);
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("GetPermanentImageStreamAsync cancelled for file {FileName} in folder {Folder}", fileName, folder);
-            return Result.Failure<Stream>("operation.cancelled");
+            return Result.Success(stream);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error reading permanent file {FileName} in folder {Folder}", fileName, folder);
-            return Result.Failure<Stream>("file.read_error");
+            _logger.LogError(ex, "Error opening permanent file {FileName} in folder {Folder}", fileName, folder);
+            return Result.Failure<FileStream>("file.read_error");
         }
     }
 

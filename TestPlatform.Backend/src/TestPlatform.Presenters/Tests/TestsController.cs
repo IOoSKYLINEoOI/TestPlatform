@@ -7,6 +7,7 @@ using TestPlatform.Application.Tests.Features.DeleteTestCommand;
 using TestPlatform.Application.Tests.Features.GetAllTestsQuery;
 using TestPlatform.Application.Tests.Features.GetByIdTestQuery;
 using TestPlatform.Application.Tests.Features.UpdateTestCommand;
+using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Tests.DTOs;
 using TestPlatform.Contracts.Users.DTOs;
 
@@ -16,6 +17,13 @@ namespace TestPlatform.Presenters.Tests;
 [Route("tests")]
 public class TestsController : ControllerBase
 {
+    private readonly ICurrentUserAccessor _currentUserAccessor;
+
+    public TestsController(ICurrentUserAccessor currentUserAccessor)
+    {
+        _currentUserAccessor = currentUserAccessor;
+    }
+
     [HttpGet("{id:guid}")]
     [SwaggerOperation(
         OperationId = "GetByIdTest",
@@ -29,8 +37,10 @@ public class TestsController : ControllerBase
     {
         var query = new GetByIdTestQuery(id, includeCorrectAnswer);
 
-        var test = await handler.Handle(query, cancellationToken);
-        return Ok(test);
+        var result = await handler.Handle(query, cancellationToken);
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : NotFound(new { error = result.Error });
     }
 
     [HttpGet("all")]
@@ -44,8 +54,11 @@ public class TestsController : ControllerBase
     {
         var query = new GetAllTestsQuery();
 
-        var tests = await handler.Handle(query, cancellationToken);
-        return Ok(tests);
+        var result = await handler.Handle(query, cancellationToken);
+
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : NotFound(new { error = result.Error });
     }
 
     [HttpPost]
@@ -58,11 +71,11 @@ public class TestsController : ControllerBase
         [FromBody] TestRequest request,
         CancellationToken cancellationToken)
     {
-        var authorIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(authorIdClaim, out var authorId))
+        var currentUser = _currentUserAccessor.User;
+        if (currentUser == null)
             return Forbid();
 
-        var command = new CreateTestCommand(request, authorId);
+        var command = new CreateTestCommand(request, currentUser);
 
         var result = await handler.Handle(command, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
@@ -79,7 +92,7 @@ public class TestsController : ControllerBase
         [FromBody] TestRequest request,
         CancellationToken cancellationToken)
     {
-        var currentUser = HttpContext.Items["CurrentUser"] as CurrentUserDto;
+        var currentUser = _currentUserAccessor.User;
         if (currentUser == null)
             return Forbid();
 

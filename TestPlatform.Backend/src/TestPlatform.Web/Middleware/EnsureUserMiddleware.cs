@@ -48,6 +48,8 @@ public class EnsureUserMiddleware
         var userDto = await usersReadRepository
             .GetByKeycloakIdAsync(keycloakId, context.RequestAborted);
 
+        var isAdmin = user.IsInRole("Admin");
+
         if (userDto == null)
         {
             var newUserResult = User.Create(keycloakId, tabNumber);
@@ -73,7 +75,11 @@ public class EnsureUserMiddleware
                 Id: newUserResult.Value.Id,
                 KeycloakId: newUserResult.Value.KeycloakId,
                 TabNumber: newUserResult.Value.TabNumber,
-                IsAdmin: user.IsInRole("Admin"));
+                IsAdmin: isAdmin);
+        }
+        else
+        {
+            userDto = userDto with { IsAdmin = isAdmin };
         }
 
         context.Items["CurrentUser"] = userDto;

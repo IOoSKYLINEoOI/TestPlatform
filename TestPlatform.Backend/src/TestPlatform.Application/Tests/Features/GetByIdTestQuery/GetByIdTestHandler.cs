@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CSharpFunctionalExtensions;
+using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Tests.DTOs;
 
@@ -17,16 +18,18 @@ public class GetByIdTestHandler : IQueryHandler<TestFullResponse, GetByIdTestQue
         _logger = logger;
     }
 
-    public async Task<TestFullResponse?> Handle(GetByIdTestQuery query, CancellationToken cancellationToken)
+    public async Task<Result<TestFullResponse>> Handle(GetByIdTestQuery query, CancellationToken cancellationToken)
     {
         var test =
             await _testsReadRepository.ReadTestByIdAsync(query.Id, query.IncludeCorrectAnswer, cancellationToken);
 
         if (test == null)
+        {
             _logger.LogWarning("Test with id {Id} not found", query.Id);
-        else
-            _logger.LogInformation("Get Test with id {Id}", query.Id);
+            return Result.Failure<TestFullResponse>("Test not found");
+        }
 
-        return test;
+        _logger.LogInformation("Get Test with id {Id}", query.Id);
+        return Result.Success(test);
     }
 }
