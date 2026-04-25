@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Attempts.Interfaces;
 using TestPlatform.Application.Exams;
 using TestPlatform.Application.Questions;
@@ -36,10 +37,13 @@ public static class TestPlatformPersistenceExtensions
         services.AddScoped<IAttemptsRepository, AttemptsRepository>();
         services.AddScoped<IAttemptsReadRepository, AttemptsReadRepository>();
 
-        services.AddScoped<IExamsReadRepository, ExamsReadRepository>();
-
         services.AddScoped<IUsersRepository, UsersRepository>();
         services.AddScoped<IUsersReadRepository, UsersReadRepository>();
+
+        services.AddScoped<IExamsRepository, ExamsRepository>();
+        services.AddScoped<IExamsReadDbContext, TestPlatformDbContext>();
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
     }

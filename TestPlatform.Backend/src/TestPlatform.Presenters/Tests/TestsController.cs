@@ -40,7 +40,7 @@ public class TestsController : ControllerBase
         var result = await handler.Handle(query, cancellationToken);
         return result.IsSuccess
             ? Ok(result.Value)
-            : NotFound(new { error = result.Error });
+            : NotFound(result.Error);
     }
 
     [HttpGet("all")]
@@ -73,7 +73,7 @@ public class TestsController : ControllerBase
     {
         var currentUser = _currentUserAccessor.User;
         if (currentUser == null)
-            return Forbid();
+            return Unauthorized();
 
         var command = new CreateTestCommand(request, currentUser);
 

@@ -4,6 +4,7 @@ using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Attempts.CheckQuestionsService;
 using TestPlatform.Application.Attempts.Features.FinishAttemptCommand;
 using TestPlatform.Application.Attempts.Interfaces;
+using TestPlatform.Application.Exams.Services;
 using TestPlatform.Application.Questions.Validators;
 using TestPlatform.Application.Tags.Validators;
 
@@ -32,6 +33,7 @@ public static class TestPlatformApplicationExtensions
 
         services.AddScoped<IAttemptSourceService, AttemptSourceService>();
         services.AddScoped<IQuestionCheckerFactory, QuestionCheckerFactory>();
+        services.AddScoped<IExamAccessService, ExamAccessService>();
 
         return services;
     }

@@ -1,6 +1,7 @@
-﻿using TestPlatform.Application.Attempts.Interfaces;
+﻿/*using TestPlatform.Application.Attempts.Interfaces;
 using TestPlatform.Contracts.Exams.DTOs;
 using TestPlatform.Contracts.Questions.DTOs;
+
 
 namespace TestPlatform.Application.Attempts.SourceService;
 
@@ -17,5 +18,11 @@ public class ExamAttemptSource : IAttemptSource
 
     public int? TimeLimitSeconds => _exam.TimeLimitSeconds;
 
-    public IReadOnlyCollection<QuestionResponse> Questions => _exam.Questions;
-}
+    /*public IReadOnlyCollection<QuestionResponse> Questions =>
+        _exam.Questions.Select(q => new QuestionResponse(
+            q.QuestionId,
+            q.Order,
+            q.Score
+        )).ToList();#1#
+
+}*/

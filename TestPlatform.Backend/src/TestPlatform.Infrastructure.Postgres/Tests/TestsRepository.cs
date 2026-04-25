@@ -15,13 +15,13 @@ public class TestsRepository : ITestsRepository
     public async Task<Result<Guid>> AddAsync(Test test, CancellationToken cancellationToken)
     {
         var questions = await _context.Questions
-            .Where(q => test.QuestionsIds.Contains(q.Id))
+            .Where(q => test.QuestionIds.Contains(q.Id))
             .ToListAsync(cancellationToken);
 
         var testEntity = new TestEntity()
         {
             Id = test.Id,
-            Name = test.Name,
+            Name = test.Title,
             Description = test.Description,
             AuthorId = test.AuthorId,
             CoverImageName = test.CoverImageName,
@@ -44,13 +44,13 @@ public class TestsRepository : ITestsRepository
         if (testEntity == null)
             return Result.Failure($"Test with id {test.Id} not found");
 
-        testEntity.Name = test.Name;
+        testEntity.Name = test.Title;
         testEntity.Description = test.Description;
         testEntity.AuthorId = test.AuthorId;
         testEntity.CoverImageName = test.CoverImageName;
         testEntity.TimeLimitSeconds = test.TimeLimitSeconds;
 
-        var incomingQuestionIds = test.QuestionsIds.ToHashSet();
+        var incomingQuestionIds = test.QuestionIds.ToHashSet();
         var existingQuestionIds = testEntity.Questions.Select(q => q.Id).ToHashSet();
 
         var questionsToRemove = testEntity.Questions

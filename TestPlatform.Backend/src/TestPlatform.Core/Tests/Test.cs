@@ -10,12 +10,12 @@ public class Test
     private const int MinTimeLimitSeconds = 100;
     private const int MaxTimeLimitSeconds = 14100;
 
-    private readonly List<Guid> _questionsIds = new();
+    private readonly List<Guid> _questionIds = new();
 
-    private Test(Guid id, string name, int? timeLimitSeconds, string description, Guid? authorId, string? coverImageName)
+    private Test(Guid id, string title, int? timeLimitSeconds, string description, Guid authorId, string? coverImageName)
     {
         Id = id;
-        Name = name;
+        Title = title;
         TimeLimitSeconds = timeLimitSeconds;
         Description = description;
         AuthorId = authorId;
@@ -24,7 +24,7 @@ public class Test
 
     public Guid Id { get; }
 
-    public string Name { get; }
+    public string Title { get; }
 
     public string Description { get; }
 
@@ -32,20 +32,20 @@ public class Test
 
     public string? CoverImageName { get; }
 
-    public Guid? AuthorId { get; }
+    public Guid AuthorId { get; }
 
-    public IReadOnlyCollection<Guid> QuestionsIds => _questionsIds.AsReadOnly();
+    public IReadOnlyCollection<Guid> QuestionIds => _questionIds;
 
-    private int TotalQuestions => _questionsIds.Count;
+    private int TotalQuestions => _questionIds.Count;
 
     public static Result<Test> Create(
         string name,
         int? timeLimitSeconds,
         string description,
-        Guid? authorId,
+        Guid authorId,
         string? coverImageUrl)
     {
-        var validation = Validate(name, timeLimitSeconds, description, authorId);
+        var validation = Validate(name, timeLimitSeconds, description);
         if (validation.IsFailure)
             return Result.Failure<Test>(validation.Error);
 
@@ -57,10 +57,10 @@ public class Test
         string name,
         int? timeLimitSeconds,
         string description,
-        Guid? authorId,
+        Guid authorId,
         string? coverImageUrl)
     {
-        var validation = Validate(name, timeLimitSeconds, description, authorId);
+        var validation = Validate(name, timeLimitSeconds, description);
         if (validation.IsFailure)
             return Result.Failure<Test>(validation.Error);
 
@@ -72,28 +72,28 @@ public class Test
         if (TotalQuestions >= MaxQuestions)
             return Result.Failure($"Нельзя добавить больше {MaxQuestions} вопросов.");
 
-        _questionsIds.Add(questionId);
+        _questionIds.Add(questionId);
         return Result.Success();
     }
 
     private static Result Validate(
-        string name,
+        string title,
         int? timeLimitSeconds,
-        string description,
-        Guid? authorId)
+        string description)
     {
-        if (string.IsNullOrWhiteSpace(name) || name.Length > MaxLengthName)
-            return Result.Failure<Test>($"'{nameof(name)}' не может быть null или пустым, длиннее {MaxLengthName} символов.");
+        if (string.IsNullOrWhiteSpace(title) || title.Length > MaxLengthName)
+            return Result.Failure($"'{nameof(title)}' не может быть null или пустым, длиннее {MaxLengthName} символов.");
+
         if (string.IsNullOrWhiteSpace(description) || description.Length > MaxLengthDescription)
-            return Result.Failure<Test>($"'{nameof(description)}' не может быть null или пустым, длиннее {MaxLengthDescription} символов.");
-        if (timeLimitSeconds is < MinTimeLimitSeconds or > MaxTimeLimitSeconds)
+            return Result.Failure($"'{nameof(description)}' не может быть null или пустым, длиннее {MaxLengthDescription} символов.");
+
+        if (timeLimitSeconds.HasValue &&
+            (timeLimitSeconds < MinTimeLimitSeconds ||
+             timeLimitSeconds > MaxTimeLimitSeconds))
         {
-            return Result.Failure<Test>(
+            return Result.Failure(
                 $"'{nameof(timeLimitSeconds)}' должно быть от {MinTimeLimitSeconds} до {MaxTimeLimitSeconds} секунд.");
         }
-
-        if (authorId == Guid.Empty)
-            return Result.Failure<Test>("Автор теста не задан.");
 
         return Result.Success();
     }

@@ -26,21 +26,14 @@ public class UsersController : ControllerBase
         OperationId = "GetCurrentUser",
         Summary = "Получить текущего пользователя",
         Description = "Возвращает текущего пользователя")]
-    public async Task<IActionResult> GetCurrentUser(
-        [FromServices] IQueryHandler<CurrentUserDto, GetCurrentUserQuery> handler,
-        CancellationToken cancellationToken)
+    public IActionResult GetCurrentUser(CancellationToken cancellationToken)
     {
-        var keycloakId = _currentUserAccessor.User?.KeycloakId;
+        var currentUser = _currentUserAccessor.User;
 
-        if (string.IsNullOrEmpty(keycloakId))
+        if (currentUser == null)
             return Unauthorized();
 
-        var query = new GetCurrentUserQuery(keycloakId);
-
-        var result = await handler.Handle(query, cancellationToken);
-        return result.IsSuccess
-            ? Ok(result.Value)
-            : NotFound(new { error = result.Error });
+        return Ok(currentUser);
     }
 
     [HttpGet("me2")]

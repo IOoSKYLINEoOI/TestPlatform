@@ -1,16 +1,28 @@
-﻿using TestPlatform.Contracts.Questions.DTOs;
-using TestPlatform.Contracts.Tags.DTOs;
-
-namespace TestPlatform.Contracts.Exams.DTOs;
+﻿namespace TestPlatform.Contracts.Exams.DTOs;
 
 public record ExamFullResponse(
     Guid Id,
-    string Name,
-    int? TimeLimitSeconds,
+    string Title,
     string Description,
-    Guid? AuthorId,
-    int TotalQuestions,
-    List<TagResponse> Tags,
-    List<QuestionResponse> Questions);
+    int? TimeLimitSeconds,
+    string? CoverImageName,
+    Guid AuthorId,
+    string Status,
+    DateTime CreatedAt,
+    DateTime? PublishedAt,
+    ExamScheduleResponse? Schedule,
+    PassingRuleResponse? PassingRule,
+    IReadOnlyCollection<ExamQuestionResponse> Questions);
 
+public record ExamScheduleResponse(
+    DateTime? AvailableFrom,
+    DateTime? AvailableTo);
 
+public record PassingRuleResponse(
+    int? MinScore,
+    double? MinPercent);
+
+public record ExamQuestionResponse(
+    Guid QuestionId,
+    int Order,
+    int Score);

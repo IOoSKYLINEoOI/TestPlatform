@@ -15,4 +15,8 @@
       <ProjectReference Include="..\TestPlatform.Contracts\TestPlatform.Contracts.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <AdditionalFiles Include="stylecop.json" />
+    </ItemGroup>
+
 </Project>

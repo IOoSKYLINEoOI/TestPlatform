@@ -4,5 +4,5 @@ public enum ImageFolder
 {
     TESTS,
     QUESTIONS,
-    ANSWERS
+    ANSWERS,
 }

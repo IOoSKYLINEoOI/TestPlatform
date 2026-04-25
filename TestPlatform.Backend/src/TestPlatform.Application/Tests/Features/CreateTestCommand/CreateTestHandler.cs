@@ -64,6 +64,7 @@ public class CreateTestHandler : ICommandHandler<Guid, CreateTestCommand>
         }
 
         _logger.LogResult("Create Test", testIdResult.Value, testIdResult);
+
         return Result.Success(testIdResult.Value);
     }
 }

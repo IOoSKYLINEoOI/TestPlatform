@@ -22,4 +22,8 @@
       <Folder Include="Tests\Validators\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <AdditionalFiles Include="stylecop.json" />
+    </ItemGroup>
+
 </Project>

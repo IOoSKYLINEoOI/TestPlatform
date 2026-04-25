@@ -1,4 +1,4 @@
-﻿using TestPlatform.Infrastructure.Postgres.Exams.Entities;
+﻿using TestPlatform.Core.Exams;
 using TestPlatform.Infrastructure.Postgres.Tags.Entities;
 using TestPlatform.Infrastructure.Postgres.Tests.Entities;
 
@@ -21,6 +21,4 @@ public class QuestionEntity
     public ICollection<TagEntity> Tags { get; set; } = new List<TagEntity>();
 
     public ICollection<TestEntity> Tests { get; set; } = new List<TestEntity>();
-
-    public ICollection<ExamEntity> Exams { get; set; } = new List<ExamEntity>();
 }

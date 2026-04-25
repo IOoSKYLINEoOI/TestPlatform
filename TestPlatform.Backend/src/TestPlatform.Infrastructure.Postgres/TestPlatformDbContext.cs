@@ -1,8 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TestPlatform.Application.Exams;
+using TestPlatform.Core.Exams;
 using TestPlatform.Infrastructure.Postgres.Attempts.Configurations;
 using TestPlatform.Infrastructure.Postgres.Attempts.Entities;
 using TestPlatform.Infrastructure.Postgres.Exams.Configuration;
-using TestPlatform.Infrastructure.Postgres.Exams.Entities;
 using TestPlatform.Infrastructure.Postgres.Questions.Configurations;
 using TestPlatform.Infrastructure.Postgres.Questions.Entities;
 using TestPlatform.Infrastructure.Postgres.Tags.Configurations;
@@ -14,11 +15,13 @@ using TestPlatform.Infrastructure.Postgres.Users.Entities;
 
 namespace TestPlatform.Infrastructure.Postgres;
 
-public class TestPlatformDbContext(DbContextOptions<TestPlatformDbContext> options) : DbContext(options)
+public class TestPlatformDbContext(DbContextOptions<TestPlatformDbContext> options) : DbContext(options), IExamsReadDbContext
 {
     public DbSet<AttemptEntity> Attempts { get; set; }
 
-    public DbSet<ExamEntity> Exams { get; set; }
+    public DbSet<Exam> Exams { get; set; }
+
+    public IQueryable<Exam> ReadExams => Exams.AsNoTracking().AsQueryable();
 
     public DbSet<QuestionEntity> Questions { get; set; }
 

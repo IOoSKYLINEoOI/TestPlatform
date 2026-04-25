@@ -10,14 +10,12 @@ namespace TestPlatform.Application.Attempts.Features.FinishAttemptCommand;
 public class AttemptSourceService : IAttemptSourceService
 {
     private readonly ITestsReadRepository _testsReadRepository;
-    private readonly IExamsReadRepository _examsReadRepository;
+
 
     public AttemptSourceService(
-        ITestsReadRepository testsReadRepository,
-        IExamsReadRepository examsReadRepository)
+        ITestsReadRepository testsReadRepository)
     {
         _testsReadRepository = testsReadRepository;
-        _examsReadRepository = examsReadRepository;
     }
 
     public async Task<Result<IAttemptSource>> GetSourceAsync(
@@ -37,7 +35,7 @@ public class AttemptSourceService : IAttemptSourceService
             return Result.Success<IAttemptSource>(source);
         }
 
-        if (type == AttemptTypeDto.EXAM)
+        /*if (type == AttemptTypeDto.EXAM)
         {
             var exam = await _examsReadRepository.ReadExamByIdAsync(sourceId, true, cancellationToken);
 
@@ -47,7 +45,7 @@ public class AttemptSourceService : IAttemptSourceService
             var source = new ExamAttemptSource(exam);
 
             return Result.Success<IAttemptSource>(source);
-        }
+        }*/
 
         return Result.Failure<IAttemptSource>("Неизвестный тип попытки");
     }
