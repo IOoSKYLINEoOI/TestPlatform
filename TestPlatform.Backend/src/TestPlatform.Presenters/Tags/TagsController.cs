@@ -21,7 +21,7 @@ public class TagsController : ControllerBase
         Summary = "Получить тэг по Id.",
         Description = "Возвращает название тэга и ее описание по его Id")]
     public async Task<IActionResult> GetById(
-        [FromServices] IQueryHandler<TagResponse, GetByIdTagQuery> handler,
+        [FromServices] IQueryHandler<GetByIdTagQuery, TagResponse> handler,
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
@@ -39,7 +39,7 @@ public class TagsController : ControllerBase
         Summary = "Получить все тэги",
         Description = "Возвращает название и описание всех тэгов.")]
     public async Task<IActionResult> GetAll(
-        [FromServices] IQueryHandler<IReadOnlyList<TagResponse>, GetAllTagsQuery> handler,
+        [FromServices] IQueryHandler<GetAllTagsQuery, IReadOnlyList<TagResponse>> handler,
         CancellationToken cancellationToken)
     {
         var query = new GetAllTagsQuery();
@@ -51,14 +51,14 @@ public class TagsController : ControllerBase
             : NotFound(new { error = result.Error });
     }
 
-    [Authorize(Roles = "Teacher")]
+    //[Authorize(Roles = "Admin,Teacher")]
     [HttpPost]
     [SwaggerOperation(
         OperationId = "CreateTag",
         Summary = "Создать новый тэг",
         Description = "Создаёт новый тэг с указаным названием и опиманием.")]
     public async Task<IActionResult> Create(
-        [FromServices] ICommandHandler<Guid, CreateTagCommand> handler,
+        [FromServices] ICommandHandler<CreateTagCommand, Guid> handler,
         [FromBody] TagRequest request,
         CancellationToken cancellationToken)
     {

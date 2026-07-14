@@ -1,34 +1,29 @@
 ﻿using CSharpFunctionalExtensions;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Abstractions;
+using TestPlatform.Application.Common.Error;
+using TestPlatform.Application.Questions.Extensions;
 using TestPlatform.Contracts.Questions.DTOs;
 
 namespace TestPlatform.Application.Questions.Features.GetByIdQuestionQuery;
 
-public record GetByIdQuestionQuery(Guid Id, bool IncludeCorrectAnswer) : IQuery;
+public record GetByIdQuestionQuery(Guid Id) : IQuery;
 
-public class GetByIdQuestionHandler : IQueryHandler<QuestionResponse, GetByIdQuestionQuery>
+public class GetByIdQuestionHandler(IQuestionsReadDbContext questionsReadDbContext)
+    : IQueryHandler<GetByIdQuestionQuery, QuestionResponse>
 {
-    private readonly IQuestionsReadRepository _questionsReadRepository;
-    private readonly ILogger<GetByIdQuestionHandler> _logger;
-
-    public GetByIdQuestionHandler(IQuestionsReadRepository questionsReadRepository, ILogger<GetByIdQuestionHandler> logger)
-    {
-        _questionsReadRepository = questionsReadRepository;
-        _logger = logger;
-    }
-
     public async Task<Result<QuestionResponse>> Handle(GetByIdQuestionQuery query, CancellationToken cancellationToken)
     {
-        var question = await _questionsReadRepository.ReadQuestionByIdAsync(query.Id, query.IncludeCorrectAnswer, cancellationToken);
+        var question = await questionsReadDbContext.ReadQuestions
+            .AsNoTracking()
+            .Include(q => q.Tags)
+            .FirstOrDefaultAsync(x => x.Id == query.Id, cancellationToken);
 
-        if (question == null)
-        {
-            _logger.LogWarning("Question with id {Id} not found", query.Id);
-            return Result.Failure<QuestionResponse>("Question not found");
-        }
+        if (question is null)
+            return Result.Failure<QuestionResponse>(ErrorCodes.QuestionNotFound);
 
-        _logger.LogInformation("Get Question with id {Id}", query.Id);
-        return Result.Success(question);
+        var response = question.ToResponse();
+
+        return Result.Success(response);
     }
 }

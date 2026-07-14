@@ -1,34 +1,30 @@
-﻿using CSharpFunctionalExtensions;
-using Microsoft.Extensions.Logging;
+﻿/*using CSharpFunctionalExtensions;
+using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Abstractions;
+using TestPlatform.Application.Common.Error;
 using TestPlatform.Contracts.Users.DTOs;
 
 namespace TestPlatform.Application.Users.Features.GetCurrentUserQuery;
 
 public record GetCurrentUserQuery(string KeycloakId) : IQuery;
 
-public class GetCurrentUserHandler : IQueryHandler<CurrentUserDto, GetCurrentUserQuery>
+public class GetCurrentUserHandler(IUsersReadDbContext usersDbContext)
+    : IQueryHandler<GetCurrentUserQuery, CurrentUserDto>
 {
-    private readonly IUsersReadRepository _usersReadRepository;
-    private readonly ILogger<GetCurrentUserHandler> _logger;
-
-    public GetCurrentUserHandler(IUsersReadRepository usersReadRepository, ILogger<GetCurrentUserHandler> logger)
-    {
-        _usersReadRepository = usersReadRepository;
-        _logger = logger;
-    }
-
     public async Task<Result<CurrentUserDto>> Handle(GetCurrentUserQuery query, CancellationToken cancellationToken)
     {
-        var user = await _usersReadRepository.GetByKeycloakIdAsync(query.KeycloakId,  cancellationToken);
+        var response = await usersDbContext.ReadUsers
+            .AsNoTracking()
+            .Where(u => u.KeycloakId == query.KeycloakId)
+            .Select(u => new CurrentUserDto(
+                u.Id,
+                u.KeycloakId,
+                u.TabNumber,
+                u.))
+            .FirstOrDefaultAsync(cancellationToken: cancellationToken);
 
-        if (user == null)
-        {
-            _logger.LogWarning("CurrentUser with KeycloakId {Id} not found", query.KeycloakId);
-            return Result.Failure<CurrentUserDto>("Question not found");
-        }
-
-        _logger.LogInformation("Get CurrentUser with KeycloakId {Id}", query.KeycloakId);
-        return Result.Success(user);
+        return response is null
+            ? Result.Failure<CurrentUserDto>(ErrorCodes.Forbidden)
+            : Result.Success(response);
     }
-}
+}*/

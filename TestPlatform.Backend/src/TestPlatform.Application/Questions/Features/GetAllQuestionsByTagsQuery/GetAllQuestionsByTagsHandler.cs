@@ -1,35 +1,32 @@
 ﻿using CSharpFunctionalExtensions;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Contracts.Questions.DTOs;
+using TestPlatform.Application.Questions.Extensions;
+using TestPlatform.Contracts.Questions.DTOs.Preview;
 
 namespace TestPlatform.Application.Questions.Features.GetAllQuestionsByTagsQuery;
 
-public record GetAllQuestionsByTagsQuery(IReadOnlyList<Guid> TagIds, bool IncludeCorrectAnswer) : IQuery;
+public record GetAllQuestionsByTagsQuery(IReadOnlyList<Guid> TagIds) : IQuery;
 
-public class GetAllQuestionsByTagsHandler : IQueryHandler<IReadOnlyList<QuestionResponse>, GetAllQuestionsByTagsQuery>
+public class GetAllQuestionsByTagsHandler(IQuestionsReadDbContext questionsReadDbContext)
+    : IQueryHandler<GetAllQuestionsByTagsQuery, IReadOnlyList<QuestionPreviewResponse>>
 {
-    private readonly IQuestionsReadRepository _questionsReadRepository;
-    private readonly ILogger<GetAllQuestionsByTagsHandler> _logger;
-
-    public GetAllQuestionsByTagsHandler(IQuestionsReadRepository questionsReadRepository, ILogger<GetAllQuestionsByTagsHandler> logger)
-    {
-        _questionsReadRepository = questionsReadRepository;
-        _logger = logger;
-    }
-
-    public async Task<Result<IReadOnlyList<QuestionResponse>>> Handle(
+    public async Task<Result<IReadOnlyList<QuestionPreviewResponse>>> Handle(
         GetAllQuestionsByTagsQuery query,
         CancellationToken cancellationToken)
     {
-        var questions = await _questionsReadRepository
-            .ReadAllQuestionsByTagsAsync(query.TagIds, query.IncludeCorrectAnswer, cancellationToken);
+        var tagIds = query.TagIds.Distinct().ToList();
 
-        _logger.LogInformation(
-            "Retrieved {Count} Questions for tags {Tags}",
-            questions.Count,
-            string.Join(", ", query.TagIds));
+        var questions = await questionsReadDbContext.ReadQuestions
+            .AsNoTracking()
+            .Where(q => tagIds.All(id => q.Tags.Any(t => t.Id == id)))
+            .Include(q => q.Tags)
+            .ToListAsync(cancellationToken);
 
-        return Result.Success((IReadOnlyList<QuestionResponse>)questions);
+        var result = questions
+            .Select(q => q.ToPreviewResponse())
+            .ToList();
+
+        return Result.Success<IReadOnlyList<QuestionPreviewResponse>>(result);
     }
 }

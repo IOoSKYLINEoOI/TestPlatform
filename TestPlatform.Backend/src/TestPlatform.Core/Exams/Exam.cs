@@ -1,18 +1,19 @@
 ﻿using CSharpFunctionalExtensions;
 using TestPlatform.Core.Exams.Enums;
+using TestPlatform.Core.Shared;
 
 namespace TestPlatform.Core.Exams;
 
 public class Exam
 {
     private const int MaxQuestions = 100;
-    private const int MaxLengthName = 200;
+    private const int MaxLengthTitle = 200;
     private const int MaxLengthDescription = 250;
     private const int MinTimeLimitSeconds = 100;
     private const int MaxTimeLimitSeconds = 14100;
     private const int MinQuestionsToPublish = 3;
 
-    private readonly List<ExamQuestion> _questions = new();
+    private readonly List<QuestionAssignment> _questions = new();
 
     private Exam() { }
 
@@ -52,7 +53,8 @@ public class Exam
 
     public ExamPassingRule? PassingRule { get; private set; }
 
-    public IReadOnlyCollection<ExamQuestion> Questions => _questions.AsReadOnly();
+    public IReadOnlyCollection<QuestionAssignment> Questions => _questions.AsReadOnly();
+
 
     public static Result<Exam> Create(
         string title,
@@ -63,13 +65,12 @@ public class Exam
         if (validation.IsFailure)
             return Result.Failure<Exam>(validation.Error);
 
-        var exam = new Exam(
-            Guid.NewGuid(),
-            title,
-            description,
-            authorId);
-
-        return Result.Success(exam);
+        return Result.Success(
+            new Exam(
+                Guid.NewGuid(),
+                title,
+                description,
+                authorId));
     }
 
     public Result AddQuestion(Guid questionId, int score)
@@ -83,7 +84,7 @@ public class Exam
         if (_questions.Count >= MaxQuestions)
             return Result.Failure($"Максимум {MaxQuestions} вопросов");
 
-        _questions.Add(new ExamQuestion(
+        _questions.Add(new QuestionAssignment(
             questionId,
             _questions.Count + 1,
             score));
@@ -105,16 +106,6 @@ public class Exam
         Reorder();
 
         return Result.Success();
-    }
-
-    private void Reorder()
-    {
-        var ordered = _questions
-            .OrderBy(x => x.Order)
-            .ToList();
-
-        for (int i = 0; i < ordered.Count; i++)
-            ordered[i].SetOrder(i + 1);
     }
 
     public Result ChangeTitle(string title)
@@ -262,7 +253,7 @@ public class Exam
             return Result.Failure(titleResult.Error);
 
         var descriptionResult = ValidateDescription(description);
-        if (titleResult.IsFailure)
+        if (descriptionResult.IsFailure)
             return Result.Failure(descriptionResult.Error);
 
         return Result.Success();
@@ -270,8 +261,8 @@ public class Exam
 
     private static Result ValidateTitle(string title)
     {
-        if (string.IsNullOrWhiteSpace(title) || title.Length > MaxLengthName)
-            return Result.Failure($"'{nameof(title)}' не может быть null или пустым, длиннее {MaxLengthName} символов.");
+        if (string.IsNullOrWhiteSpace(title) || title.Length > MaxLengthTitle)
+            return Result.Failure($"'{nameof(title)}' не может быть null или пустым, длиннее {MaxLengthTitle} символов.");
 
         return Result.Success();
     }
@@ -282,6 +273,16 @@ public class Exam
             return Result.Failure("Invalid description");
 
         return Result.Success();
+    }
+
+    private void Reorder()
+    {
+        var ordered = _questions
+            .OrderBy(x => x.Order)
+            .ToList();
+
+        for (int i = 0; i < ordered.Count; i++)
+            ordered[i].SetOrder(i + 1);
     }
 
     private bool IsDraft() => Status == ExamStatus.Draft;

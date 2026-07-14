@@ -4,7 +4,7 @@ namespace TestPlatform.Application.Abstractions;
 
 public interface ICommand;
 
-public interface ICommandHandler<TResponse, in TCommand>
+public interface ICommandHandler<in TCommand, TResponse>
     where TCommand : ICommand
 {
     Task<Result<TResponse>> Handle(TCommand command, CancellationToken cancellationToken);

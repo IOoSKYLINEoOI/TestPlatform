@@ -1,7 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Exams.Services;
+using TestPlatform.Core.Exams;
 
 namespace TestPlatform.Application.Exams.Features.DeleteExamTimeLimitCommand;
 
@@ -10,12 +10,12 @@ public record DeleteExamTimeLimitCommand(Guid Id) : ICommand;
 public class DeleteExamTimeLimitHandler : ICommandHandler<DeleteExamTimeLimitCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExamAccessService _examAccessService;
+    private readonly IAccessService<Exam> _examAccessService;
     private readonly ILogger<DeleteExamTimeLimitHandler> _logger;
 
     public DeleteExamTimeLimitHandler(
         IUnitOfWork unitOfWork,
-        IExamAccessService examAccessService,
+        IAccessService<Exam> examAccessService,
         ILogger<DeleteExamTimeLimitHandler> logger)
     {
         _unitOfWork = unitOfWork;

@@ -1,8 +1,6 @@
-﻿using CSharpFunctionalExtensions;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Questions;
 using TestPlatform.Core.Questions;
-using TestPlatform.Infrastructure.Postgres.Questions.Entities;
 
 namespace TestPlatform.Infrastructure.Postgres.Questions;
 
@@ -12,128 +10,14 @@ public class QuestionsRepository : IQuestionsRepository
 
     public QuestionsRepository(TestPlatformDbContext context) => _context = context;
 
-    public async Task<Result<Guid>> AddAsync(Question question, CancellationToken cancellationToken)
-    {
-        var questionEntity = MapToEntity(question);
+    public async Task<Question?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+        => await _context.Questions
+            .Include(q => q.Tags)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-        await _context.Questions.AddAsync(questionEntity, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
+    public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken)
+        => await _context.Questions.AnyAsync(x => x.Id == id, cancellationToken);
 
-        return Result.Success(questionEntity.Id);
-    }
-
-    public async Task<Result> UpdateAsync(Question question, CancellationToken cancellationToken)
-{
-    var questionEntity = await _context.Questions
-        .Include(q => q.AnswersOptions)
-        .Include(q => q.Tags)
-        .SingleOrDefaultAsync(q => q.Id == question.Id, cancellationToken);
-
-    if (questionEntity == null)
-        return Result.Failure($"Question with id {question.Id} not found");
-
-    questionEntity.Text = question.Text;
-    questionEntity.Points = question.Points;
-    questionEntity.QuestionTypeId = (int)question.QuestionType;
-    questionEntity.ImageName = question.ImageName;
-
-    var incomingAnswers = question.AnswersOptions.ToDictionary(a => a.Id);
-    var existingAnswers = questionEntity.AnswersOptions.ToDictionary(a => a.Id);
-
-    var toRemove = questionEntity.AnswersOptions
-        .Where(a => !incomingAnswers.ContainsKey(a.Id))
-        .ToList();
-
-    if (toRemove.Count > 0)
-        _context.AnswerOptions.RemoveRange(toRemove);
-
-    foreach (var incoming in incomingAnswers.Values)
-    {
-        if (existingAnswers.TryGetValue(incoming.Id, out var existing))
-        {
-            existing.Text = incoming.Text;
-            existing.IsCorrect = incoming.IsCorrect;
-            existing.ImageName = incoming.ImageName;
-        }
-        else
-        {
-            var newEntity = new AnswerOptionEntity
-            {
-                Id = incoming.Id,
-                Text = incoming.Text,
-                IsCorrect = incoming.IsCorrect,
-                ImageName = incoming.ImageName,
-                QuestionId = questionEntity.Id,
-            };
-
-            await _context.AnswerOptions.AddAsync(newEntity, cancellationToken);
-        }
-    }
-
-    var incomingTagIds = question.TagIds.ToHashSet();
-    var existingTagIds = questionEntity.Tags.Select(t => t.Id).ToHashSet();
-
-    var tagsToRemove = questionEntity.Tags
-        .Where(t => !incomingTagIds.Contains(t.Id))
-        .ToList();
-
-    foreach (var tag in tagsToRemove)
-        questionEntity.Tags.Remove(tag);
-
-    var tagIdsToAdd = incomingTagIds
-        .Where(id => !existingTagIds.Contains(id))
-        .ToList();
-
-    if (tagIdsToAdd.Count > 0)
-    {
-        var tagsToAdd = await _context.Tags
-            .Where(t => tagIdsToAdd.Contains(t.Id))
-            .ToListAsync(cancellationToken);
-
-        foreach (var tag in tagsToAdd)
-            questionEntity.Tags.Add(tag);
-    }
-
-    await _context.SaveChangesAsync(cancellationToken);
-
-    return Result.Success();
-}
-
-    public async Task<bool> ExistsAsync(Guid questionId, CancellationToken cancellationToken)
-        => await _context.Questions.AnyAsync(q => q.Id == questionId, cancellationToken);
-
-    public async Task<Result> DeleteAsync(Guid questionId, CancellationToken cancellationToken)
-    {
-        var questionEntity = await FindQuestionAsync(questionId, cancellationToken);
-        if(questionEntity is null)
-            return Result.Failure($"Question with id {questionId} not found");
-
-        _context.Questions.Remove(questionEntity);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return Result.Success();
-    }
-
-    private static QuestionEntity MapToEntity(Question question) 
-        => new QuestionEntity
-        {
-            Id = question.Id,
-            Text = question.Text,
-            QuestionTypeId = (int)question.QuestionType,
-            Points = question.Points,
-            ImageName = question.ImageName,
-            AnswersOptions = question.AnswersOptions
-                .Select(x => new AnswerOptionEntity
-                {
-                    Id = x.Id,
-                    Text = x.Text,
-                    IsCorrect = x.IsCorrect,
-                    ImageName = x.ImageName,
-                }).ToList(),
-        };
-
-    private Task<QuestionEntity?> FindQuestionAsync(Guid id, CancellationToken cancellationToken) =>
-        _context.Questions
-            .Include(q => q.AnswersOptions)
-            .SingleOrDefaultAsync(q => q.Id == id, cancellationToken);
+    public async Task AddAsync(Question question, CancellationToken cancellationToken)
+        => await _context.Questions.AddAsync(question, cancellationToken);
 }

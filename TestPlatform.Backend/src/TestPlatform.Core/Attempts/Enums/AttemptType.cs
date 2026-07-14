@@ -2,6 +2,6 @@
 
 public enum AttemptType
 {
-    TEST,
-    EXAM
+    Test,
+    Exam
 }

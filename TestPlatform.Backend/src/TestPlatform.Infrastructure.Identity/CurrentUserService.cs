@@ -1,5 +1,6 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Users;
 
@@ -8,14 +9,14 @@ namespace TestPlatform.Infrastructure.Identity;
 public class CurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IUsersReadRepository _usersRepository;
+    private readonly IUsersReadDbContext _usersReadDbContext;
 
     public CurrentUserService(
         IHttpContextAccessor httpContextAccessor,
-        IUsersReadRepository usersRepository)
+        IUsersReadDbContext usersReadDbContext)
     {
         _httpContextAccessor = httpContextAccessor;
-        _usersRepository = usersRepository;
+        _usersReadDbContext = usersReadDbContext;
     }
 
     public string? KeycloakId =>
@@ -26,11 +27,11 @@ public class CurrentUserService : ICurrentUserService
         if (KeycloakId is null)
             return Result.Failure<Guid>("unauthorized");
 
-        var user = await _usersRepository.GetByKeycloakIdAsync(KeycloakId, cancellationToken);
+        var userId = await _usersReadDbContext.ReadUsers
+            .Where(x => x.KeycloakId == KeycloakId)
+            .Select(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (user == null)
-            return Result.Failure<Guid>("user.not_found");
-
-        return Result.Success(user.Id);
+        return userId == Guid.Empty ? Result.Failure<Guid>("user.not_found") : Result.Success(userId);
     }
 }

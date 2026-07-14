@@ -1,152 +1,87 @@
 ﻿using CSharpFunctionalExtensions;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Abstractions.Enums;
-using TestPlatform.Application.Extensions;
+using TestPlatform.Application.Common.Error;
+using TestPlatform.Application.Questions.Factories;
+using TestPlatform.Application.Tags;
 using TestPlatform.Contracts.Questions.DTOs;
-using TestPlatform.Core.Questions;
 
 namespace TestPlatform.Application.Questions.Features.UpdateQuestionCommand;
 
-public record UpdateQuestionCommand(Guid Id, UpdateQuestionRequest Request) : ICommand;
+public record UpdateQuestionCommand(Guid Id, QuestionRequest Request) : ICommand;
 
 public class UpdateQuestionHandler : ICommandHandler<UpdateQuestionCommand>
 {
     private readonly IQuestionsRepository _questionsRepository;
-    private readonly IQuestionsReadRepository _questionsReadRepository;
+    private readonly ITagsReadDbContext _tagsReadDbContext;
     private readonly IImageStorageService _imageStorageService;
-    private readonly ILogger<UpdateQuestionHandler> _logger;
+    private readonly IUnitOfWork _unitOfWork;
 
     public UpdateQuestionHandler(
         IQuestionsRepository questionsRepository,
-        IQuestionsReadRepository questionsReadRepository,
+        ITagsReadDbContext tagsReadDbContext,
         IImageStorageService imageStorageService,
-        ILogger<UpdateQuestionHandler> logger)
+        IUnitOfWork unitOfWork)
     {
         _questionsRepository = questionsRepository;
-        _questionsReadRepository = questionsReadRepository;
+        _tagsReadDbContext = tagsReadDbContext;
         _imageStorageService = imageStorageService;
-        _logger = logger;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(UpdateQuestionCommand command, CancellationToken cancellationToken)
     {
-        if (command.Id == Guid.Empty)
-            return Result.Failure("Invalid question Id");
+        var question = await _questionsRepository.GetByIdAsync(command.Id, cancellationToken);
+        if (question is null)
+            return Result.Failure(ErrorCodes.QuestionNotFound);
 
-        var existingQuestion = await _questionsReadRepository.ReadQuestionByIdAsync(
-            command.Id, false, cancellationToken);
+        var tagIds = command.Request.TagIds.Distinct().ToList();
 
-        if (existingQuestion is null)
-            return Result.Failure($"Question with id {command.Id} not found");
+        var tags = await _tagsReadDbContext.ReadTags
+            .Where(t => tagIds.Contains(t.Id))
+            .ToListAsync(cancellationToken);
 
-        var questionResult = Question.CreateWithId(
-            command.Id,
-            command.Request.Text,
-            (QuestionType)command.Request.QuestionTypeId,
-            command.Request.Points,
-            command.Request.ImageName);
+        var missingTags = tagIds.Except(tags.Select(t => t.Id)).ToList();
 
-        if (questionResult.IsFailure)
-            return Result.Failure(questionResult.Error);
+        if (missingTags.Count != 0)
+            return Result.Failure("One or more tags do not exist.");
 
-        var updatedQuestion = questionResult.Value;
+        question.ReplaceTags(tags);
 
-        var existingAnswersDict = existingQuestion.AnswerOptions
-            .Where(a => a.Id != Guid.Empty)
-            .ToDictionary(a => a.Id, a => a);
+        var definitionResult = QuestionAnswerDefinitionFactory.Create(command.Request);
+        if (definitionResult.IsFailure)
+            return Result.Failure(definitionResult.Error);
 
-        var imagesForMove = new List<string>();
-        var imagesForDelete = new List<string>();
+        var updatedQuestionResult = question.Update(command.Request.Text, definitionResult.Value);
+        if (updatedQuestionResult.IsFailure)
+            return Result.Failure(updatedQuestionResult.Error);
 
-        foreach (var answerDto in command.Request.AnswerOptions)
+        var oldImageName = question.ImageName;
+
+        if (command.Request.ImageName != oldImageName)
         {
-            AnswerOption answer;
-
-            if (answerDto.Id.HasValue && existingAnswersDict.TryGetValue(answerDto.Id.Value, out var existingAnswer))
+            if (!string.IsNullOrWhiteSpace(command.Request.ImageName))
             {
-                if (!string.IsNullOrEmpty(existingAnswer.ImageName) &&
-                    existingAnswer.ImageName != answerDto.ImageName)
-                {
-                    imagesForDelete.Add(existingAnswer.ImageName);
-                    if (!string.IsNullOrEmpty(answerDto.ImageName))
-                        imagesForMove.Add(answerDto.ImageName);
-                }
-                else if (!string.IsNullOrEmpty(answerDto.ImageName) &&
-                         string.IsNullOrEmpty(existingAnswer.ImageName))
-                {
-                    imagesForMove.Add(answerDto.ImageName);
-                }
+                var moveResult = await _imageStorageService.MoveToPermanent(
+                    command.Request.ImageName,
+                    ImageFolder.QUESTIONS);
 
-                var res = AnswerOption.CreateWithId(
-                    answerDto.Id.Value,
-                    answerDto.Text,
-                    answerDto.IsCorrect,
-                    answerDto.ImageName);
-
-                if (res.IsFailure) return Result.Failure(res.Error);
-                answer = res.Value;
-            }
-            else
-            {
-                var res = AnswerOption.Create(
-                    answerDto.Text,
-                    answerDto.IsCorrect,
-                    answerDto.ImageName);
-
-                if (res.IsFailure) return Result.Failure(res.Error);
-                answer = res.Value;
-
-                if (!string.IsNullOrEmpty(answerDto.ImageName))
-                    imagesForMove.Add(answerDto.ImageName);
+                if (moveResult.IsFailure)
+                    return Result.Failure(moveResult.Error);
             }
 
-            updatedQuestion.AddAnswerOption(answer);
+            var changeImageResult = question.ChangeImage(command.Request.ImageName);
+
+            if (changeImageResult.IsFailure)
+                return Result.Failure(changeImageResult.Error);
+
+            if (!string.IsNullOrWhiteSpace(oldImageName))
+                await _imageStorageService.DeletePermanentAsync(ImageFolder.QUESTIONS, oldImageName);
         }
 
-        var deletedAnswerImages = existingQuestion.AnswerOptions
-            .Where(a => a.Id != Guid.Empty && !command.Request.AnswerOptions.Any(x => x.Id == a.Id))
-            .Select(a => a.ImageName)
-            .Where(img => !string.IsNullOrEmpty(img));
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        imagesForDelete.AddRange(deletedAnswerImages!);
-
-        foreach (var tagId in command.Request.TagIds.ToHashSet())
-            updatedQuestion.AddTag(tagId);
-
-        var updateResult = await _questionsRepository.UpdateAsync(updatedQuestion, cancellationToken);
-        if (updateResult.IsFailure)
-            return Result.Failure(updateResult.Error);
-
-        if (updatedQuestion.ImageName != existingQuestion.ImageName)
-        {
-            if (!string.IsNullOrEmpty(updatedQuestion.ImageName))
-            {
-                await _imageStorageService.MoveToPermanent(updatedQuestion.ImageName, ImageFolder.QUESTIONS);
-                _logger.LogInformation("Moved question image {Image}", updatedQuestion.ImageName);
-            }
-
-            if (!string.IsNullOrEmpty(existingQuestion.ImageName))
-            {
-                await _imageStorageService.DeletePermanentAsync(ImageFolder.QUESTIONS, existingQuestion.ImageName);
-                _logger.LogInformation("Deleted old question image {Image}", existingQuestion.ImageName);
-            }
-        }
-
-        foreach (var img in imagesForMove)
-        {
-            await _imageStorageService.MoveToPermanent(img, ImageFolder.ANSWERS);
-            _logger.LogInformation("Moved answer image {Image}", img);
-        }
-
-        foreach (var img in imagesForDelete)
-        {
-            await _imageStorageService.DeletePermanentAsync(ImageFolder.ANSWERS, img);
-            _logger.LogInformation("Deleted answer image {Image}", img);
-        }
-
-        _logger.LogResult("Update Question", command.Id, updateResult);
-
-        return updateResult;
+        return Result.Success();
     }
 }

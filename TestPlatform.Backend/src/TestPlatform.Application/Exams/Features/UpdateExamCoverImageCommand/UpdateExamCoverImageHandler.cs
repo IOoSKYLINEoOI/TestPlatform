@@ -1,22 +1,22 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Exams.Services;
-using TestPlatform.Contracts.Exams.DTOs;
+using TestPlatform.Contracts.Share;
+using TestPlatform.Core.Exams;
 
 namespace TestPlatform.Application.Exams.Features.UpdateExamCoverImageCommand;
 
-public record UpdateExamCoverImageCommand(Guid Id, UpdateExamCoverImageRequest Request) : ICommand;
+public record UpdateExamCoverImageCommand(Guid Id, UpdateCoverImageRequest Request) : ICommand;
 
 public class UpdateExamCoverImageHandler : ICommandHandler<UpdateExamCoverImageCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExamAccessService _examAccessService;
+    private readonly IAccessService<Exam> _examAccessService;
     private readonly ILogger<UpdateExamCoverImageHandler> _logger;
 
     public UpdateExamCoverImageHandler(
         IUnitOfWork unitOfWork,
-        IExamAccessService examAccessService,
+        IAccessService<Exam> examAccessService,
         ILogger<UpdateExamCoverImageHandler> logger)
     {
         _unitOfWork = unitOfWork;
@@ -38,7 +38,7 @@ public class UpdateExamCoverImageHandler : ICommandHandler<UpdateExamCoverImageC
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Exam {ExamId} cover image updated to {TimeLimit}", command.Id, command.Request.FileName);
+        _logger.LogInformation("Exam {ExamId} cover image updated to {FileName}", command.Id, command.Request.FileName);
 
         return Result.Success();
     }

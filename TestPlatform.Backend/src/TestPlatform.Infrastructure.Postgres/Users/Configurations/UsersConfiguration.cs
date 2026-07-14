@@ -1,33 +1,32 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TestPlatform.Infrastructure.Postgres.Users.Entities;
+using TestPlatform.Core.Users;
 
 namespace TestPlatform.Infrastructure.Postgres.Users.Configurations;
 
-public class UsersConfiguration : IEntityTypeConfiguration<UserEntity>
+public class UsersConfiguration : IEntityTypeConfiguration<User>
 {
-    public void Configure(EntityTypeBuilder<UserEntity> builder)
+    public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("users");
 
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.Id)
+            .ValueGeneratedNever();
+
         builder.Property(x => x.KeycloakId)
-            .HasMaxLength(250)
+            .HasMaxLength(255)
             .IsRequired();
 
         builder.Property(x => x.TabNumber)
             .HasMaxLength(50)
             .IsRequired();
 
-        builder.HasMany(x => x.Attempts)
-            .WithOne(x => x.User)
-            .HasForeignKey(x => x.UserId)
-            .IsRequired()
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => x.KeycloakId)
+            .IsUnique();
 
-        builder.HasMany(x => x.Tests)
-            .WithOne(x => x.Author)
-            .HasForeignKey(x => x.AuthorId);
+        builder.HasIndex(x => x.TabNumber)
+            .IsUnique();
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Exams.Services;
 using TestPlatform.Contracts.Exams.DTOs;
+using TestPlatform.Core.Exams;
 
 namespace TestPlatform.Application.Exams.Features.UpdateExamDetailsCommand;
 
@@ -11,12 +12,12 @@ public record UpdateExamDetailsCommand(Guid Id, UpdateExamDetailsRequest Request
 public class UpdateExamDetailsHandler : ICommandHandler<UpdateExamDetailsCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExamAccessService _examAccessService;
+    private readonly IAccessService<Exam> _examAccessService;
     private readonly ILogger<UpdateExamDetailsHandler> _logger;
 
     public UpdateExamDetailsHandler(
         IUnitOfWork unitOfWork,
-        IExamAccessService examAccessService,
+        IAccessService<Exam> examAccessService,
         ILogger<UpdateExamDetailsHandler> logger)
     {
         _unitOfWork = unitOfWork;

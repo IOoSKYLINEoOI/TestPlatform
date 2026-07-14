@@ -10,9 +10,11 @@ public class ExamsRepository : IExamsRepository
 
     public ExamsRepository(TestPlatformDbContext context) => _context = context;
 
+    public async Task<Exam?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+        => await _context.Exams
+            .Include(x => x.Questions)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
     public async Task AddAsync(Exam exam, CancellationToken cancellationToken)
         => await _context.Exams.AddAsync(exam, cancellationToken);
-
-    public async Task<Exam?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
-        => await _context.Exams.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 }

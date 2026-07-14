@@ -1,29 +1,24 @@
 ﻿using CSharpFunctionalExtensions;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Tags.DTOs;
 
 namespace TestPlatform.Application.Tags.Features.GetAllTagsQuery;
 
-public record GetAllTagsQuery() : IQuery;
+public record GetAllTagsQuery : IQuery;
 
-public class GetAllTagsHandler : IQueryHandler<IReadOnlyList<TagResponse>, GetAllTagsQuery>
+public class GetAllTagsHandler(ITagsReadDbContext tagsDbContext)
+    : IQueryHandler<GetAllTagsQuery, IReadOnlyList<TagResponse>>
 {
-    private readonly ITagsReadRepository _tagsReadRepository;
-    private readonly ILogger<GetAllTagsHandler> _logger;
-
-    public GetAllTagsHandler(ITagsReadRepository tagsReadRepository, ILogger<GetAllTagsHandler> logger)
-    {
-        _tagsReadRepository = tagsReadRepository;
-        _logger = logger;
-    }
-
     public async Task<Result<IReadOnlyList<TagResponse>>> Handle(GetAllTagsQuery query, CancellationToken cancellationToken)
     {
-        var tags = await _tagsReadRepository.ReadAllTagsAsync(cancellationToken);
+        var response = await tagsDbContext.ReadTags
+            .Select(x => new TagResponse(
+                Id: x.Id,
+                Name: x.Name,
+                Description: x.Description))
+            .ToListAsync(cancellationToken);
 
-        _logger.LogInformation("Retrieved {Count} tags", tags.Count);
-
-        return Result.Success((IReadOnlyList<TagResponse>)tags);
+        return Result.Success<IReadOnlyList<TagResponse>>(response);
     }
 }

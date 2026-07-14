@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿/*using Microsoft.EntityFrameworkCore;
 using TestPlatform.Infrastructure.Postgres.Questions.Entities;
 using TestPlatform.Infrastructure.Postgres.Tags.Entities;
 using TestPlatform.Infrastructure.Postgres.Tests.Entities;
@@ -301,4 +301,4 @@ public class DbInitializer
         }
 
     }
-}
+}*/

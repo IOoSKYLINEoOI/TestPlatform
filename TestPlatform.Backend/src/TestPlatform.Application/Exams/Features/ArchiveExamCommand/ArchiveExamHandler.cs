@@ -4,6 +4,7 @@ using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Common.Error;
 using TestPlatform.Application.Exams.Services;
 using TestPlatform.Application.Users;
+using TestPlatform.Core.Exams;
 
 namespace TestPlatform.Application.Exams.Features.ArchiveExamCommand;
 
@@ -12,12 +13,12 @@ public record ArchiveExamCommand(Guid Id) : ICommand;
 public class ArchiveExamHandler : ICommandHandler<ArchiveExamCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExamAccessService _examAccessService;
+    private readonly IAccessService<Exam> _examAccessService;
     private readonly ILogger<ArchiveExamHandler> _logger;
 
     public ArchiveExamHandler(
         IUnitOfWork unitOfWork,
-        IExamAccessService examAccessService,
+        IAccessService<Exam> examAccessService,
         ILogger<ArchiveExamHandler> logger)
     {
         _unitOfWork = unitOfWork;

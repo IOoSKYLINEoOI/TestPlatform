@@ -1,49 +1,89 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TestPlatform.Infrastructure.Postgres.Attempts.Entities;
+using TestPlatform.Core.Attempts;
 
 namespace TestPlatform.Infrastructure.Postgres.Attempts.Configurations;
 
-public class AttemptsConfiguration : IEntityTypeConfiguration<AttemptEntity>
+public class AttemptsConfiguration : IEntityTypeConfiguration<Attempt>
 {
-    public void Configure(EntityTypeBuilder<AttemptEntity> builder)
+    public void Configure(EntityTypeBuilder<Attempt> builder)
     {
         builder.ToTable("attempts");
 
-        builder.HasKey(a => a.Id);
+        builder.HasKey(x => x.Id);
 
-        builder.Property(a => a.TotalQuestions)
+        builder.Property(x => x.UserId).IsRequired();
+
+        builder.Property(x => x.Type)
+            .HasConversion<string>()
             .IsRequired();
 
-        builder.Property(a => a.CorrectAnswers)
+        builder.Property(x => x.SourceId).IsRequired();
+
+        builder.Property(x => x.TotalQuestions).IsRequired();
+
+        builder.Property(x => x.TotalMaxScore)
+            .HasPrecision(10, 2)
             .IsRequired();
 
-        builder.Property(a => a.EarnedPoints)
-            .HasColumnType("numeric(5,2)")
+        builder.Property(x => x.TimeLimitSeconds);
+
+        builder.Property(x => x.Deadline);
+
+        builder.Property(x => x.Status)
+            .HasConversion<string>()
             .IsRequired();
 
-        builder.Property(a => a.MaxPoints)
-            .HasColumnType("numeric(5,2)")
-            .IsRequired();
+        builder.Property(x => x.StartedAt);
+        builder.Property(x => x.FinishedAt);
 
-        builder.Property(a => a.StartedAt)
-            .IsRequired();
+        builder.Ignore(x => x.Score);
 
-        builder.Property(a => a.FinishedAt);
+        builder.OwnsOne(x => x.AttemptResult, b =>
+        {
+            b.ToJson();
+        });
 
-        builder
-            .Property(x => x.Status)
-            .HasConversion<string>();
+        builder.Navigation(x => x.AttemptAnswers)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        builder.Property(a => a.UserId)
-            .IsRequired();
+        builder.OwnsMany(x => x.AttemptAnswers, b =>
+        {
+            b.ToTable("attempt_answers");
 
-        builder.HasIndex(a => a.UserId);
-        builder.HasIndex(e => new { e.Type, e.SourceId });
+            b.WithOwner()
+                .HasForeignKey("AttemptId");
 
-        builder.ToTable(t =>
-            t.HasCheckConstraint(
-                "CK_Attempt_Parent",
-                "(\"TestId\" IS NOT NULL AND \"ExamId\" IS NULL) OR (\"TestId\" IS NULL AND \"ExamId\" IS NOT NULL)"));
+            b.HasKey("AttemptId", nameof(AttemptAnswer.QuestionId));
+
+            b.Property(x => x.QuestionId).IsRequired();
+
+            b.Property(x => x.TextAnswer);
+
+            b.Property(x => x.NumberAnswer)
+                .HasPrecision(10, 2);
+
+            b.Property(x => x.SelectedOptionIds)
+                .HasColumnType("jsonb")
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
+                    v => JsonSerializer.Deserialize<List<Guid>>(v, (JsonSerializerOptions)null!)!
+                );
+
+            b.Property(x => x.MatchingPairs)
+                .HasColumnType("jsonb")
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
+                    v => JsonSerializer.Deserialize<List<AttemptMatchingPair>>(v, (JsonSerializerOptions)null!)!
+                );
+
+            b.HasIndex("AttemptId", nameof(AttemptAnswer.QuestionId))
+                .IsUnique();
+        });
+
+        builder.HasIndex(x => x.UserId);
+        builder.HasIndex(x => new { x.UserId, x.Status });
+        builder.HasIndex(x => new { x.Type, x.SourceId });
     }
 }

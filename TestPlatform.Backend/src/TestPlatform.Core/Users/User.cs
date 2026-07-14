@@ -4,6 +4,8 @@ namespace TestPlatform.Core.Users;
 
 public class User
 {
+    private User() { }
+
     private User(Guid id, string keycloakId, string tabNumber)
     {
         Id = id;

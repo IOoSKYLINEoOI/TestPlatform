@@ -19,6 +19,7 @@ using TestPlatform.Application.Exams.Features.UpdateExamScheduleCommand;
 using TestPlatform.Application.Exams.Features.UpdateExamTimeLimitCommand;
 using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Exams.DTOs;
+using TestPlatform.Contracts.Share;
 
 namespace TestPlatform.Presenters.Exams;
 
@@ -32,7 +33,7 @@ public class ExamController : ControllerBase
         Summary = "Получить экзамен по Id.",
         Description = "Возвращает экзамен с деталями и списком вопросов")]
     public async Task<IActionResult> GetById(
-        [FromServices] IQueryHandler<ExamFullResponse, GetByIdExamQuery> handler,
+        [FromServices] IQueryHandler<GetByIdExamQuery, ExamFullResponse> handler,
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
@@ -51,7 +52,7 @@ public class ExamController : ControllerBase
         Summary = "Создать черновик экзамена",
         Description = "Создаёт новый экзамен с указаным названием и описанием и статусом Draft")]
     public async Task<IActionResult> Create(
-        [FromServices] ICommandHandler<Guid, CreateExamCommand> handler,
+        [FromServices] ICommandHandler<CreateExamCommand, Guid> handler,
         [FromBody] ExamRequest request,
         CancellationToken cancellationToken)
     {
@@ -99,7 +100,7 @@ public class ExamController : ControllerBase
     public async Task<IActionResult> UpdateTimeLimit(
         [FromServices] ICommandHandler<UpdateExamTimeLimitCommand> handler,
         [FromRoute] Guid id,
-        [FromBody] UpdateExamTimeLimitRequest request,
+        [FromBody] UpdateTimeLimitRequest request,
         CancellationToken cancellationToken)
     {
         var command = new UpdateExamTimeLimitCommand(id, request);
@@ -150,7 +151,7 @@ public class ExamController : ControllerBase
     public async Task<IActionResult> UpdateCoverImage(
         [FromServices] ICommandHandler<UpdateExamCoverImageCommand> handler,
         [FromRoute] Guid id,
-        [FromBody] UpdateExamCoverImageRequest request,
+        [FromBody] UpdateCoverImageRequest request,
         CancellationToken cancellationToken)
     {
         var command = new UpdateExamCoverImageCommand(id, request);
@@ -331,7 +332,7 @@ public class ExamController : ControllerBase
     public async Task<IActionResult> AddQuestion(
         [FromServices] ICommandHandler<AddExamQuestionCommand> handler,
         [FromRoute] Guid id,
-        [FromBody] AddExamQuestionRequest request,
+        [FromBody] AddQuestionRequest request,
         CancellationToken cancellationToken)
     {
         var command = new AddExamQuestionCommand(id, request);

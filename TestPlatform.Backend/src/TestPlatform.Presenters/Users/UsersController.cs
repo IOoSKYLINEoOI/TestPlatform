@@ -1,11 +1,7 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Users;
-using TestPlatform.Application.Users.Features.GetCurrentUserQuery;
-using TestPlatform.Contracts.Users.DTOs;
 
 namespace TestPlatform.Presenters.Users;
 

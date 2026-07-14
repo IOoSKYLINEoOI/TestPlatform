@@ -12,12 +12,12 @@ public record UpdateExamPassingRuleCommand(Guid Id, UpdateExamPassingRuleRequest
 public class UpdateExamPassingRuleHandler : ICommandHandler<UpdateExamPassingRuleCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExamAccessService _examAccessService;
+    private readonly IAccessService<Exam> _examAccessService;
     private readonly ILogger<UpdateExamPassingRuleHandler> _logger;
 
     public UpdateExamPassingRuleHandler(
         IUnitOfWork unitOfWork,
-        IExamAccessService examAccessService,
+        IAccessService<Exam> examAccessService,
         ILogger<UpdateExamPassingRuleHandler> logger)
     {
         _unitOfWork = unitOfWork;

@@ -1,6 +1,4 @@
-﻿
-
-using Microsoft.OpenApi;
+﻿using Microsoft.OpenApi;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Infrastructure.Identity;
 

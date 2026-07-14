@@ -1,18 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TestPlatform.Infrastructure.Postgres.Tests.Entities;
+using TestPlatform.Core.Shared;
+using TestPlatform.Core.Tests;
 
 namespace TestPlatform.Infrastructure.Postgres.Tests.Configurations;
 
-public class TestsConfiguration : IEntityTypeConfiguration<TestEntity>
+public class TestsConfiguration : IEntityTypeConfiguration<Test>
 {
-    public void Configure(EntityTypeBuilder<TestEntity> builder)
+    public void Configure(EntityTypeBuilder<Test> builder)
     {
         builder.ToTable("tests");
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Name)
+        builder.Property(x => x.Title)
             .HasMaxLength(100)
             .IsRequired();
 
@@ -20,11 +21,31 @@ public class TestsConfiguration : IEntityTypeConfiguration<TestEntity>
             .HasMaxLength(250)
             .IsRequired();
 
-        builder.Property(x => x.CoverImageName)
-            .HasMaxLength(500);
+        builder.Property(x => x.TimeLimitSeconds);
 
-        builder.HasMany(x => x.Questions)
-            .WithMany(x => x.Tests)
-            .UsingEntity(x => x.ToTable("tests_questions"));
+        builder.Property(x => x.CoverImageName)
+            .HasMaxLength(255);
+
+        builder.Property(x => x.AuthorId)
+            .IsRequired();
+
+        builder.OwnsMany(x => x.Questions, b =>
+        {
+            b.ToTable("test_questions");
+
+            b.WithOwner()
+                .HasForeignKey("TestId");
+
+            b.HasKey("TestId", "QuestionId");
+
+            b.Property(x => x.QuestionId).IsRequired();
+            b.Property(x => x.Order).IsRequired();
+            b.Property(x => x.Score).IsRequired();
+
+            b.HasIndex("TestId", "QuestionId").IsUnique();
+            b.HasIndex("TestId", "Order").IsUnique();
+        });
+
+        builder.HasIndex(x => x.AuthorId);
     }
 }

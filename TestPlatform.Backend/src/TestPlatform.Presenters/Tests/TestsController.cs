@@ -1,15 +1,11 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Tests.Features.CreateTestCommand;
-using TestPlatform.Application.Tests.Features.DeleteTestCommand;
 using TestPlatform.Application.Tests.Features.GetAllTestsQuery;
 using TestPlatform.Application.Tests.Features.GetByIdTestQuery;
-using TestPlatform.Application.Tests.Features.UpdateTestCommand;
 using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Tests.DTOs;
-using TestPlatform.Contracts.Users.DTOs;
 
 namespace TestPlatform.Presenters.Tests;
 
@@ -30,12 +26,11 @@ public class TestsController : ControllerBase
         Summary = "Получить тест по Id.",
         Description = "Возвращает тест с названием, ограничением времени, описанием, ид автора, количеством вопросов и тэгами по его Id")]
     public async Task<IActionResult> GetById(
-        [FromServices] IQueryHandler<TestFullResponse, GetByIdTestQuery> handler,
+        [FromServices] IQueryHandler<GetByIdTestQuery, TestFullResponse> handler,
         [FromRoute] Guid id,
-        CancellationToken cancellationToken,
-        [FromQuery] bool includeCorrectAnswer = false)
+        CancellationToken cancellationToken)
     {
-        var query = new GetByIdTestQuery(id, includeCorrectAnswer);
+        var query = new GetByIdTestQuery(id);
 
         var result = await handler.Handle(query, cancellationToken);
         return result.IsSuccess
@@ -49,7 +44,7 @@ public class TestsController : ControllerBase
         Summary = "Получить все тесты",
         Description = "Возвращает название, ограничение времени, описание, автора, количество вопросов и список тэгов всех тестов.")]
     public async Task<IActionResult> GetAll(
-        [FromServices] IQueryHandler<List<TestResponse>, GetAllTestsQuery> handler,
+        [FromServices] IQueryHandler<GetAllTestsQuery, IReadOnlyList<TestResponse>> handler,
         CancellationToken cancellationToken)
     {
         var query = new GetAllTestsQuery();
@@ -67,7 +62,7 @@ public class TestsController : ControllerBase
         Summary = "Создать новый тест",
         Description = "Создаёт новый тест с указаным названием и описанием, ограничением по времени, кавером, ид автора, и списком вопросов.")]
     public async Task<IActionResult> Create(
-        [FromServices] ICommandHandler<Guid, CreateTestCommand> handler,
+        [FromServices] ICommandHandler<CreateTestCommand, Guid> handler,
         [FromBody] TestRequest request,
         CancellationToken cancellationToken)
     {
@@ -81,7 +76,7 @@ public class TestsController : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
     }
 
-    [HttpPut("{id:guid}")]
+    /*[HttpPut("{id:guid}")]
     [SwaggerOperation(
         OperationId = "UpdateTest",
         Summary = "Обновить тест",
@@ -100,9 +95,9 @@ public class TestsController : ControllerBase
 
         var result = await handler.Handle(command, cancellationToken);
         return result.IsSuccess ? Ok() : result.Error == "Forbidden" ? Forbid() : BadRequest(result.Error);
-    }
+    }*/
 
-    [HttpDelete("{id:guid}")]
+    /*[HttpDelete("{id:guid}")]
     [SwaggerOperation(
         OperationId = "DeleteTest",
         Summary = "Удалить тест",
@@ -120,5 +115,5 @@ public class TestsController : ControllerBase
 
         var result = await handler.Handle(command, cancellationToken);
         return result.IsSuccess ? NoContent() : result.Error == "Forbidden" ? Forbid() : NotFound(result.Error);
-    }
+    }*/
 }

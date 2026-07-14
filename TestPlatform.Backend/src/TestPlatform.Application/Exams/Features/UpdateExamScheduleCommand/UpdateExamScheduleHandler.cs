@@ -12,12 +12,12 @@ public record UpdateExamScheduleCommand(Guid Id, UpdateExamScheduleRequest Reque
 public class UpdateExamScheduleHandler : ICommandHandler<UpdateExamScheduleCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExamAccessService _examAccessService;
+    private readonly IAccessService<Exam> _examAccessService;
     private readonly ILogger<UpdateExamScheduleHandler> _logger;
 
     public UpdateExamScheduleHandler(
         IUnitOfWork unitOfWork,
-        IExamAccessService examAccessService,
+        IAccessService<Exam> examAccessService,
         ILogger<UpdateExamScheduleHandler> logger)
     {
         _unitOfWork = unitOfWork;

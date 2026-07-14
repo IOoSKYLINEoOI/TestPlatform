@@ -1,15 +1,16 @@
-﻿using TestPlatform.Contracts.Questions.DTOs;
-using TestPlatform.Contracts.Tags.DTOs;
-
-namespace TestPlatform.Contracts.Tests.DTOs;
+﻿namespace TestPlatform.Contracts.Tests.DTOs;
 
 public record TestFullResponse(
     Guid Id,
-    string Name,
-    int? TimeLimitSeconds,
+    string Title,
     string Description,
-    Guid? AuthorId,
-    int TotalQuestions,
+    int? TimeLimitSeconds,
     string? CoverImageName,
-    List<TagResponse> Tags,
-    List<QuestionResponse> Questions);
+    Guid? AuthorId,
+    DateTime CreatedAt,
+    IReadOnlyCollection<TestQuestionResponse> Questions);
+
+public record TestQuestionResponse(
+    Guid QuestionId,
+    int Order,
+    int Score);

@@ -1,12 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TestPlatform.Infrastructure.Postgres.Questions.Entities;
+using TestPlatform.Core.Questions;
+using TestPlatform.Infrastructure.Postgres.Questions.Mapping;
 
 namespace TestPlatform.Infrastructure.Postgres.Questions.Configurations;
 
-public class QuestionsConfiguration: IEntityTypeConfiguration<QuestionEntity>
+public class QuestionsConfiguration : IEntityTypeConfiguration<Question>
 {
-    public void Configure(EntityTypeBuilder<QuestionEntity> builder)
+    public void Configure(EntityTypeBuilder<Question> builder)
     {
         builder.ToTable("questions");
 
@@ -16,24 +17,17 @@ public class QuestionsConfiguration: IEntityTypeConfiguration<QuestionEntity>
             .HasMaxLength(200)
             .IsRequired();
 
-        builder.Property(x => x.QuestionTypeId)
-            .IsRequired();
-
-        builder.Property(x => x.Points)
-            .HasDefaultValue(1)
-            .IsRequired();
+        builder.Ignore(x => x.QuestionType);
 
         builder.Property(x => x.ImageName)
             .HasMaxLength(500);
 
-        builder.HasMany(x => x.AnswersOptions)
-            .WithOne(x => x.Question)
-            .HasForeignKey(x => x.QuestionId)
-            .IsRequired()
-            .OnDelete(DeleteBehavior.Cascade);
-
         builder.HasMany(x => x.Tags)
-            .WithMany(x => x.Questions)
-            .UsingEntity(j => j.ToTable("questions_tags"));
+            .WithMany()
+            .UsingEntity(j => j.ToTable("question_tags"));
+
+        builder.Property(x => x.AnswerDefinition)
+            .HasConversion(new AnswerDefinitionValueConverter())
+            .HasColumnType("jsonb");
     }
 }

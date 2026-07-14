@@ -1,8 +1,9 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Abstractions.Enums;
+using TestPlatform.Application.Common.Error;
 using TestPlatform.Application.Extensions;
+using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Tests.DTOs;
 using TestPlatform.Contracts.Users.DTOs;
 using TestPlatform.Core.Tests;
@@ -11,60 +12,49 @@ namespace TestPlatform.Application.Tests.Features.CreateTestCommand;
 
 public record CreateTestCommand(TestRequest Request, CurrentUserDto CurrentUser) : ICommand;
 
-public class CreateTestHandler : ICommandHandler<Guid, CreateTestCommand>
+public class CreateTestHandler : ICommandHandler<CreateTestCommand, Guid>
 {
     private readonly ITestsRepository _testsRepository;
-    private readonly IImageStorageService _imageStorageService;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserAccessor _currentUser;
     private readonly ILogger<CreateTestHandler> _logger;
 
     public CreateTestHandler(
         ITestsRepository testsRepository,
-        IImageStorageService imageStorageService,
+        IUnitOfWork unitOfWork,
+        ICurrentUserAccessor currentUser,
         ILogger<CreateTestHandler> logger)
     {
         _testsRepository = testsRepository;
-        _imageStorageService = imageStorageService;
+        _unitOfWork = unitOfWork;
+        _currentUser = currentUser;
         _logger = logger;
     }
 
     public async Task<Result<Guid>> Handle(CreateTestCommand command, CancellationToken cancellationToken)
     {
+        var user = _currentUser.User;
+
+        if (user is null)
+        {
+            _logger.LogWarning("Unauthorized access attempt to create exam.");
+            return Result.Failure<Guid>(ErrorCodes.Unauthorized);
+        }
+
         var testResult = Test.Create(
-            command.Request.Name,
-            command.Request.TimeLimitSeconds,
+            command.Request.Title,
             command.Request.Description,
-            command.CurrentUser.Id,
-            command.Request.CoverImageUrl);
+            command.CurrentUser.Id);
 
         if (testResult.IsFailure)
             return Result.Failure<Guid>(testResult.Error);
 
-        var test = testResult.Value;
+        await _testsRepository.AddAsync(testResult.Value, cancellationToken);
 
-        foreach (var questionId in command.Request.QuestionsIds.ToHashSet())
-            test.AddQuestion(questionId);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var testIdResult = await _testsRepository.AddAsync(test, cancellationToken);
-        if (testIdResult.IsFailure)
-        {
-            _logger.LogWarning("Failed to create Test: {Error}", testIdResult.Error);
-            return Result.Failure<Guid>(testIdResult.Error);
-        }
+        _logger.LogResult("Create Test", testResult.Value.Id, testResult);
 
-        if (!string.IsNullOrWhiteSpace(command.Request.CoverImageUrl))
-        {
-            var moveResult = await _imageStorageService.MoveToPermanent(command.Request.CoverImageUrl, ImageFolder.TESTS);
-            if (moveResult.IsFailure)
-            {
-                _logger.LogWarning("Failed to move test cover image {Image}: {Error}", command.Request.CoverImageUrl, moveResult.Error);
-                return Result.Failure<Guid>(moveResult.Error);
-            }
-
-            _logger.LogInformation("Moved test cover image {Image}", command.Request.CoverImageUrl);
-        }
-
-        _logger.LogResult("Create Test", testIdResult.Value, testIdResult);
-
-        return Result.Success(testIdResult.Value);
+        return Result.Success(testResult.Value.Id);
     }
 }

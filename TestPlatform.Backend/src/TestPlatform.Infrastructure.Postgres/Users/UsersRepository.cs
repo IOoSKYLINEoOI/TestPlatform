@@ -1,7 +1,5 @@
-﻿using CSharpFunctionalExtensions;
-using TestPlatform.Application.Users;
+﻿using TestPlatform.Application.Users;
 using TestPlatform.Core.Users;
-using TestPlatform.Infrastructure.Postgres.Users.Entities;
 
 namespace TestPlatform.Infrastructure.Postgres.Users;
 
@@ -11,16 +9,6 @@ public class UsersRepository : IUsersRepository
 
     public UsersRepository(TestPlatformDbContext context) => _context = context;
 
-    public async Task<Result<Guid>> AddAsync(User user, CancellationToken cancellationToken)
-    {
-        var userEntity = MapToEntity(user);
-
-        await _context.Users.AddAsync(userEntity, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return Result.Success(userEntity.Id);
-    }
-
-    private UserEntity MapToEntity(User user)
-        => new UserEntity() { Id = user.Id, KeycloakId = user.KeycloakId, TabNumber = user.TabNumber, };
+    public async Task AddAsync(User user, CancellationToken cancellationToken)
+        => await _context.Users.AddAsync(user, cancellationToken);
 }

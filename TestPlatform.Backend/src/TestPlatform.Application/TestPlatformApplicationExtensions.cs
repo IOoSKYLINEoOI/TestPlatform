@@ -1,12 +1,15 @@
 ﻿using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Attempts.CheckQuestionsService;
-using TestPlatform.Application.Attempts.Features.FinishAttemptCommand;
 using TestPlatform.Application.Attempts.Interfaces;
+using TestPlatform.Application.Attempts.Services;
+using TestPlatform.Application.Attempts.Services.SourceService;
 using TestPlatform.Application.Exams.Services;
-using TestPlatform.Application.Questions.Validators;
 using TestPlatform.Application.Tags.Validators;
+using TestPlatform.Application.Tests.Services;
+using TestPlatform.Core.Attempts;
+using TestPlatform.Core.Exams;
+using TestPlatform.Core.Tests;
 
 namespace TestPlatform.Application;
 
@@ -15,7 +18,6 @@ public static class TestPlatformApplicationExtensions
     public static IServiceCollection AddTestPlatformApplication(this IServiceCollection services)
     {
         services.AddValidatorsFromAssemblyContaining<CreateTagRequestValidator>();
-        services.AddValidatorsFromAssemblyContaining<CreateQuestionRequestValidator>();
 
         var assembly = typeof(TestPlatformApplicationExtensions).Assembly;
 
@@ -31,9 +33,13 @@ public static class TestPlatformApplicationExtensions
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
-        services.AddScoped<IAttemptSourceService, AttemptSourceService>();
-        services.AddScoped<IQuestionCheckerFactory, QuestionCheckerFactory>();
-        services.AddScoped<IExamAccessService, ExamAccessService>();
+        services.AddScoped<IAttemptSourceService, TestAttemptSource>();
+        services.AddScoped<IAttemptSourceService, ExamAttemptSource>();
+        services.AddScoped<AttemptSourceResolver>();
+
+        services.AddScoped<IAccessService<Exam>, ExamAccessService>();
+        services.AddScoped<IAccessService<Test>, TestAccessService>();
+        services.AddScoped<IAccessService<Attempt>, AttemptAccessService>();
 
         return services;
     }

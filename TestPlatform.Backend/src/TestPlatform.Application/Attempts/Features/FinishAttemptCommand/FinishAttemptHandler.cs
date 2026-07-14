@@ -1,147 +1,58 @@
 ﻿using CSharpFunctionalExtensions;
-using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Attempts.Interfaces;
+using TestPlatform.Application.Attempts.Mappers;
+using TestPlatform.Application.Attempts.Services.SourceService;
 using TestPlatform.Contracts.Attempts.DTOs;
-using TestPlatform.Contracts.Attempts.Enums;
-using TestPlatform.Contracts.Users.DTOs;
 using TestPlatform.Core.Attempts;
-using TestPlatform.Core.Attempts.Enums;
-using TestPlatform.Core.Questions;
 
 namespace TestPlatform.Application.Attempts.Features.FinishAttemptCommand;
 
-public record FinishAttemptCommand(Guid Id, FinishRequest FinishRequest, CurrentUserDto CurrentUser) : ICommand;
+public record FinishAttemptCommand(Guid AttemptId) : ICommand;
 
-public class FinishAttemptHandler : ICommandHandler<AttemptResponse, FinishAttemptCommand>
+public class FinishAttemptHandler : ICommandHandler<FinishAttemptCommand, FinishAttemptResponse>
 {
-    private readonly IAttemptsRepository _attemptsRepository;
-    private readonly IAttemptsReadRepository _attemptsReadRepository;
-    private readonly IAttemptSourceService _attemptSourceService;
-    private readonly IQuestionCheckerFactory _checkerFactory;
-    private readonly ILogger<FinishAttemptHandler> _logger;
+    private readonly IAccessService<Attempt> _attemptAccessService;
+    private readonly AttemptSourceResolver _resolver;
+    private readonly IUnitOfWork _unitOfWork;
 
     public FinishAttemptHandler(
-        IAttemptsRepository attemptsRepository,
-        IAttemptsReadRepository attemptsReadRepository,
-        IAttemptSourceService attemptSourceService,
-        IQuestionCheckerFactory checkerFactory,
-        ILogger<FinishAttemptHandler> logger)
+        IAccessService<Attempt> attemptAccessService,
+        AttemptSourceResolver resolver,
+        IUnitOfWork unitOfWork)
     {
-        _attemptsRepository = attemptsRepository;
-        _attemptsReadRepository = attemptsReadRepository;
-        _attemptSourceService = attemptSourceService;
-        _checkerFactory = checkerFactory;
-        _logger = logger;
+        _attemptAccessService = attemptAccessService;
+        _resolver = resolver;
+        _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<AttemptResponse>> Handle(FinishAttemptCommand command, CancellationToken cancellationToken)
+    public async Task<Result<FinishAttemptResponse>> Handle(
+        FinishAttemptCommand command,
+        CancellationToken cancellationToken)
     {
-         var attemptEntity = await _attemptsReadRepository.ReadAttemptByIdAsync(command.Id, cancellationToken);
-         if (attemptEntity is null)
-             return Result.Failure<AttemptResponse>("Attempt not found");
+        var attemptResult = await _attemptAccessService
+            .GetForModifyAsync(command.AttemptId, cancellationToken);
 
-         var attempt = Attempt.FromPersistence(
-            attemptEntity.Id,
-            attemptEntity.TotalQuestions,
-            attemptEntity.MaxPoints,
-            attemptEntity.EarnedPoints,
-            attemptEntity.CorrectAnswers,
-            attemptEntity.UserId,
-            (AttemptStatus)attemptEntity.Status,
-            attemptEntity.StartedAt,
-            attemptEntity.FinishedAt,
-            (AttemptType)attemptEntity.Type,
-            attemptEntity.SourceId);
+        if (attemptResult.IsFailure)
+            return Result.Failure<FinishAttemptResponse>(attemptResult.Error);
 
-         if (attempt.FinishedAt != null)
-             return Result.Failure<AttemptResponse>("Тест уже завершён");
+        var attempt = attemptResult.Value;
 
-         if (attempt.StartedAt == null)
-             return Result.Failure<AttemptResponse>("Попытка ещё не была начата");
+        var sourceResult = await _resolver.GetSourceAsync(
+            attempt.Type,
+            attempt.SourceId,
+            cancellationToken);
 
-         var sourceResult = await _attemptSourceService.GetSourceAsync(
-             (AttemptTypeDto)attempt.Type,
-             attempt.SourceId,
-             cancellationToken);
+        if (sourceResult.IsFailure)
+            return Result.Failure<FinishAttemptResponse>(sourceResult.Error);
 
-         if (sourceResult.IsFailure)
-             return Result.Failure<AttemptResponse>("Источник попытки не найден");
+        var finishResult = attempt.Finish(
+            sourceResult.Value.Questions);
 
-         var source = sourceResult.Value;
+        if (finishResult.IsFailure)
+            return Result.Failure<FinishAttemptResponse>(finishResult.Error);
 
-         bool isTimeExpired =
-            source.TimeLimitSeconds.HasValue &&
-            DateTime.UtcNow >
-            attempt.StartedAt.Value.AddSeconds(source.TimeLimitSeconds.Value);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-         int correctCount = 0;
-         decimal earnedPoints = 0;
-
-         if (!isTimeExpired)
-         {
-             var checkResult = CheckAnswers(source, command.FinishRequest.UserAnswers);
-             if (checkResult.IsFailure)
-                 return Result.Failure<AttemptResponse>(checkResult.Error);
-
-             correctCount = checkResult.Value.correctAnswers;
-             earnedPoints = checkResult.Value.points;
-         }
-
-         var finishResult = attempt.Finish(correctCount, earnedPoints);
-         if (finishResult.IsFailure)
-             return Result.Failure<AttemptResponse>(finishResult.Error);
-
-         var updateResult = await _attemptsRepository.UpdateAsync(attempt, cancellationToken);
-         if (updateResult.IsFailure)
-             return Result.Failure<AttemptResponse>(updateResult.Error);
-
-         var response = new AttemptResponse(
-             attempt.Id,
-             attempt.TotalQuestions,
-             attempt.CorrectAnswers,
-             attempt.EarnedPoints,
-             attempt.MaxPoints,
-             attempt.UserId,
-             attempt.StartedAt,
-             attempt.FinishedAt,
-             (AttemptStatusDto)attempt.Status,
-             (AttemptTypeDto)attempt.Type,
-             attempt.SourceId);
-
-         return Result.Success(response);
+        return Result.Success(AttemptFinishMapper.ToFinishResponse(attempt));
     }
-
-    private Result<(int correctAnswers, decimal points)> CheckAnswers(
-        IAttemptSource source,
-        IReadOnlyList<UserAnswer> userAnswers)
-    {
-        int correct = 0;
-        decimal points = 0;
-
-        foreach (var userAnswer in userAnswers)
-        {
-            var question = source.Questions.FirstOrDefault(q => q.Id == userAnswer.QuestionId);
-            if (question is null)
-                return Result.Failure<(int, decimal)>($"Вопрос {userAnswer.QuestionId} не найден");
-
-            var questionType = (QuestionType)question.QuestionTypeId;
-
-            var checker = _checkerFactory.GetChecker(questionType);
-
-            var result = checker.Check(question, userAnswer);
-
-            if (result.IsFailure)
-                return Result.Failure<(int, decimal)>(result.Error);
-
-            if (result.Value)
-            {
-                correct++;
-                points += question.Points;
-            }
-        }
-
-        return Result.Success((correct, points));
-    }
-
 }

@@ -11,7 +11,7 @@ namespace TestPlatform.Application.Exams.Features.CreateExamCommand;
 
 public record CreateExamCommand(ExamRequest Request) : ICommand;
 
-public class CreateExamHandler : ICommandHandler<Guid, CreateExamCommand>
+public class CreateExamHandler : ICommandHandler<CreateExamCommand, Guid>
 {
     private readonly IExamsRepository _examsRepository;
     private readonly IUnitOfWork _unitOfWork;

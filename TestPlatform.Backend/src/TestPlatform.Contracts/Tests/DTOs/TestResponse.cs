@@ -2,9 +2,9 @@
 
 public record TestResponse(
     Guid Id,
-    string Name,
-    int? TimeLimitSeconds,
+    string Title,
     string Description,
+    int? TimeLimitSeconds,
     Guid? AuthorId,
-    int TotalQuestions,
-    List<Guid> TagIds);
+    DateTime CreatedAt,
+    int TotalQuestions);

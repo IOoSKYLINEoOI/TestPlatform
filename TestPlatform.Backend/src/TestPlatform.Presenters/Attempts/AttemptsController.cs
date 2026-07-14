@@ -26,7 +26,7 @@ public class AttemptsController : ControllerBase
         Summary = "Получить результаты попытки по Id.",
         Description = "Возвращает результат попытки по его Id")]
     public async Task<IActionResult> GetById(
-        [FromServices] IQueryHandler<AttemptResponse, GetByIdAttemptQuery> handler,
+        [FromServices] IQueryHandler<GetByIdAttemptQuery, FinishAttemptResponse> handler,
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
@@ -34,7 +34,7 @@ public class AttemptsController : ControllerBase
         if (currentUser == null)
             return Forbid();
 
-        var query = new GetByIdAttemptQuery(id,  currentUser);
+        var query = new GetByIdAttemptQuery(id);
 
         var result = await handler.Handle(query, cancellationToken);
 
@@ -57,7 +57,7 @@ public class AttemptsController : ControllerBase
         Summary = "Начать прохождение попытки",
         Description = "Создается попытка прохождения теста/экзамена и возвращает тест/экзамена для прохождения.")]
     public async Task<IActionResult> Start(
-        [FromServices] ICommandHandler<StartResponse, StartAttemptCommand> handler,
+        [FromServices] ICommandHandler<StartAttemptCommand, StartAttemptResponse> handler,
         [FromBody] StartRequest request,
         CancellationToken cancellationToken)
     {
@@ -65,7 +65,7 @@ public class AttemptsController : ControllerBase
         if (currentUser == null)
             return Forbid();
 
-        var command = new StartAttemptCommand(request, currentUser);
+        var command = new StartAttemptCommand(request);
 
         var response = await handler.Handle(command, cancellationToken);
         return Ok(response);
@@ -77,7 +77,7 @@ public class AttemptsController : ControllerBase
         Summary = "Закончить прохождение попытки",
         Description = "Возвращается попытка прохождения с результатами прохождения теста/экзамена.")]
     public async Task<IActionResult> Finish(
-        [FromServices] ICommandHandler<AttemptResponse, FinishAttemptCommand> handler,
+        [FromServices] ICommandHandler<FinishAttemptCommand, FinishAttemptResponse> handler,
         [FromRoute] Guid id,
         [FromBody] FinishRequest request,
         CancellationToken cancellationToken)
@@ -86,7 +86,7 @@ public class AttemptsController : ControllerBase
         if (currentUser == null)
             return Forbid();
 
-        var command = new FinishAttemptCommand(id, request,  currentUser);
+        var command = new FinishAttemptCommand(id);
 
         var response = await handler.Handle(command, cancellationToken);
         return Ok(response);

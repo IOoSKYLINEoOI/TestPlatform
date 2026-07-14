@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+﻿/*using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Abstractions.Enums;
@@ -82,4 +82,4 @@ public class DeleteQuestionHandler : ICommandHandler<DeleteQuestionCommand>
 
         return deleteResult;
     }
-}
+}*/

@@ -2,20 +2,25 @@
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Extensions;
-using TestPlatform.Core.Tags;
+using TestPlatform.Core.Questions;
 
 namespace TestPlatform.Application.Tags.Features.CreateTagCommand;
 
 public record CreateTagCommand(string Name, string Description) : ICommand;
 
-public class CreateTagHandler : ICommandHandler<Guid, CreateTagCommand>
+public class CreateTagHandler : ICommandHandler<CreateTagCommand, Guid>
 {
     private readonly ITagsRepository _tagsRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CreateTagHandler> _logger;
 
-    public CreateTagHandler(ITagsRepository tagsRepository, ILogger<CreateTagHandler> logger)
+    public CreateTagHandler(
+        ITagsRepository tagsRepository,
+        IUnitOfWork unitOfWork,
+        ILogger<CreateTagHandler> logger)
     {
         _tagsRepository = tagsRepository;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -26,16 +31,12 @@ public class CreateTagHandler : ICommandHandler<Guid, CreateTagCommand>
         if(tagResult.IsFailure)
             return Result.Failure<Guid>(tagResult.Error);
 
-        var tagIdResult = await _tagsRepository.AddAsync(tagResult.Value, cancellationToken);
-        if (tagIdResult.IsFailure)
-        {
-            _logger.LogWarning("Failed to create tag: {Error}", tagIdResult.Error);
+        await _tagsRepository.AddAsync(tagResult.Value, cancellationToken);
 
-            return Result.Failure<Guid>(tagIdResult.Error);
-        }
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        _logger.LogResult("Create Tag", tagIdResult.Value, tagIdResult);
+        _logger.LogResult("Create Tag", tagResult.Value.Id, tagResult);
 
-        return Result.Success(tagIdResult.Value);
+        return Result.Success(tagResult.Value.Id);
     }
 }

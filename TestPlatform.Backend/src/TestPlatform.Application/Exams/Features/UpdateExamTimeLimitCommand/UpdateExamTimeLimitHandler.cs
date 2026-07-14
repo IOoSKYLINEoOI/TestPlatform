@@ -1,22 +1,22 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Exams.Services;
-using TestPlatform.Contracts.Exams.DTOs;
+using TestPlatform.Contracts.Share;
+using TestPlatform.Core.Exams;
 
 namespace TestPlatform.Application.Exams.Features.UpdateExamTimeLimitCommand;
 
-public record UpdateExamTimeLimitCommand(Guid Id, UpdateExamTimeLimitRequest Request) : ICommand;
+public record UpdateExamTimeLimitCommand(Guid Id, UpdateTimeLimitRequest Request) : ICommand;
 
 public class UpdateExamTimeLimitHandler : ICommandHandler<UpdateExamTimeLimitCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExamAccessService _examAccessService;
+    private readonly IAccessService<Exam> _examAccessService;
     private readonly ILogger<UpdateExamTimeLimitHandler> _logger;
 
     public UpdateExamTimeLimitHandler(
         IUnitOfWork unitOfWork,
-        IExamAccessService examAccessService,
+        IAccessService<Exam> examAccessService,
         ILogger<UpdateExamTimeLimitHandler> logger)
     {
         _unitOfWork = unitOfWork;

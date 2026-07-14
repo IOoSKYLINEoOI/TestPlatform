@@ -1,7 +1,9 @@
 ﻿using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Users.DTOs;
 using TestPlatform.Core.Users;
+using TestPlatform.Infrastructure.Postgres;
 
 namespace TestPlatform.Web.Middleware;
 
@@ -10,7 +12,9 @@ public class EnsureUserMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<EnsureUserMiddleware> _logger;
 
-    public EnsureUserMiddleware(RequestDelegate next, ILogger<EnsureUserMiddleware> logger)
+    public EnsureUserMiddleware(
+        RequestDelegate next,
+        ILogger<EnsureUserMiddleware> logger)
     {
         _next = next;
         _logger = logger;
@@ -18,71 +22,75 @@ public class EnsureUserMiddleware
 
     public async Task InvokeAsync(
         HttpContext context,
-        IUsersReadRepository usersReadRepository,
+        IUsersReadDbContext usersReadDbContext,
+        UnitOfWork unitOfWork,
         IUsersRepository usersRepository)
     {
-        var user = context.User;
+        var principal = context.User;
 
-        if (user.Identity?.IsAuthenticated != true)
+        if (principal.Identity?.IsAuthenticated != true)
         {
             await _next(context);
             return;
         }
 
-        if (context.Items.ContainsKey("CurrentUser"))
+        const string currentUserKey = "CurrentUser";
+
+        if (context.Items.ContainsKey(currentUserKey))
         {
             await _next(context);
             return;
         }
 
-        var keycloakId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var tabNumber = user.Identity?.Name;
+        var keycloakId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        var tabNumber = principal.Identity?.Name;
 
-        if (string.IsNullOrEmpty(keycloakId) || string.IsNullOrEmpty(tabNumber))
+        if (string.IsNullOrWhiteSpace(keycloakId) ||
+            string.IsNullOrWhiteSpace(tabNumber))
         {
             _logger.LogWarning("Missing required claims for user provisioning");
             await _next(context);
             return;
         }
 
-        var userDto = await usersReadRepository
-            .GetByKeycloakIdAsync(keycloakId, context.RequestAborted);
-
-        var isAdmin = user.IsInRole("Admin");
-
-        if (userDto == null)
-        {
-            var newUserResult = User.Create(keycloakId, tabNumber);
-
-            if (newUserResult.IsFailure)
+        var userInfo = await usersReadDbContext.ReadUsers
+            .AsNoTracking()
+            .Where(x => x.KeycloakId == keycloakId)
+            .Select(x => new
             {
-                _logger.LogError("Failed to create user domain object");
+                x.Id,
+                x.KeycloakId,
+                x.TabNumber,
+            })
+            .FirstOrDefaultAsync(context.RequestAborted);
+
+        if (userInfo is null)
+        {
+            var createResult = User.Create(keycloakId, tabNumber);
+
+            if (createResult.IsFailure)
+            {
+                _logger.LogError("Failed to create user: {Error}", createResult.Error);
                 await _next(context);
                 return;
             }
 
-            var addResult = await usersRepository
-                .AddAsync(newUserResult.Value, context.RequestAborted);
+            await usersRepository.AddAsync(createResult.Value, context.RequestAborted);
+            await unitOfWork.SaveChangesAsync(context.RequestAborted);
 
-            if (addResult.IsFailure)
+            userInfo = new
             {
-                _logger.LogError("Failed to persist new user");
-                await _next(context);
-                return;
-            }
-
-            userDto = new CurrentUserDto(
-                Id: newUserResult.Value.Id,
-                KeycloakId: newUserResult.Value.KeycloakId,
-                TabNumber: newUserResult.Value.TabNumber,
-                IsAdmin: isAdmin);
-        }
-        else
-        {
-            userDto = userDto with { IsAdmin = isAdmin };
+                createResult.Value.Id,
+                createResult.Value.KeycloakId,
+                createResult.Value.TabNumber,
+            };
         }
 
-        context.Items["CurrentUser"] = userDto;
+        context.Items[currentUserKey] = new CurrentUserDto(
+            userInfo.Id,
+            userInfo.KeycloakId,
+            userInfo.TabNumber,
+            principal.IsInRole("Admin"));
 
         await _next(context);
     }

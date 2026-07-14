@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Exams.Services;
+using TestPlatform.Core.Exams;
 
 namespace TestPlatform.Application.Exams.Features.PublishExamCommand;
 
@@ -10,12 +11,12 @@ public record PublishExamCommand(Guid Id) : ICommand;
 public class PublishExamHandler : ICommandHandler<PublishExamCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExamAccessService _examAccessService;
+    private readonly IAccessService<Exam> _examAccessService;
     private readonly ILogger<PublishExamHandler> _logger;
 
     public PublishExamHandler(
         IUnitOfWork unitOfWork,
-        IExamAccessService examAccessService,
+        IAccessService<Exam> examAccessService,
         ILogger<PublishExamHandler> logger)
     {
         _unitOfWork = unitOfWork;

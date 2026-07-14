@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TestPlatform.Application.Abstractions;
+using TestPlatform.Application.Attempts;
 using TestPlatform.Application.Attempts.Interfaces;
 using TestPlatform.Application.Exams;
 using TestPlatform.Application.Questions;
@@ -11,7 +12,6 @@ using TestPlatform.Application.Users;
 using TestPlatform.Infrastructure.Postgres.Attempts;
 using TestPlatform.Infrastructure.Postgres.Exams;
 using TestPlatform.Infrastructure.Postgres.Questions;
-using TestPlatform.Infrastructure.Postgres.Tags;
 using TestPlatform.Infrastructure.Postgres.Tests;
 using TestPlatform.Infrastructure.Postgres.Users;
 
@@ -26,22 +26,22 @@ public static class TestPlatformPersistenceExtensions
                               ?? throw new InvalidOperationException("Connection string 'TestPlatformContextPostgreSQL' not found.")));
 
         services.AddScoped<ITagsRepository, TagsRepository>();
-        services.AddScoped<ITagsReadRepository, TagsReadRepository>();
+        services.AddScoped<ITagsReadDbContext, TestPlatformDbContext>();
 
         services.AddScoped<IQuestionsRepository, QuestionsRepository>();
-        services.AddScoped<IQuestionsReadRepository, QuestionsReadRepository>();
+        services.AddScoped<IQuestionsReadDbContext, TestPlatformDbContext>();
 
         services.AddScoped<ITestsRepository, TestsRepository>();
-        services.AddScoped<ITestsReadRepository, TestsReadRepository>();
-
-        services.AddScoped<IAttemptsRepository, AttemptsRepository>();
-        services.AddScoped<IAttemptsReadRepository, AttemptsReadRepository>();
-
-        services.AddScoped<IUsersRepository, UsersRepository>();
-        services.AddScoped<IUsersReadRepository, UsersReadRepository>();
+        services.AddScoped<ITestsReadDbContext, TestPlatformDbContext>();
 
         services.AddScoped<IExamsRepository, ExamsRepository>();
         services.AddScoped<IExamsReadDbContext, TestPlatformDbContext>();
+
+        services.AddScoped<IAttemptsRepository, AttemptsRepository>();
+        services.AddScoped<IAttemptsReadDbContext, TestPlatformDbContext>();
+
+        services.AddScoped<IUsersRepository, UsersRepository>();
+        services.AddScoped<IUsersReadDbContext, TestPlatformDbContext>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 

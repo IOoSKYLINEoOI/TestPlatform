@@ -1,15 +1,12 @@
-﻿using CSharpFunctionalExtensions;
-using TestPlatform.Core.Tags;
+﻿using TestPlatform.Core.Questions;
 
 namespace TestPlatform.Application.Tags;
 
 public interface ITagsRepository
 {
-    Task<Result<Guid>> AddAsync(Tag tag, CancellationToken cancellationToken);
+    Task<Tag?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
-    Task<Result> UpdateAsync(Guid id, string name, string description, CancellationToken cancellationToken);
+    Task AddAsync(Tag tag, CancellationToken cancellationToken);
 
-    Task<bool> ExistsAsync(Guid tagId, CancellationToken cancellationToken);
-
-    Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken);
+    void Delete(Tag tag);
 }

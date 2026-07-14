@@ -22,34 +22,69 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("QuestionEntityTagEntity", b =>
+            modelBuilder.Entity("QuestionTag", b =>
                 {
-                    b.Property<Guid>("QuestionsId")
+                    b.Property<Guid>("QuestionId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("TagsId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("QuestionsId", "TagsId");
+                    b.HasKey("QuestionId", "TagsId");
 
                     b.HasIndex("TagsId");
 
-                    b.ToTable("questions_tags", (string)null);
+                    b.ToTable("question_tags", (string)null);
                 });
 
-            modelBuilder.Entity("QuestionEntityTestEntity", b =>
+            modelBuilder.Entity("TestPlatform.Core.Attempts.Attempt", b =>
                 {
-                    b.Property<Guid>("QuestionsId")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("TestsId")
+                    b.Property<DateTime?>("Deadline")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SourceId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("QuestionsId", "TestsId");
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.HasIndex("TestsId");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.ToTable("tests_questions", (string)null);
+                    b.Property<int?>("TimeLimitSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalMaxScore")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int>("TotalQuestions")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Type", "SourceId");
+
+                    b.HasIndex("UserId", "Status");
+
+                    b.ToTable("attempts", (string)null);
                 });
 
             modelBuilder.Entity("TestPlatform.Core.Exams.Exam", b =>
@@ -97,100 +132,19 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     b.ToTable("exams", (string)null);
                 });
 
-            modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Attempts.Entities.AttemptEntity", b =>
+            modelBuilder.Entity("TestPlatform.Core.Questions.Question", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("CorrectAnswers")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("EarnedPoints")
-                        .HasColumnType("numeric(5,2)");
-
-                    b.Property<DateTime?>("FinishedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("MaxPoints")
-                        .HasColumnType("numeric(5,2)");
-
-                    b.Property<Guid>("SourceId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("StartedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
+                    b.Property<string>("AnswerDefinition")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("TotalQuestions")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("Type", "SourceId");
-
-                    b.ToTable("attempts", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_Attempt_Parent", "(\"TestId\" IS NOT NULL AND \"ExamId\" IS NULL) OR (\"TestId\" IS NULL AND \"ExamId\" IS NOT NULL)");
-                        });
-                });
-
-            modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Questions.Entities.AnswerOptionEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("ImageName")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
-
-                    b.Property<bool>("IsCorrect")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("QuestionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuestionId");
-
-                    b.ToTable("answer_options", (string)null);
-                });
-
-            modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Questions.Entities.QuestionEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ImageName")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("Points")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
-
-                    b.Property<int>("QuestionTypeId")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Text")
                         .IsRequired()
@@ -202,13 +156,14 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     b.ToTable("questions", (string)null);
                 });
 
-            modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Tags.Entities.TagEntity", b =>
+            modelBuilder.Entity("TestPlatform.Core.Questions.Tag", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
 
@@ -220,36 +175,37 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("ix_tags_name_lower_unique");
 
                     b.ToTable("tags", (string)null);
                 });
 
-            modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Tests.Entities.TestEntity", b =>
+            modelBuilder.Entity("TestPlatform.Core.Tests.Test", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("AuthorId")
+                    b.Property<Guid>("AuthorId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("CoverImageName")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
 
-                    b.Property<string>("Name")
+                    b.Property<int?>("TimeLimitSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
-
-                    b.Property<int?>("TimeLimitSeconds")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -258,16 +214,15 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     b.ToTable("tests", (string)null);
                 });
 
-            modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Users.Entities.UserEntity", b =>
+            modelBuilder.Entity("TestPlatform.Core.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("KeycloakId")
                         .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("character varying(250)");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("TabNumber")
                         .IsRequired()
@@ -276,58 +231,95 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("KeycloakId")
+                        .IsUnique();
+
+                    b.HasIndex("TabNumber")
+                        .IsUnique();
+
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("QuestionEntityTagEntity", b =>
+            modelBuilder.Entity("QuestionTag", b =>
                 {
-                    b.HasOne("TestPlatform.Infrastructure.Postgres.Questions.Entities.QuestionEntity", null)
+                    b.HasOne("TestPlatform.Core.Questions.Question", null)
                         .WithMany()
-                        .HasForeignKey("QuestionsId")
+                        .HasForeignKey("QuestionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("TestPlatform.Infrastructure.Postgres.Tags.Entities.TagEntity", null)
+                    b.HasOne("TestPlatform.Core.Questions.Tag", null)
                         .WithMany()
                         .HasForeignKey("TagsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("QuestionEntityTestEntity", b =>
+            modelBuilder.Entity("TestPlatform.Core.Attempts.Attempt", b =>
                 {
-                    b.HasOne("TestPlatform.Infrastructure.Postgres.Questions.Entities.QuestionEntity", null)
-                        .WithMany()
-                        .HasForeignKey("QuestionsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.OwnsMany("TestPlatform.Core.Attempts.AttemptAnswer", "AttemptAnswers", b1 =>
+                        {
+                            b1.Property<Guid>("AttemptId")
+                                .HasColumnType("uuid");
 
-                    b.HasOne("TestPlatform.Infrastructure.Postgres.Tests.Entities.TestEntity", null)
-                        .WithMany()
-                        .HasForeignKey("TestsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                            b1.Property<Guid>("QuestionId")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("MatchingPairs")
+                                .IsRequired()
+                                .HasColumnType("jsonb");
+
+                            b1.Property<decimal?>("NumberAnswer")
+                                .HasPrecision(10, 2)
+                                .HasColumnType("numeric(10,2)");
+
+                            b1.Property<string>("SelectedOptionIds")
+                                .IsRequired()
+                                .HasColumnType("jsonb");
+
+                            b1.Property<string>("TextAnswer")
+                                .HasColumnType("text");
+
+                            b1.HasKey("AttemptId", "QuestionId");
+
+                            b1.HasIndex("AttemptId", "QuestionId")
+                                .IsUnique();
+
+                            b1.ToTable("attempt_answers", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("AttemptId");
+                        });
+
+                    b.OwnsOne("TestPlatform.Core.Attempts.AttemptResult", "AttemptResult", b1 =>
+                        {
+                            b1.Property<Guid>("AttemptId");
+
+                            b1.Property<int>("CorrectAnswers");
+
+                            b1.Property<decimal>("EarnedPoints");
+
+                            b1.HasKey("AttemptId");
+
+                            b1.ToTable("attempts");
+
+                            b1
+                                .ToJson("AttemptResult")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AttemptId");
+                        });
+
+                    b.Navigation("AttemptAnswers");
+
+                    b.Navigation("AttemptResult");
                 });
 
             modelBuilder.Entity("TestPlatform.Core.Exams.Exam", b =>
                 {
-                    b.OwnsOne("TestPlatform.Core.Exams.ExamPassingRule", "PassingRule", b1 =>
-                        {
-                            b1.Property<Guid>("ExamId");
-
-                            b1.HasKey("ExamId");
-
-                            b1.ToTable("exams");
-
-                            b1
-                                .ToJson("PassingRule")
-                                .HasColumnType("jsonb");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ExamId");
-                        });
-
-                    b.OwnsMany("TestPlatform.Core.Exams.ExamQuestion", "Questions", b1 =>
+                    b.OwnsMany("TestPlatform.Core.Shared.QuestionAssignment", "Questions", b1 =>
                         {
                             b1.Property<Guid>("ExamId")
                                 .HasColumnType("uuid");
@@ -356,6 +348,22 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                                 .HasForeignKey("ExamId");
                         });
 
+                    b.OwnsOne("TestPlatform.Core.Exams.ExamPassingRule", "PassingRule", b1 =>
+                        {
+                            b1.Property<Guid>("ExamId");
+
+                            b1.HasKey("ExamId");
+
+                            b1.ToTable("exams");
+
+                            b1
+                                .ToJson("PassingRule")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ExamId");
+                        });
+
                     b.OwnsOne("TestPlatform.Core.Exams.ExamSchedule", "Schedule", b1 =>
                         {
                             b1.Property<Guid>("ExamId");
@@ -379,47 +387,38 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     b.Navigation("Schedule");
                 });
 
-            modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Attempts.Entities.AttemptEntity", b =>
+            modelBuilder.Entity("TestPlatform.Core.Tests.Test", b =>
                 {
-                    b.HasOne("TestPlatform.Infrastructure.Postgres.Users.Entities.UserEntity", "User")
-                        .WithMany("Attempts")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.OwnsMany("TestPlatform.Core.Shared.QuestionAssignment", "Questions", b1 =>
+                        {
+                            b1.Property<Guid>("TestId")
+                                .HasColumnType("uuid");
 
-                    b.Navigation("User");
-                });
+                            b1.Property<Guid>("QuestionId")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("uuid");
 
-            modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Questions.Entities.AnswerOptionEntity", b =>
-                {
-                    b.HasOne("TestPlatform.Infrastructure.Postgres.Questions.Entities.QuestionEntity", "Question")
-                        .WithMany("AnswersOptions")
-                        .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                            b1.Property<int>("Order")
+                                .HasColumnType("integer");
 
-                    b.Navigation("Question");
-                });
+                            b1.Property<int>("Score")
+                                .HasColumnType("integer");
 
-            modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Tests.Entities.TestEntity", b =>
-                {
-                    b.HasOne("TestPlatform.Infrastructure.Postgres.Users.Entities.UserEntity", "Author")
-                        .WithMany("Tests")
-                        .HasForeignKey("AuthorId");
+                            b1.HasKey("TestId", "QuestionId");
 
-                    b.Navigation("Author");
-                });
+                            b1.HasIndex("TestId", "Order")
+                                .IsUnique();
 
-            modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Questions.Entities.QuestionEntity", b =>
-                {
-                    b.Navigation("AnswersOptions");
-                });
+                            b1.HasIndex("TestId", "QuestionId")
+                                .IsUnique();
 
-            modelBuilder.Entity("TestPlatform.Infrastructure.Postgres.Users.Entities.UserEntity", b =>
-                {
-                    b.Navigation("Attempts");
+                            b1.ToTable("test_questions", (string)null);
 
-                    b.Navigation("Tests");
+                            b1.WithOwner()
+                                .HasForeignKey("TestId");
+                        });
+
+                    b.Navigation("Questions");
                 });
 #pragma warning restore 612, 618
         }

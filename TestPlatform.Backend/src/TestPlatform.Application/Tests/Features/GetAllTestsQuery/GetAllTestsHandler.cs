@@ -1,5 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Tests.DTOs;
 
@@ -7,25 +7,21 @@ namespace TestPlatform.Application.Tests.Features.GetAllTestsQuery;
 
 public record GetAllTestsQuery() : IQuery;
 
-public class GetAllTestsHandler : IQueryHandler<IReadOnlyList<TestResponse>, GetAllTestsQuery>
+public class GetAllTestsHandler(ITestsReadDbContext testsDbContext) : IQueryHandler<GetAllTestsQuery, IReadOnlyList<TestResponse>>
 {
-    private readonly ITestsReadRepository _testsReadRepository;
-    private readonly ILogger<GetAllTestsHandler> _logger;
-
-    public GetAllTestsHandler(ITestsReadRepository testsReadRepository, ILogger<GetAllTestsHandler> logger)
+    public async Task<Result<IReadOnlyList<TestResponse>>> Handle(GetAllTestsQuery query, CancellationToken cancellationToken)
     {
-        _testsReadRepository = testsReadRepository;
-        _logger = logger;
-    }
+        var response = await testsDbContext.ReadTests
+            .Select(t => new TestResponse(
+                t.Id,
+                t.Title,
+                t.Description,
+                t.TimeLimitSeconds,
+                t.AuthorId,
+                t.CreatedAt,
+                t.Questions.Count))
+            .ToListAsync(cancellationToken);
 
-    public async Task<Result<IReadOnlyList<TestResponse>>> Handle(
-        GetAllTestsQuery request,
-        CancellationToken cancellationToken)
-    {
-        var tests = await _testsReadRepository.ReadAllTestAsync(cancellationToken);
-
-        _logger.LogInformation("Retrieved {Count} tags", tests.Count);
-
-        return Result.Success((IReadOnlyList<TestResponse>)tests);
+        return Result.Success<IReadOnlyList<TestResponse>>(response);
     }
 }

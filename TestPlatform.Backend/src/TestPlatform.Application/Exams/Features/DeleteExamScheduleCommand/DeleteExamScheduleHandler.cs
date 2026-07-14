@@ -1,7 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Exams.Services;
+using TestPlatform.Core.Exams;
 
 namespace TestPlatform.Application.Exams.Features.DeleteExamScheduleCommand;
 
@@ -10,12 +10,12 @@ public record DeleteExamScheduleCommand(Guid Id) : ICommand;
 public class DeleteExamScheduleHandler : ICommandHandler<DeleteExamScheduleCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExamAccessService _examAccessService;
+    private readonly IAccessService<Exam> _examAccessService;
     private readonly ILogger<DeleteExamScheduleHandler> _logger;
 
     public DeleteExamScheduleHandler(
         IUnitOfWork unitOfWork,
-        IExamAccessService examAccessService,
+        IAccessService<Exam> examAccessService,
         ILogger<DeleteExamScheduleHandler> logger)
     {
         _unitOfWork = unitOfWork;

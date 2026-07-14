@@ -1,8 +1,8 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
+using TestPlatform.Application.Common.Error;
 using TestPlatform.Application.Extensions;
-using TestPlatform.Core.Tags;
 
 namespace TestPlatform.Application.Tags.Features.UpdateTagCommand;
 
@@ -11,30 +11,33 @@ public record UpdateTagCommand(Guid Id, string Name, string Description) : IComm
 public class UpdateTagHandler : ICommandHandler<UpdateTagCommand>
 {
     private readonly ITagsRepository _tagsRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<UpdateTagHandler> _logger;
 
-    public UpdateTagHandler(ITagsRepository tagsRepository, ILogger<UpdateTagHandler> logger)
+    public UpdateTagHandler(
+        ITagsRepository tagsRepository,
+        IUnitOfWork unitOfWork,
+        ILogger<UpdateTagHandler> logger)
     {
         _tagsRepository = tagsRepository;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
     public async Task<Result> Handle(UpdateTagCommand command, CancellationToken cancellationToken)
     {
-        var tagUpdatedResult = Tag.CreateWithId(command.Id, command.Name, command.Description);
+        var tag = await _tagsRepository.GetByIdAsync(command.Id, cancellationToken);
+        if (tag is null)
+            return Result.Failure(ErrorCodes.TagNotFound);
+
+        var tagUpdatedResult = tag.Update(command.Name, command.Description);
         if (tagUpdatedResult.IsFailure)
             return Result.Failure(tagUpdatedResult.Error);
 
-        var tagUpdated = tagUpdatedResult.Value;
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var updatedResult = await _tagsRepository.UpdateAsync(
-            tagUpdated.Id,
-            tagUpdated.Name,
-            tagUpdated.Description,
-            cancellationToken);
+        _logger.LogResult("Update Tag", command.Id, Result.Success());
 
-        _logger.LogResult("Update Tag", command.Id, updatedResult);
-
-        return updatedResult;
+        return Result.Success();
     }
 }

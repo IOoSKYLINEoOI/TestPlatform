@@ -1,7 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Exams.Services;
+using TestPlatform.Core.Exams;
 
 namespace TestPlatform.Application.Exams.Features.DeleteExamCoverImageCommand;
 
@@ -10,12 +10,12 @@ public record DeleteExamCoverImageCommand(Guid Id) : ICommand;
 public class DeleteExamCoverImageHandler : ICommandHandler<DeleteExamCoverImageCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExamAccessService _examAccessService;
+    private readonly IAccessService<Exam> _examAccessService;
     private readonly ILogger<DeleteExamCoverImageHandler> _logger;
 
     public DeleteExamCoverImageHandler(
         IUnitOfWork unitOfWork,
-        IExamAccessService examAccessService,
+        IAccessService<Exam> examAccessService,
         ILogger<DeleteExamCoverImageHandler> logger)
     {
         _unitOfWork = unitOfWork;

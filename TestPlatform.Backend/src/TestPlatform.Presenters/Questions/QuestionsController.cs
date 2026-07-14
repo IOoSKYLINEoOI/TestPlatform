@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Questions.Features.CreateQuestionCommand;
-using TestPlatform.Application.Questions.Features.DeleteQuestionCommand;
 using TestPlatform.Application.Questions.Features.GetAllQuestionsByTagsQuery;
 using TestPlatform.Application.Questions.Features.GetByIdQuestionQuery;
 using TestPlatform.Application.Questions.Features.UpdateQuestionCommand;
@@ -21,12 +20,11 @@ public class QuestionsController : ControllerBase
         Summary = "Получить вопрос с ответами по Id.",
         Description = "Возвращает вопрос с ответами по его Id")]
     public async Task<IActionResult> GetById(
-        [FromServices] IQueryHandler<QuestionResponse, GetByIdQuestionQuery> handler,
+        [FromServices] IQueryHandler<GetByIdQuestionQuery, QuestionResponse> handler,
         [FromRoute] Guid id,
-        CancellationToken cancellationToken,
-        [FromQuery] bool includeCorrectAnswer = false)
+        CancellationToken cancellationToken)
     {
-        var query = new GetByIdQuestionQuery(id,  includeCorrectAnswer);
+        var query = new GetByIdQuestionQuery(id);
 
         var result = await handler.Handle(query, cancellationToken);
         return result.IsSuccess
@@ -40,12 +38,11 @@ public class QuestionsController : ControllerBase
         Summary = "Получить все вопросы с определенными тэгами",
         Description = "Возвращает вопросы с ответами по определенным тэгам.")]
     public async Task<IActionResult> GetAll(
-        [FromServices] IQueryHandler<IReadOnlyList<QuestionResponse>, GetAllQuestionsByTagsQuery> handler,
+        [FromServices] IQueryHandler<GetAllQuestionsByTagsQuery, IReadOnlyList<QuestionResponse>> handler,
         [FromQuery] List<Guid> tagIds,
-        CancellationToken cancellationToken,
-        [FromQuery] bool includeCorrectAnswer = false)
+        CancellationToken cancellationToken)
     {
-        var query = new GetAllQuestionsByTagsQuery(tagIds, includeCorrectAnswer);
+        var query = new GetAllQuestionsByTagsQuery(tagIds);
 
         var result = await handler.Handle(query, cancellationToken);
 
@@ -61,7 +58,7 @@ public class QuestionsController : ControllerBase
         Summary = "Создать новый вопрос с ответами",
         Description = "Создаёт новый вопрос с указаным текста, типа, стоимости, пути изображения, списка ответов (текст, корректность).")]
     public async Task<IActionResult> Create(
-        [FromServices] ICommandHandler<Guid, CreateQuestionCommand> handler,
+        [FromServices] ICommandHandler<CreateQuestionCommand, Guid> handler,
         [FromBody] QuestionRequest request,
         CancellationToken cancellationToken)
     {
@@ -80,7 +77,7 @@ public class QuestionsController : ControllerBase
     public async Task<IActionResult> Update(
         [FromServices] ICommandHandler<UpdateQuestionCommand> handler,
         [FromRoute] Guid id,
-        [FromBody] UpdateQuestionRequest request,
+        [FromBody] QuestionRequest request,
         CancellationToken cancellationToken)
     {
         var command = new UpdateQuestionCommand(id, request);
@@ -89,7 +86,7 @@ public class QuestionsController : ControllerBase
         return result.IsSuccess ? Ok() : BadRequest(result.Error);
     }
 
-    [Authorize(Roles = "Teacher,Admin")]
+    /*Authorize(Roles = "Teacher,Admin")]
     [HttpDelete("{id:guid}")]
     [SwaggerOperation(
         OperationId = "DeleteQuestion",
@@ -104,5 +101,5 @@ public class QuestionsController : ControllerBase
 
         var result = await handler.Handle(command, cancellationToken);
         return result.IsSuccess ? NoContent() : NotFound(result.Error);
-    }
+    }*/
 }
