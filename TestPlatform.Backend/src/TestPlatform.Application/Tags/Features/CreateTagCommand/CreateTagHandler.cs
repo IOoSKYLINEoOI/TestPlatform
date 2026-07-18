@@ -28,7 +28,7 @@ public class CreateTagHandler : ICommandHandler<CreateTagCommand, Guid>
     {
         var tagResult = Tag.Create(command.Name, command.Description);
 
-        if(tagResult.IsFailure)
+        if (tagResult.IsFailure)
             return Result.Failure<Guid>(tagResult.Error);
 
         await _tagsRepository.AddAsync(tagResult.Value, cancellationToken);

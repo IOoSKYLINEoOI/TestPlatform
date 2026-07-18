@@ -5,7 +5,7 @@ public record ExamFullResponse(
     string Title,
     string Description,
     int? TimeLimitSeconds,
-    string? CoverImageName,
+    Guid? CoverImageId,
     Guid AuthorId,
     string Status,
     DateTime CreatedAt,

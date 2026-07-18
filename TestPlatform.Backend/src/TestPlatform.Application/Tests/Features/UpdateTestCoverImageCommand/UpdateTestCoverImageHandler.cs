@@ -1,6 +1,8 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
+using TestPlatform.Application.Files;
+using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Share;
 using TestPlatform.Core.Tests;
 
@@ -12,15 +14,21 @@ public class UpdateTestCoverImageHandler : ICommandHandler<UpdateTestCoverImageC
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAccessService<Test> _testAccessService;
+    private readonly IFileAssetService _fileAssetService;
+    private readonly ICurrentUserAccessor _currentUserAccessor;
     private readonly ILogger<UpdateTestCoverImageHandler> _logger;
 
     public UpdateTestCoverImageHandler(
         IUnitOfWork unitOfWork,
         IAccessService<Test> testAccessService,
+        IFileAssetService fileAssetService,
+        ICurrentUserAccessor currentUserAccessor,
         ILogger<UpdateTestCoverImageHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _testAccessService = testAccessService;
+        _fileAssetService = fileAssetService;
+        _currentUserAccessor = currentUserAccessor;
         _logger = logger;
     }
 
@@ -30,15 +38,27 @@ public class UpdateTestCoverImageHandler : ICommandHandler<UpdateTestCoverImageC
         if (accessResult.IsFailure)
             return accessResult;
 
+        var currentUser = _currentUserAccessor.User;
+        if (currentUser is null)
+            return Result.Failure("unauthorized");
+
+        var attachResult = await _fileAssetService.AttachAsync(
+            command.Request.FileId,
+            currentUser.Id,
+            cancellationToken);
+
+        if (attachResult.IsFailure)
+            return Result.Failure(attachResult.Error);
+
         var test = accessResult.Value;
 
-        var result = test.ChangeCoverImage(command.Request.FileName);
+        var result = test.ChangeCoverImage(command.Request.FileId);
         if (result.IsFailure)
             return Result.Failure(result.Error);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Test {TestId} cover image updated to {FileName}", command.Id, command.Request.FileName);
+        _logger.LogInformation("Test {TestId} cover image updated to {FileId}", command.Id, command.Request.FileId);
 
         return Result.Success();
     }

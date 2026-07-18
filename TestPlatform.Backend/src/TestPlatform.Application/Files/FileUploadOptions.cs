@@ -1,13 +1,7 @@
-﻿namespace TestPlatform.Infrastructure.FileStorage;
+﻿namespace TestPlatform.Application.Files;
 
-public class ImageStorageOptions
+public class FileUploadOptions
 {
-    public string RootPath { get; set; } = "wwwroot/images";
-
-    public string TempFolder { get; set; } = "temp";
-
-    public string PermanentFolder { get; set; } = "permanent";
-
     public int MaxFileSizeMb { get; set; } = 5;
 
     public string[] AllowedExtensions { get; set; } =
@@ -16,7 +10,7 @@ public class ImageStorageOptions
         ".jpeg",
         ".png",
         ".webp",
-        ".bmp"
+        ".bmp",
     ];
 
     public int MaxWidth { get; set; } = 1024;

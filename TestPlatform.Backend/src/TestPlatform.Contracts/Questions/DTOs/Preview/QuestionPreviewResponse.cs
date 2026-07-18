@@ -6,6 +6,6 @@ namespace TestPlatform.Contracts.Questions.DTOs.Preview;
 public abstract record QuestionPreviewResponse(
     Guid Id,
     string Text,
-    string? ImageName,
+    Guid? ImageId,
     QuestionTypeDto Type,
     IReadOnlyList<TagResponse> Tags);

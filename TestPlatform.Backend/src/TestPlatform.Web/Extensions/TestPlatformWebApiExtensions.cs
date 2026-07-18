@@ -40,6 +40,9 @@ public static class TestPlatformWebApiExtensions
                     },
                 });
 
+            o.UseOneOfForPolymorphism();
+            o.UseAllOfForInheritance();
+
             o.AddSecurityRequirement(doc => new OpenApiSecurityRequirement()
             {
                 {

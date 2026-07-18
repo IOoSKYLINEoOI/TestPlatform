@@ -4,5 +4,5 @@ namespace TestPlatform.Application.Users;
 
 public interface IUsersRepository
 {
-    Task AddAsync(User user,  CancellationToken cancellationToken);
+    Task AddAsync(User user, CancellationToken cancellationToken);
 }

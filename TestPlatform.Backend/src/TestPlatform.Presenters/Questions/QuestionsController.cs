@@ -55,8 +55,8 @@ public class QuestionsController : ControllerBase
     [HttpPost]
     [SwaggerOperation(
         OperationId = "CreateQuestion",
-        Summary = "Создать новый вопрос с ответами",
-        Description = "Создаёт новый вопрос с указаным текста, типа, стоимости, пути изображения, списка ответов (текст, корректность).")]
+        Summary = "Создать новый вопрос с ответами(РАЗНЫЕ СХЕМЫ)",
+        Description = "Создаёт новый вопрос и его варианты ответа.")]
     public async Task<IActionResult> Create(
         [FromServices] ICommandHandler<CreateQuestionCommand, Guid> handler,
         [FromBody] QuestionRequest request,
@@ -72,8 +72,8 @@ public class QuestionsController : ControllerBase
     [HttpPut("{id:guid}")]
     [SwaggerOperation(
         OperationId = "UpdateQuestion",
-        Summary = "Обновить вопрос с ответами",
-        Description = "Обновить существующий вопрос по Id с новыми данными: текст, тип, стоимость, путь изображения, список ответов (текст, корректность).")]
+        Summary = "Обновить вопрос с ответами(РАЗНЫЕ СХЕМЫ)",
+        Description = "Обновить существующий вопрос по Id  и его варианты ответа.")]
     public async Task<IActionResult> Update(
         [FromServices] ICommandHandler<UpdateQuestionCommand> handler,
         [FromRoute] Guid id,

@@ -3,4 +3,4 @@
 public record AnswerOptionResponse(
     Guid Id,
     string Text,
-    string? ImageName);
+    Guid? ImageId);

@@ -5,12 +5,14 @@ using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Attempts;
 using TestPlatform.Application.Attempts.Interfaces;
 using TestPlatform.Application.Exams;
+using TestPlatform.Application.Files;
 using TestPlatform.Application.Questions;
 using TestPlatform.Application.Tags;
 using TestPlatform.Application.Tests;
 using TestPlatform.Application.Users;
 using TestPlatform.Infrastructure.Postgres.Attempts;
 using TestPlatform.Infrastructure.Postgres.Exams;
+using TestPlatform.Infrastructure.Postgres.Files;
 using TestPlatform.Infrastructure.Postgres.Questions;
 using TestPlatform.Infrastructure.Postgres.Tests;
 using TestPlatform.Infrastructure.Postgres.Users;
@@ -42,6 +44,9 @@ public static class TestPlatformPersistenceExtensions
 
         services.AddScoped<IUsersRepository, UsersRepository>();
         services.AddScoped<IUsersReadDbContext, TestPlatformDbContext>();
+
+        services.AddScoped<IFileAssetsRepository, FileAssetsRepository>();
+        services.AddScoped<IFileAssetsReadDbContext, TestPlatformDbContext>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 

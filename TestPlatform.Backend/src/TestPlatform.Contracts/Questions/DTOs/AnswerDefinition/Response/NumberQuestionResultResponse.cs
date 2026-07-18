@@ -6,8 +6,8 @@ namespace TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Response;
 public record NumberQuestionResultResponse(
     Guid Id,
     string Text,
-    string? ImageName,
+    Guid? ImageId,
     QuestionTypeDto Type,
     decimal CorrectAnswer,
     IReadOnlyList<TagResponse> Tags)
-    : QuestionResultResponse(Id, Text, ImageName, Tags);
+    : QuestionResultResponse(Id, Text, ImageId, Tags);

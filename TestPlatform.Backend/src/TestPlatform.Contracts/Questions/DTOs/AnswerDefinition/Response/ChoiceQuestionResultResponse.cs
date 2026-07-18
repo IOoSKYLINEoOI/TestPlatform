@@ -6,10 +6,10 @@ namespace TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Response;
 public record ChoiceQuestionResultResponse(
     Guid Id,
     string Text,
-    string? ImageName,
+    Guid? ImageId,
     QuestionTypeDto Type,
     ChoiceModeDto Mode,
     EvaluationModeDto EvaluationMode,
     IReadOnlyList<TagResponse> Tags,
     IReadOnlyList<AnswerOptionResultResponse> Options)
-    : QuestionResultResponse(Id, Text, ImageName, Tags);
+    : QuestionResultResponse(Id, Text, ImageId, Tags);

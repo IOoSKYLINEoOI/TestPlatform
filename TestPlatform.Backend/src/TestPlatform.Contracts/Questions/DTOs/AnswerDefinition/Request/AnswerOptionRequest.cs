@@ -3,4 +3,4 @@
 public record AnswerOptionRequest(
     string Text,
     bool IsCorrect,
-    string? ImageUrl);
+    Guid? ImageId);

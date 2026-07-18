@@ -3,4 +3,4 @@
 public record MatchingItemRequest(
     string Text,
     bool IsCorrect,
-    string? ImageUrl);
+    Guid? ImageId);

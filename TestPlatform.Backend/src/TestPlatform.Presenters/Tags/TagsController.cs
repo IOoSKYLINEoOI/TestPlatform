@@ -62,10 +62,10 @@ public class TagsController : ControllerBase
         [FromBody] TagRequest request,
         CancellationToken cancellationToken)
     {
-       var command = new CreateTagCommand(request.Name, request.Description);
+        var command = new CreateTagCommand(request.Name, request.Description);
 
-       var result = await handler.Handle(command, cancellationToken);
-       return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        var result = await handler.Handle(command, cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
     }
 
     [Authorize(Roles = "Admin")]

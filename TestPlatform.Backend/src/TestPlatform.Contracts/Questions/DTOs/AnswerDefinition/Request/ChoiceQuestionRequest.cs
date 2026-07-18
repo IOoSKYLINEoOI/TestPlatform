@@ -4,9 +4,9 @@ namespace TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Request;
 
 public record ChoiceQuestionRequest(
     string Text,
-    string? ImageName,
+    Guid? ImageId,
     ChoiceModeDto Mode,
     EvaluationModeDto EvaluationMode,
     List<Guid> TagIds,
     List<AnswerOptionRequest> Options)
-    : QuestionRequest(Text, ImageName, TagIds);
+    : QuestionRequest(Text, ImageId, TagIds);

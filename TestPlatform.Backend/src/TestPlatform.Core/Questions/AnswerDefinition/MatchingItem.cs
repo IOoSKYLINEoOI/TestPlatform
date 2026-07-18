@@ -6,26 +6,26 @@ public class MatchingItem
 {
     private const int MaxLengthText = 200;
 
-    private MatchingItem(Guid id, string text, string? imageName)
+    private MatchingItem(Guid id, string text, Guid? imageId)
     {
         Id = id;
         Text = text;
-        ImageName = imageName;
+        ImageId = imageId;
     }
 
     public Guid Id { get; }
 
     public string Text { get; }
 
-    public string? ImageName { get; }
+    public Guid? ImageId { get; }
 
-    public static Result<MatchingItem> Create(string text, string? imageName)
+    public static Result<MatchingItem> Create(string text, Guid? imageId)
     {
         var validator = Validate(text);
-        if(validator.IsFailure)
+        if (validator.IsFailure)
             return Result.Failure<MatchingItem>(validator.Error);
 
-        return Result.Success(new MatchingItem(Guid.NewGuid(), text, imageName));
+        return Result.Success(new MatchingItem(Guid.NewGuid(), text, imageId));
     }
 
     private static Result Validate(string text)

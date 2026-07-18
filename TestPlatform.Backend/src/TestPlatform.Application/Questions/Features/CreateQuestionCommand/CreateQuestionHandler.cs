@@ -2,10 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Abstractions.Enums;
 using TestPlatform.Application.Extensions;
+using TestPlatform.Application.Files;
 using TestPlatform.Application.Questions.Factories;
 using TestPlatform.Application.Tags;
+using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Questions.DTOs;
 using TestPlatform.Core.Questions;
 
@@ -17,20 +18,23 @@ public record CreateQuestionCommand(QuestionRequest Request) : ICommand;
 public class CreateQuestionHandler : ICommandHandler<CreateQuestionCommand, Guid>
 {
     private readonly IQuestionsRepository _questionsRepository;
-    private readonly IImageStorageService _imageStorageService;
+    private readonly IFileAssetService _fileAssetService;
+    private readonly ICurrentUserAccessor _currentUserAccessor;
     private readonly ITagsReadDbContext _tagsReadDbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CreateQuestionHandler> _logger;
 
     public CreateQuestionHandler(
         IQuestionsRepository questionsRepository,
-        IImageStorageService imageStorageService,
+        IFileAssetService fileAssetService,
+        ICurrentUserAccessor currentUserAccessor,
         ITagsReadDbContext tagsReadDbContext,
         IUnitOfWork unitOfWork,
         ILogger<CreateQuestionHandler> logger)
     {
         _questionsRepository = questionsRepository;
-        _imageStorageService = imageStorageService;
+        _fileAssetService = fileAssetService;
+        _currentUserAccessor = currentUserAccessor;
         _tagsReadDbContext = tagsReadDbContext;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -68,23 +72,28 @@ public class CreateQuestionHandler : ICommandHandler<CreateQuestionCommand, Guid
         if (tagResult.IsFailure)
             return Result.Failure<Guid>(tagResult.Error);
 
-        if (!string.IsNullOrWhiteSpace(command.Request.ImageName))
+        if (command.Request.ImageId.HasValue)
         {
-            var moveResult = await _imageStorageService.MoveToPermanent(
-                command.Request.ImageName,
-                ImageFolder.QUESTIONS);
+            var currentUser = _currentUserAccessor.User;
+            if (currentUser is null)
+                return Result.Failure<Guid>("unauthorized");
 
-            if (moveResult.IsFailure)
+            var attachResult = await _fileAssetService.AttachAsync(
+                command.Request.ImageId.Value,
+                currentUser.Id,
+                cancellationToken);
+
+            if (attachResult.IsFailure)
             {
                 _logger.LogWarning(
-                    "Failed to move image {ImageName} to permanent storage: {Error}",
-                    command.Request.ImageName,
-                    moveResult.Error);
+                    "Failed to attach image {ImageId}: {Error}",
+                    command.Request.ImageId,
+                    attachResult.Error);
 
-                return Result.Failure<Guid>(moveResult.Error);
+                return Result.Failure<Guid>(attachResult.Error);
             }
 
-            question.ChangeImage(command.Request.ImageName);
+            question.ChangeImage(command.Request.ImageId);
         }
 
         await _questionsRepository.AddAsync(question, cancellationToken);

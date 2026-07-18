@@ -19,8 +19,7 @@ public class QuestionsConfiguration : IEntityTypeConfiguration<Question>
 
         builder.Ignore(x => x.QuestionType);
 
-        builder.Property(x => x.ImageName)
-            .HasMaxLength(500);
+        builder.Property(x => x.ImageId);
 
         builder.HasMany(x => x.Tags)
             .WithMany()

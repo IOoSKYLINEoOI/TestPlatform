@@ -19,7 +19,7 @@ public class GetByIdExamHandler(IExamsReadDbContext examsDbContext) : IQueryHand
                 Title: x.Title,
                 Description: x.Description,
                 TimeLimitSeconds: x.TimeLimitSeconds,
-                CoverImageName: x.CoverImageName,
+                CoverImageId: x.CoverImageId,
                 AuthorId: x.AuthorId,
                 Status: x.Status.ToString(),
                 CreatedAt: x.CreatedAt,

@@ -5,7 +5,7 @@ public record TestFullResponse(
     string Title,
     string Description,
     int? TimeLimitSeconds,
-    string? CoverImageName,
+    Guid? CoverImageId,
     Guid? AuthorId,
     DateTime CreatedAt,
     IReadOnlyCollection<TestQuestionResponse> Questions);

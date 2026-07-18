@@ -37,7 +37,7 @@ public static class QuestionAnswerDefinitionFactory
             .Select(o => AnswerOption.Create(
                 o.Text,
                 o.IsCorrect,
-                o.ImageUrl))
+                o.ImageId))
             .ToList();
 
         var combined = Result.Combine(options);
@@ -78,13 +78,13 @@ public static class QuestionAnswerDefinitionFactory
         var leftItems = request.LeftItems
             .Select(i => MatchingItem.Create(
                 i.Text,
-                i.ImageUrl))
+                i.ImageId))
             .ToList();
 
         var rightItems = request.RightItems
             .Select(i => MatchingItem.Create(
                 i.Text,
-                i.ImageUrl))
+                i.ImageId))
             .ToList();
 
         var leftResult = Result.Combine(leftItems);

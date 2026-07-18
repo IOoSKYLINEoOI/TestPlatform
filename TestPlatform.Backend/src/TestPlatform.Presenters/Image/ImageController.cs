@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Abstractions.Enums;
+using TestPlatform.Application.Files;
+using TestPlatform.Application.Users;
 
 namespace TestPlatform.Presenters.Image;
 
@@ -11,89 +10,87 @@ namespace TestPlatform.Presenters.Image;
 [Route("images")]
 public class ImageController : ControllerBase
 {
-    private readonly IImageStorageService _imageStorage;
+    private readonly IFileAssetService _fileAssetService;
+    private readonly ICurrentUserAccessor _currentUserAccessor;
 
-    public ImageController(IImageStorageService imageStorage) => _imageStorage = imageStorage;
-
-    [HttpPost("temp")]
-    [SwaggerOperation(
-        OperationId = "UploadTempImage",
-        Summary = "Загрузить изображение во временное хранилище.",
-        Description = "Сохраняет изображение во временную папку и возвращает имя файла.")]
-    public async Task<IActionResult> UploadTemp(IFormFile file)
+    public ImageController(
+        IFileAssetService fileAssetService,
+        ICurrentUserAccessor currentUserAccessor)
     {
-        var result = await _imageStorage.SaveTempAsync(file, CancellationToken.None);
-
-        if (!result.IsSuccess)
-            return BadRequest(new { error = result.Error });
-
-        return Ok(new { tempFileName = result.Value });
+        _fileAssetService = fileAssetService;
+        _currentUserAccessor = currentUserAccessor;
     }
 
-    [Authorize(Roles = "Admin")]
-    [HttpDelete("temp/{fileName}")]
+    [HttpPost]
     [SwaggerOperation(
-        OperationId = "DeleteTempImage",
-        Summary = "Удалить временное изображение.",
-        Description = "Удаляет изображение из временного хранилища.")]
-    public async Task<IActionResult> DeleteTemp(string fileName)
+        OperationId = "UploadImage",
+        Summary = "Загрузить изображение",
+        Description = "Загружает изображение в объектное хранилище и возвращает идентификатор файла.")]
+    public async Task<IActionResult> Upload(IFormFile file, CancellationToken cancellationToken)
     {
-        var result = await _imageStorage.DeleteTempAsync(fileName);
+        var currentUser = _currentUserAccessor.User;
+        if (currentUser is null)
+            return Unauthorized();
 
-        if (!result.IsSuccess)
-            return BadRequest(new { error = result.Error });
+        var result = await _fileAssetService.UploadImageAsync(
+            file,
+            currentUser.Id,
+            cancellationToken);
 
-        return NoContent();
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : BadRequest(new { error = result.Error });
     }
 
-    [Authorize(Roles = "Admin")]
-    [HttpDelete("permanent/{folder}/{fileName}")]
+    [HttpGet("{fileId:guid}")]
     [SwaggerOperation(
-        OperationId = "DeletePermanentImage",
-        Summary = "Удалить постоянное изображение.",
-        Description = "Удаляет изображение из постоянного хранилища.")]
-    public async Task<IActionResult> DeletePermanent(ImageFolder folder, string fileName)
+        OperationId = "GetImage",
+        Summary = "Получить изображение",
+        Description = "Возвращает изображение по идентификатору файла.")]
+    public async Task<IActionResult> Get(Guid fileId, CancellationToken cancellationToken)
     {
-        var result = await _imageStorage.DeletePermanentAsync(folder, fileName);
+        var result = await _fileAssetService.GetStreamAsync(fileId, cancellationToken);
 
-        if (!result.IsSuccess)
-            return BadRequest(new { error = result.Error });
+        if (result.IsFailure)
+            return result.Error == "file.not_found"
+                ? NotFound()
+                : BadRequest(new { error = result.Error });
 
-        return NoContent();
+        return File(result.Value, "image/webp");
     }
 
-    [HttpGet("permanent/{folder}/{fileName}")]
+    [HttpGet("{fileId:guid}/url")]
     [SwaggerOperation(
-        OperationId = "GetPermanentImage",
-        Summary = "Получить изображение.",
-        Description = "Возвращает изображение из постоянного хранилища.")]
-    public async Task<IActionResult> GetPermanent(ImageFolder folder, string fileName)
+        OperationId = "GetImageUrl",
+        Summary = "Получить URL изображения",
+        Description = "Возвращает URL изображения по идентификатору файла.")]
+    public async Task<IActionResult> GetUrl(Guid fileId, CancellationToken cancellationToken)
     {
-        var result = await _imageStorage.GetPermanentImageStreamAsync(folder, fileName, CancellationToken.None);
+        var result = await _fileAssetService.GetUrlAsync(fileId, cancellationToken);
 
-        if (!result.IsSuccess)
-        {
-            if (result.Error == "file.not_found")
-                return NotFound();
-            return StatusCode(StatusCodes.Status500InternalServerError, new { error = result.Error });
-        }
-
-        var stream = result.Value;
-        return File(stream, "image/webp", fileName);
+        return result.IsSuccess
+            ? Ok(new { url = result.Value })
+            : NotFound(new { error = result.Error });
     }
 
-    [HttpGet("url/permanent/{folder}/{fileName}")]
+    [HttpDelete("{fileId:guid}")]
     [SwaggerOperation(
-        OperationId = "GetPermanentImageUrl",
-        Summary = "Получить URL изображения.",
-        Description = "Возвращает публичный URL изображения.")]
-    public IActionResult GetPermanentUrl(ImageFolder folder, string fileName)
+        OperationId = "DeleteImage",
+        Summary = "Удалить изображение",
+        Description = "Помечает файл удалённым и удаляет объект из хранилища.")]
+    public async Task<IActionResult> Delete(Guid fileId, CancellationToken cancellationToken)
     {
-        var result = _imageStorage.GetPermanentImageUrl(folder, fileName);
+        var currentUser = _currentUserAccessor.User;
+        if (currentUser is null)
+            return Unauthorized();
 
-        if (!result.IsSuccess)
-            return BadRequest(new { error = result.Error });
+        var result = await _fileAssetService.DeleteAsync(
+            fileId,
+            currentUser.Id,
+            cancellationToken);
 
-        return Ok(new { url = result.Value });
+        return result.IsSuccess
+            ? NoContent()
+            : BadRequest(new { error = result.Error });
     }
 }

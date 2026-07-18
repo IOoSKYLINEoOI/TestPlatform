@@ -36,14 +36,14 @@ public class UpdateExamDetailsHandler : ICommandHandler<UpdateExamDetailsCommand
         if (command.Request.Title != null)
         {
             var changeTitleResult = exam.ChangeTitle(command.Request.Title);
-            if(changeTitleResult.IsFailure)
+            if (changeTitleResult.IsFailure)
                 return Result.Failure(changeTitleResult.Error);
         }
 
         if (command.Request.Description != null)
         {
             var changeDescriptionResult = exam.ChangeDescription(command.Request.Description);
-            if(changeDescriptionResult.IsFailure)
+            if (changeDescriptionResult.IsFailure)
                 return Result.Failure(changeDescriptionResult.Error);
         }
 

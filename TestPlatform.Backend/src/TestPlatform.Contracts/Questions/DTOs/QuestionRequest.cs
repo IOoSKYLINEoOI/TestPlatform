@@ -2,5 +2,5 @@
 
 public abstract record QuestionRequest(
     string Text,
-    string? ImageName,
+    Guid? ImageId,
     List<Guid> TagIds);

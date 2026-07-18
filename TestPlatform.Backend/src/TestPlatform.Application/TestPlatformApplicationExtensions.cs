@@ -5,6 +5,7 @@ using TestPlatform.Application.Attempts.Interfaces;
 using TestPlatform.Application.Attempts.Services;
 using TestPlatform.Application.Attempts.Services.SourceService;
 using TestPlatform.Application.Exams.Services;
+using TestPlatform.Application.Files;
 using TestPlatform.Application.Tags.Validators;
 using TestPlatform.Application.Tests.Services;
 using TestPlatform.Core.Attempts;
@@ -18,6 +19,7 @@ public static class TestPlatformApplicationExtensions
     public static IServiceCollection AddTestPlatformApplication(this IServiceCollection services)
     {
         services.AddValidatorsFromAssemblyContaining<CreateTagRequestValidator>();
+        services.AddOptions<FileUploadOptions>().BindConfiguration("ImageStorage");
 
         var assembly = typeof(TestPlatformApplicationExtensions).Assembly;
 
@@ -40,6 +42,7 @@ public static class TestPlatformApplicationExtensions
         services.AddScoped<IAccessService<Exam>, ExamAccessService>();
         services.AddScoped<IAccessService<Test>, TestAccessService>();
         services.AddScoped<IAccessService<Attempt>, AttemptAccessService>();
+        services.AddScoped<IFileAssetService, FileAssetService>();
 
         return services;
     }

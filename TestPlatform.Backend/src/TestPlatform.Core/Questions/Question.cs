@@ -28,7 +28,7 @@ public class Question
 
     public QuestionType QuestionType => AnswerDefinition.Type;
 
-    public string? ImageName { get; private set; }
+    public Guid? ImageId { get; private set; }
 
     public QuestionAnswerDefinition AnswerDefinition { get; private set; }
 
@@ -57,9 +57,9 @@ public class Question
         return Result.Success();
     }
 
-    public Result ChangeImage(string? fileName)
+    public Result ChangeImage(Guid? fileAssetId)
     {
-        ImageName = fileName;
+        ImageId = fileAssetId;
 
         return Result.Success();
     }

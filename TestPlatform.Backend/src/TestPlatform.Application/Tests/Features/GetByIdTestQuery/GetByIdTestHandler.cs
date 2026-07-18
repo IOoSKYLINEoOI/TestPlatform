@@ -19,7 +19,7 @@ public class GetByIdTestHandler(ITestsReadDbContext testsDbContext) : IQueryHand
                 t.Title,
                 t.Description,
                 t.TimeLimitSeconds,
-                t.CoverImageName,
+                t.CoverImageId,
                 t.AuthorId,
                 t.CreatedAt,
                 t.Questions
