@@ -5,29 +5,50 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Events;
 using TestPlatform.Application;
 using TestPlatform.Application.Users;
-using TestPlatform.Infrastructure.FileStorage;
+using TestPlatform.Contracts.Users.DTOs;
+using TestPlatform.Infrastructure.Files.ImageProcessing;
 using TestPlatform.Infrastructure.Identity;
+using TestPlatform.Infrastructure.Files.ObjectStorage.Minio;
 using TestPlatform.Infrastructure.Postgres;
 using TestPlatform.Web.Extensions;
 using TestPlatform.Web.Middleware;
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-builder.Configuration.AddUserSecrets<Program>();
-builder.Services.AddControllers();
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGenWithAuthSupport(builder.Configuration);
+    builder.Configuration.AddUserSecrets<Program>();
+    builder.Services.AddSerilog((_, loggerConfiguration) =>
+    {
+        loggerConfiguration
+            .MinimumLevel.Information()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("Application", "TestPlatform")
+            .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+            .WriteTo.Console()
+            .WriteTo.Seq(builder.Configuration["Seq:ServerUrl"]
+                ?? throw new InvalidOperationException("Seq:ServerUrl is not configured."));
+    });
 
-builder.Services.AddAuthorization();
+    builder.Services.AddControllers();
 
-JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGenWithAuthSupport(builder.Configuration);
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    builder.Services.AddAuthorization();
+
+    JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.RequireHttpsMetadata = false;
@@ -39,7 +60,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Authentication:ValidIssuer"],
 
             NameClaimType = "preferred_username",
-            RoleClaimType = "role",
+            RoleClaimType = ClaimTypes.Role,
         };
 
         options.Events = new JwtBearerEvents
@@ -58,12 +79,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 if (sub != null)
                     identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, sub));
 
+                foreach (var role in context.Principal.FindAll("role"))
+                {
+                    if (!identity.HasClaim(ClaimTypes.Role, role.Value))
+                        identity.AddClaim(new Claim(ClaimTypes.Role, role.Value));
+                }
+
                 return Task.CompletedTask;
             },
         };
     });
 
-builder.Services.AddCors(options =>
+    builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
@@ -73,68 +100,88 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()
             .AllowCredentials();
     });
-});
+    });
 
-builder.Services.AddControllers(config =>
+    builder.Services.AddControllers(config =>
 {
     var policy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
     config.Filters.Add(new AuthorizeFilter(policy));
-});
-
-builder.Services
-    .AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService("TestPlatform"))
-    .WithTracing(tracing =>
-    {
-        tracing
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation();
-
-        tracing.AddOtlpExporter();
     });
 
-builder.Services
+    builder.Services
     .AddTestPlatformPersistence(builder.Configuration)
     .AddTestPlatformApplication()
-    .AddTestPlatformFileStorage(builder.Configuration)
-    .AddCurrentUser();
+    .AddTestPlatformMinioObjectStorage(builder.Configuration)
+    .AddTestPlatformImageProcessing(builder.Configuration)
+        .AddCurrentUser();
 
-builder.Services.AddProblemDetails();
+    builder.Services.AddProblemDetails();
 
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
 
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(5062);
-});
-
-var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    builder.WebHost.ConfigureKestrel(options =>
     {
-        c.OAuthClientId("public-client");
-        c.OAuthUsePkce();
+        options.ListenAnyIP(5062);
     });
+
+    var app = builder.Build();
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
+        {
+            c.OAuthClientId("public-client");
+            c.OAuthUsePkce();
+        });
+    }
+
+    app.UseStaticFiles();
+
+    app.UseRouting();
+
+    app.UseSerilogRequestLogging(options =>
+    {
+        options.GetLevel = (context, _, exception) =>
+        {
+            if (exception is not null || context.Response.StatusCode >= StatusCodes.Status500InternalServerError)
+                return LogEventLevel.Error;
+
+            return context.Response.StatusCode >= StatusCodes.Status400BadRequest
+                ? LogEventLevel.Warning
+                : LogEventLevel.Information;
+        };
+
+        options.EnrichDiagnosticContext = (diagnosticContext, context) =>
+        {
+            diagnosticContext.Set("TraceId", context.TraceIdentifier);
+            diagnosticContext.Set("KeycloakUserId", context.User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+            if (context.Items["CurrentUser"] is CurrentUserDto currentUser)
+                diagnosticContext.Set("UserId", currentUser.Id);
+        };
+    });
+
+    app.UseCors("Frontend");
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.UseMiddleware<EnsureUserMiddleware>();
+
+    app.MapControllers();
+
+    app.Run();
 }
-
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.UseCors("Frontend");
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.UseMiddleware<EnsureUserMiddleware>();
-
-app.MapControllers();
-
-app.Run();
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

@@ -1,5 +1,5 @@
 ﻿using TestPlatform.Application.Questions.Mappers;
-using TestPlatform.Application.Tags.Extensions;
+using TestPlatform.Application.Questions.Tags.Extensions;
 using TestPlatform.Contracts.Questions.DTOs;
 using TestPlatform.Contracts.Questions.DTOs.AnswerDefinition;
 using TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Response;

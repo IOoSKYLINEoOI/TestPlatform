@@ -5,7 +5,7 @@ COPY *.sln ./
 COPY src/TestPlatform.Application/*.csproj ./src/TestPlatform.Application/
 COPY src/TestPlatform.Contracts/*.csproj ./src/TestPlatform.Contracts/
 COPY src/TestPlatform.Core/*.csproj ./src/TestPlatform.Core/
-COPY src/TestPlatform.Infrastructure.FileStorage/*.csproj ./src/TestPlatform.Infrastructure.FileStorage/
+COPY src/TestPlatform.Infrastructure.Files/*.csproj ./src/TestPlatform.Infrastructure.Files/
 COPY src/TestPlatform.Infrastructure.Postgres/*.csproj ./src/TestPlatform.Infrastructure.Postgres/
 COPY src/TestPlatform.Infrastructure.Identity/*.csproj ./src/TestPlatform.Infrastructure.Identity/
 COPY src/TestPlatform.Presenters/*.csproj ./src/TestPlatform.Presenters/

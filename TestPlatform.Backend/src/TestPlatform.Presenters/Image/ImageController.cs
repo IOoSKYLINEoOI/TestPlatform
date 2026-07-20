@@ -32,8 +32,13 @@ public class ImageController : ControllerBase
         if (currentUser is null)
             return Unauthorized();
 
+        await using var content = file.OpenReadStream();
         var result = await _fileAssetService.UploadImageAsync(
-            file,
+            new FileUploadRequest(
+                file.FileName,
+                file.ContentType,
+                file.Length,
+                content),
             currentUser.Id,
             cancellationToken);
 

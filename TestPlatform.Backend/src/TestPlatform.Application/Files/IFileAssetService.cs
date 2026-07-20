@@ -1,12 +1,11 @@
-﻿using CSharpFunctionalExtensions;
-using Microsoft.AspNetCore.Http;
+using CSharpFunctionalExtensions;
 
 namespace TestPlatform.Application.Files;
 
 public interface IFileAssetService
 {
     Task<Result<FileAssetUploadResult>> UploadImageAsync(
-        IFormFile file,
+        FileUploadRequest file,
         Guid uploadedByUserId,
         CancellationToken cancellationToken);
 
@@ -20,3 +19,9 @@ public interface IFileAssetService
 }
 
 public record FileAssetUploadResult(Guid FileId, string Url);
+
+public record FileUploadRequest(
+    string FileName,
+    string ContentType,
+    long Length,
+    Stream Content);

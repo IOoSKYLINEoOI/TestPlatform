@@ -12,8 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.7" />
-      <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+      <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.2.3" />
     </ItemGroup>
 
 </Project>

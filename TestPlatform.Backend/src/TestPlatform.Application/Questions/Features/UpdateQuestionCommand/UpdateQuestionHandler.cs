@@ -4,7 +4,7 @@ using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Common.Error;
 using TestPlatform.Application.Files;
 using TestPlatform.Application.Questions.Factories;
-using TestPlatform.Application.Tags;
+using TestPlatform.Application.Questions.Tags;
 using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Questions.DTOs;
 

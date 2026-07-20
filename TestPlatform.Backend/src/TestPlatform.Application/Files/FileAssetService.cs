@@ -1,9 +1,4 @@
-﻿using CSharpFunctionalExtensions;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.Processing;
+using CSharpFunctionalExtensions;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Core.Files;
 
@@ -13,69 +8,40 @@ public class FileAssetService : IFileAssetService
 {
     private readonly IFileAssetsRepository _fileAssetsRepository;
     private readonly IObjectStorage _objectStorage;
+    private readonly IImageProcessor _imageProcessor;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly FileUploadOptions _imageOptions;
 
     public FileAssetService(
         IFileAssetsRepository fileAssetsRepository,
         IObjectStorage objectStorage,
-        IUnitOfWork unitOfWork,
-        IOptions<FileUploadOptions> imageOptions)
+        IImageProcessor imageProcessor,
+        IUnitOfWork unitOfWork)
     {
         _fileAssetsRepository = fileAssetsRepository;
         _objectStorage = objectStorage;
+        _imageProcessor = imageProcessor;
         _unitOfWork = unitOfWork;
-        _imageOptions = imageOptions.Value;
     }
 
     public async Task<Result<FileAssetUploadResult>> UploadImageAsync(
-        IFormFile file,
+        FileUploadRequest file,
         Guid uploadedByUserId,
         CancellationToken cancellationToken)
     {
-        if (file.Length == 0)
-            return Result.Failure<FileAssetUploadResult>("file.empty");
+        var processedImageResult = await _imageProcessor.ProcessAsync(file, cancellationToken);
+        if (processedImageResult.IsFailure)
+            return Result.Failure<FileAssetUploadResult>(processedImageResult.Error);
 
-        var maxBytes = _imageOptions.MaxFileSizeMb * 1024 * 1024;
-        if (file.Length > maxBytes)
-            return Result.Failure<FileAssetUploadResult>("file.too_large");
-
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(extension) || !_imageOptions.AllowedExtensions.Contains(extension))
-            return Result.Failure<FileAssetUploadResult>("file.invalid_extension");
+        await using var processedImage = processedImageResult.Value.Content;
 
         var fileId = Guid.NewGuid();
         var objectKey = $"images/{DateTime.UtcNow:yyyy/MM}/{fileId:N}.webp";
 
-        await using var inputStream = file.OpenReadStream();
-        await using var outputStream = new MemoryStream();
-
-        try
-        {
-            using var image = await Image.LoadAsync(inputStream, cancellationToken);
-            image.Mutate(x => x.Resize(new ResizeOptions
-            {
-                Mode = ResizeMode.Max,
-                Size = new Size(_imageOptions.MaxWidth, _imageOptions.MaxHeight),
-            }));
-
-            await image.SaveAsync(
-                outputStream,
-                new WebpEncoder { Quality = _imageOptions.WebpQuality },
-                cancellationToken);
-        }
-        catch (UnknownImageFormatException)
-        {
-            return Result.Failure<FileAssetUploadResult>("file.invalid_format");
-        }
-
-        outputStream.Position = 0;
-
         var putResult = await _objectStorage.PutAsync(
             objectKey,
-            outputStream,
-            outputStream.Length,
-            "image/webp",
+            processedImage,
+            processedImage.Length,
+            processedImageResult.Value.ContentType,
             cancellationToken);
 
         if (putResult.IsFailure)
@@ -84,9 +50,9 @@ public class FileAssetService : IFileAssetService
         var fileAssetResult = FileAsset.Create(
             fileId,
             objectKey,
-            $"{fileId:N}.webp",
-            "image/webp",
-            outputStream.Length,
+            $"{fileId:N}{processedImageResult.Value.FileExtension}",
+            processedImageResult.Value.ContentType,
+            processedImage.Length,
             uploadedByUserId);
 
         if (fileAssetResult.IsFailure)
@@ -99,10 +65,9 @@ public class FileAssetService : IFileAssetService
             fileAssetResult.Value.ObjectKey,
             cancellationToken);
 
-        if (urlResult.IsFailure)
-            return Result.Failure<FileAssetUploadResult>(urlResult.Error);
-
-        return Result.Success(new FileAssetUploadResult(fileAssetResult.Value.Id, urlResult.Value));
+        return urlResult.IsSuccess
+            ? Result.Success(new FileAssetUploadResult(fileAssetResult.Value.Id, urlResult.Value))
+            : Result.Failure<FileAssetUploadResult>(urlResult.Error);
     }
 
     public async Task<Result> AttachAsync(Guid fileId, Guid userId, CancellationToken cancellationToken)
@@ -131,8 +96,7 @@ public class FileAssetService : IFileAssetService
         fileAsset.MarkDeleted();
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await _objectStorage.DeleteAsync(fileAsset.ObjectKey, cancellationToken);
-        return Result.Success();
+        return await _objectStorage.DeleteAsync(fileAsset.ObjectKey, cancellationToken);
     }
 
     public async Task<Result<Stream>> GetStreamAsync(Guid fileId, CancellationToken cancellationToken)

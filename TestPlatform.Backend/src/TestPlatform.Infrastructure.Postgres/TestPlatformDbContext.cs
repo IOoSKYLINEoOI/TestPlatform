@@ -3,7 +3,7 @@ using TestPlatform.Application.Attempts;
 using TestPlatform.Application.Exams;
 using TestPlatform.Application.Files;
 using TestPlatform.Application.Questions;
-using TestPlatform.Application.Tags;
+using TestPlatform.Application.Questions.Tags;
 using TestPlatform.Application.Tests;
 using TestPlatform.Application.Users;
 using TestPlatform.Core.Attempts;

@@ -77,12 +77,14 @@ public static class QuestionAnswerDefinitionFactory
     {
         var leftItems = request.LeftItems
             .Select(i => MatchingItem.Create(
+                i.Id,
                 i.Text,
                 i.ImageId))
             .ToList();
 
         var rightItems = request.RightItems
             .Select(i => MatchingItem.Create(
+                i.Id,
                 i.Text,
                 i.ImageId))
             .ToList();

@@ -8,24 +8,15 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.1" />
-        <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.1" />
-        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.1" />
-        <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
-        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.7" />
-        <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+        <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+        <PackageReference Include="Serilog.Sinks.Seq" Version="9.1.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\TestPlatform.Application\TestPlatform.Application.csproj" />
       <ProjectReference Include="..\TestPlatform.Core\TestPlatform.Core.csproj" />
-      <ProjectReference Include="..\TestPlatform.Infrastructure.FileStorage\TestPlatform.Infrastructure.FileStorage.csproj" />
+      <ProjectReference Include="..\TestPlatform.Infrastructure.Files\TestPlatform.Infrastructure.Files.csproj" />
       <ProjectReference Include="..\TestPlatform.Infrastructure.Identity\TestPlatform.Infrastructure.Identity.csproj" />
       <ProjectReference Include="..\TestPlatform.Infrastructure.Postgres\TestPlatform.Infrastructure.Postgres.csproj" />
       <ProjectReference Include="..\TestPlatform.Presenters\TestPlatform.Presenters.csproj" />
