@@ -6,9 +6,9 @@ namespace TestPlatform.Contracts.Questions.DTOs.Preview;
 public record ChoiceQuestionPreviewResponse(
     Guid Id,
     string Text,
-    string? ImageName,
+    Guid? ImageId,
     QuestionTypeDto Type,
     ChoiceModeDto Mode,
     EvaluationModeDto EvaluationMode,
     IReadOnlyList<TagResponse> Tags)
-    : QuestionPreviewResponse(Id, Text, ImageName, Type, Tags);
+    : QuestionPreviewResponse(Id, Text, ImageId, Type, Tags);

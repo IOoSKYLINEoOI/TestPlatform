@@ -88,7 +88,7 @@ public class AnswerDefinitionMapper
                     id = o.Id,
                     text = o.Text,
                     isCorrect = o.IsCorrect,
-                    imageName = o.ImageName,
+                    imageId = o.ImageId,
                 }),
             },
         };
@@ -171,7 +171,7 @@ public class AnswerDefinitionMapper
             .Select(x => AnswerOption.Create(
                 x.GetProperty("text").GetString()!,
                 x.GetProperty("isCorrect").GetBoolean(),
-                x.TryGetProperty("imageName", out var img) ? img.GetString() : null).Value)
+                TryGetImageId(x)).Value)
             .ToList();
 
         var modeDomain = mode switch
@@ -303,11 +303,9 @@ public class AnswerDefinitionMapper
             if (string.IsNullOrWhiteSpace(text))
                 return Result.Failure<List<MatchingItem>>("Item text is empty");
 
-            var imageName = item.TryGetProperty("imageName", out var imgProp)
-                ? imgProp.GetString()
-                : null;
+            var imageId = TryGetImageId(item);
 
-            var result = MatchingItem.Create(text, imageName);
+            var result = MatchingItem.Create(text, imageId);
 
             if (result.IsFailure)
                 return Result.Failure<List<MatchingItem>>(result.Error);
@@ -343,5 +341,13 @@ public class AnswerDefinitionMapper
         }
 
         return Result.Success(list);
+    }
+    private static Guid? TryGetImageId(JsonElement element)
+    {
+        if (!element.TryGetProperty("imageId", out var imageIdProperty))
+            return null;
+
+        var value = imageIdProperty.GetString();
+        return Guid.TryParse(value, out var imageId) ? imageId : null;
     }
 }

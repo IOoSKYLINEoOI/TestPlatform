@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Users.DTOs;
 using TestPlatform.Core.Users;
@@ -23,7 +24,7 @@ public class EnsureUserMiddleware
     public async Task InvokeAsync(
         HttpContext context,
         IUsersReadDbContext usersReadDbContext,
-        UnitOfWork unitOfWork,
+        IUnitOfWork unitOfWork,
         IUsersRepository usersRepository)
     {
         var principal = context.User;

@@ -1,6 +1,7 @@
-﻿namespace TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Request;
+namespace TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Request;
 
 public record MatchingItemRequest(
+    Guid Id,
     string Text,
     bool IsCorrect,
-    string? ImageUrl);
+    Guid? ImageId);

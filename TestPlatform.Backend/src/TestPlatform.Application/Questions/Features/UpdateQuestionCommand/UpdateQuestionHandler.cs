@@ -1,10 +1,11 @@
 ﻿using CSharpFunctionalExtensions;
 using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Abstractions.Enums;
 using TestPlatform.Application.Common.Error;
+using TestPlatform.Application.Files;
 using TestPlatform.Application.Questions.Factories;
-using TestPlatform.Application.Tags;
+using TestPlatform.Application.Questions.Tags;
+using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Questions.DTOs;
 
 namespace TestPlatform.Application.Questions.Features.UpdateQuestionCommand;
@@ -15,18 +16,21 @@ public class UpdateQuestionHandler : ICommandHandler<UpdateQuestionCommand>
 {
     private readonly IQuestionsRepository _questionsRepository;
     private readonly ITagsReadDbContext _tagsReadDbContext;
-    private readonly IImageStorageService _imageStorageService;
+    private readonly IFileAssetService _fileAssetService;
+    private readonly ICurrentUserAccessor _currentUserAccessor;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdateQuestionHandler(
         IQuestionsRepository questionsRepository,
         ITagsReadDbContext tagsReadDbContext,
-        IImageStorageService imageStorageService,
+        IFileAssetService fileAssetService,
+        ICurrentUserAccessor currentUserAccessor,
         IUnitOfWork unitOfWork)
     {
         _questionsRepository = questionsRepository;
         _tagsReadDbContext = tagsReadDbContext;
-        _imageStorageService = imageStorageService;
+        _fileAssetService = fileAssetService;
+        _currentUserAccessor = currentUserAccessor;
         _unitOfWork = unitOfWork;
     }
 
@@ -57,27 +61,29 @@ public class UpdateQuestionHandler : ICommandHandler<UpdateQuestionCommand>
         if (updatedQuestionResult.IsFailure)
             return Result.Failure(updatedQuestionResult.Error);
 
-        var oldImageName = question.ImageName;
+        var oldImageId = question.ImageId;
 
-        if (command.Request.ImageName != oldImageName)
+        if (command.Request.ImageId != oldImageId)
         {
-            if (!string.IsNullOrWhiteSpace(command.Request.ImageName))
+            if (command.Request.ImageId.HasValue)
             {
-                var moveResult = await _imageStorageService.MoveToPermanent(
-                    command.Request.ImageName,
-                    ImageFolder.QUESTIONS);
+                var currentUser = _currentUserAccessor.User;
+                if (currentUser is null)
+                    return Result.Failure("unauthorized");
 
-                if (moveResult.IsFailure)
-                    return Result.Failure(moveResult.Error);
+                var attachResult = await _fileAssetService.AttachAsync(
+                    command.Request.ImageId.Value,
+                    currentUser.Id,
+                    cancellationToken);
+
+                if (attachResult.IsFailure)
+                    return Result.Failure(attachResult.Error);
             }
 
-            var changeImageResult = question.ChangeImage(command.Request.ImageName);
+            var changeImageResult = question.ChangeImage(command.Request.ImageId);
 
             if (changeImageResult.IsFailure)
                 return Result.Failure(changeImageResult.Error);
-
-            if (!string.IsNullOrWhiteSpace(oldImageName))
-                await _imageStorageService.DeletePermanentAsync(ImageFolder.QUESTIONS, oldImageName);
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

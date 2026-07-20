@@ -45,7 +45,7 @@ public class CreateExamHandler : ICommandHandler<CreateExamCommand, Guid>
             command.Request.Description,
             user.Id);
 
-        if(examResult.IsFailure)
+        if (examResult.IsFailure)
             return Result.Failure<Guid>(examResult.Error);
 
         await _examsRepository.AddAsync(examResult.Value, cancellationToken);

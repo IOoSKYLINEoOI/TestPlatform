@@ -427,3 +427,4 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
         }
     }
 }
+

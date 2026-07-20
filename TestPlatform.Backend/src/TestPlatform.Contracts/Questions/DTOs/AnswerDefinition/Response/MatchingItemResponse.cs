@@ -3,4 +3,4 @@
 public record MatchingItemResponse(
     Guid Id,
     string Text,
-    string? ImageName);
+    Guid? ImageId);

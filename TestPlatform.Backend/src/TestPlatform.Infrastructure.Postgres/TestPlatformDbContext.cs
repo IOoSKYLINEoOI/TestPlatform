@@ -1,12 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Attempts;
 using TestPlatform.Application.Exams;
+using TestPlatform.Application.Files;
 using TestPlatform.Application.Questions;
-using TestPlatform.Application.Tags;
+using TestPlatform.Application.Questions.Tags;
 using TestPlatform.Application.Tests;
 using TestPlatform.Application.Users;
 using TestPlatform.Core.Attempts;
 using TestPlatform.Core.Exams;
+using TestPlatform.Core.Files;
 using TestPlatform.Core.Questions;
 using TestPlatform.Core.Tests;
 using TestPlatform.Core.Users;
@@ -19,6 +21,7 @@ public class TestPlatformDbContext(DbContextOptions<TestPlatformDbContext> optio
         IQuestionsReadDbContext,
         ITestsReadDbContext,
         IExamsReadDbContext,
+        IFileAssetsReadDbContext,
         IAttemptsReadDbContext,
         IUsersReadDbContext
 {
@@ -45,6 +48,10 @@ public class TestPlatformDbContext(DbContextOptions<TestPlatformDbContext> optio
     public DbSet<User> Users { get; set; }
 
     public IQueryable<User> ReadUsers => Users.AsNoTracking().AsQueryable();
+
+    public DbSet<FileAsset> FileAssets { get; set; }
+
+    public IQueryable<FileAsset> ReadFileAssets => FileAssets.AsNoTracking().AsQueryable();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

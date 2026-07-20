@@ -19,6 +19,8 @@ public class QuestionsController : ControllerBase
         OperationId = "GetByIdQuestion",
         Summary = "Получить вопрос с ответами по Id.",
         Description = "Возвращает вопрос с ответами по его Id")]
+    [ProducesResponseType(typeof(QuestionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(
         [FromServices] IQueryHandler<GetByIdQuestionQuery, QuestionResponse> handler,
         [FromRoute] Guid id,
@@ -37,6 +39,8 @@ public class QuestionsController : ControllerBase
         OperationId = "GetAllQuestionsByTags",
         Summary = "Получить все вопросы с определенными тэгами",
         Description = "Возвращает вопросы с ответами по определенным тэгам.")]
+    [ProducesResponseType(typeof(IReadOnlyList<QuestionResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAll(
         [FromServices] IQueryHandler<GetAllQuestionsByTagsQuery, IReadOnlyList<QuestionResponse>> handler,
         [FromQuery] List<Guid> tagIds,
@@ -55,8 +59,10 @@ public class QuestionsController : ControllerBase
     [HttpPost]
     [SwaggerOperation(
         OperationId = "CreateQuestion",
-        Summary = "Создать новый вопрос с ответами",
-        Description = "Создаёт новый вопрос с указаным текста, типа, стоимости, пути изображения, списка ответов (текст, корректность).")]
+        Summary = "Создать новый вопрос с ответами(РАЗНЫЕ СХЕМЫ)",
+        Description = "Создаёт новый вопрос и его варианты ответа.")]
+    [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(
         [FromServices] ICommandHandler<CreateQuestionCommand, Guid> handler,
         [FromBody] QuestionRequest request,
@@ -72,8 +78,10 @@ public class QuestionsController : ControllerBase
     [HttpPut("{id:guid}")]
     [SwaggerOperation(
         OperationId = "UpdateQuestion",
-        Summary = "Обновить вопрос с ответами",
-        Description = "Обновить существующий вопрос по Id с новыми данными: текст, тип, стоимость, путь изображения, список ответов (текст, корректность).")]
+        Summary = "Обновить вопрос с ответами(РАЗНЫЕ СХЕМЫ)",
+        Description = "Обновить существующий вопрос по Id  и его варианты ответа.")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Update(
         [FromServices] ICommandHandler<UpdateQuestionCommand> handler,
         [FromRoute] Guid id,

@@ -39,7 +39,7 @@ public class Exam
 
     public int? TimeLimitSeconds { get; private set; }
 
-    public string? CoverImageName { get; private set; }
+    public Guid? CoverImageId { get; private set; }
 
     public Guid AuthorId { get; private set; }
 
@@ -194,12 +194,12 @@ public class Exam
         return Result.Success();
     }
 
-    public Result ChangeCoverImage(string fileName)
+    public Result ChangeCoverImage(Guid fileAssetId)
     {
         if (!IsDraft())
             return Result.Failure("Редактирование доступно только для черновика");
 
-        CoverImageName = fileName;
+        CoverImageId = fileAssetId;
 
         return Result.Success();
     }
@@ -209,7 +209,7 @@ public class Exam
         if (!IsDraft())
             return Result.Failure("Редактирование доступно только для черновика");
 
-        CoverImageName = null;
+        CoverImageId = null;
 
         return Result.Success();
     }

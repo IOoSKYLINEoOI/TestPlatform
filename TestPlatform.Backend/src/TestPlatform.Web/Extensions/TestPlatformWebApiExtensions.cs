@@ -40,6 +40,19 @@ public static class TestPlatformWebApiExtensions
                     },
                 });
 
+            o.UseOneOfForPolymorphism();
+            o.UseAllOfForInheritance();
+            o.OperationFilter<TestPlatform.Web.Swagger.QuestionRequestExamplesOperationFilter>();
+            o.SelectDiscriminatorNameUsing(_ => "kind");
+            o.SelectDiscriminatorValueUsing(type => type.Name switch
+            {
+                var name when name.StartsWith("ChoiceQuestion") => "choice",
+                var name when name.StartsWith("TextQuestion") => "text",
+                var name when name.StartsWith("NumberQuestion") => "number",
+                var name when name.StartsWith("MatchingQuestion") => "matching",
+                _ => type.Name,
+            });
+
             o.AddSecurityRequirement(doc => new OpenApiSecurityRequirement()
             {
                 {

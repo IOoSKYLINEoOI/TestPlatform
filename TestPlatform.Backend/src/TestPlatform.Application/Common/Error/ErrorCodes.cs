@@ -13,6 +13,9 @@ public static class ErrorCodes
     public const string QuestionNotInExam = "question_not_in_exam";
 
     public const string TagNotFound = "tag_not_found";
+    public const string TagAlreadyExists = "tag.already_exists";
+    public const string TagInUse = "tag.in_use";
+    public const string TagMergeSameTarget = "tag.merge_same_target";
 
     public const string AttemptNotFound = "attempt_not_found";
     public const string AttemptNotFinished = "attempt_not_finished";

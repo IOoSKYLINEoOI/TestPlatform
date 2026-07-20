@@ -3,5 +3,5 @@
 public record AnswerOptionResultResponse(
     Guid Id,
     string Text,
-    string? ImageName,
+    Guid? ImageId,
     bool IsCorrect);

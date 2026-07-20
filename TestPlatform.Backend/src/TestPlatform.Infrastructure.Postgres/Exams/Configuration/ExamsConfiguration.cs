@@ -21,8 +21,7 @@ public class ExamsConfiguration : IEntityTypeConfiguration<Exam>
 
         builder.Property(x => x.TimeLimitSeconds);
 
-        builder.Property(x => x.CoverImageName)
-            .HasMaxLength(500);
+        builder.Property(x => x.CoverImageId);
 
         builder.Property(x => x.AuthorId)
             .IsRequired();

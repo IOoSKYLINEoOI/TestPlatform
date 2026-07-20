@@ -8,7 +8,7 @@ namespace TestPlatform.Application.Tests.Features.UpdateTestTimeLimitCommand;
 
 public record UpdateTestTimeLimitCommand(Guid Id, UpdateTimeLimitRequest Request) : ICommand;
 
-public class UpdateTestTimeLimitHandler : ICommandHandler<UpdateTestTimeLimitCommand> 
+public class UpdateTestTimeLimitHandler : ICommandHandler<UpdateTestTimeLimitCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAccessService<Test> _testAccessService;

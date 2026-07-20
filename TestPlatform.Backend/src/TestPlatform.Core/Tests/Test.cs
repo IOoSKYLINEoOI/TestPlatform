@@ -36,7 +36,7 @@ public class Test
 
     public int? TimeLimitSeconds { get; private set; }
 
-    public string? CoverImageName { get; private set; }
+    public Guid? CoverImageId { get; private set; }
 
     public Guid AuthorId { get; }
 
@@ -137,16 +137,16 @@ public class Test
         return Result.Success();
     }
 
-    public Result ChangeCoverImage(string fileName)
+    public Result ChangeCoverImage(Guid fileAssetId)
     {
-        CoverImageName = fileName;
+        CoverImageId = fileAssetId;
 
         return Result.Success();
     }
 
     public Result RemoveCoverImage()
     {
-        CoverImageName = null;
+        CoverImageId = null;
 
         return Result.Success();
     }

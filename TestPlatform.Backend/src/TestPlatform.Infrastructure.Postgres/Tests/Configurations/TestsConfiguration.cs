@@ -23,8 +23,7 @@ public class TestsConfiguration : IEntityTypeConfiguration<Test>
 
         builder.Property(x => x.TimeLimitSeconds);
 
-        builder.Property(x => x.CoverImageName)
-            .HasMaxLength(255);
+        builder.Property(x => x.CoverImageId);
 
         builder.Property(x => x.AuthorId)
             .IsRequired();

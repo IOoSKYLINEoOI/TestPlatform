@@ -1,5 +1,5 @@
 ﻿using TestPlatform.Application.Questions.Mappers;
-using TestPlatform.Application.Tags.Extensions;
+using TestPlatform.Application.Questions.Tags.Extensions;
 using TestPlatform.Contracts.Questions.DTOs;
 using TestPlatform.Contracts.Questions.DTOs.AnswerDefinition;
 using TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Response;
@@ -21,7 +21,7 @@ public static class QuestionMappingExtensions
             ChoiceAnswerDefinition c => new ChoiceQuestionResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 c.Type.ToDto(),
                 c.Mode.ToDto(),
                 c.EvaluationMode.ToDto(),
@@ -29,37 +29,37 @@ public static class QuestionMappingExtensions
                 c.Options.Select(o => new AnswerOptionResponse(
                     o.Id,
                     o.Text,
-                    o.ImageName)).ToList()),
+                    o.ImageId)).ToList()),
 
             TextAnswerDefinition _ => new TextQuestionResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 QuestionTypeDto.Text,
                 tags),
 
             NumberAnswerDefinition _ => new NumberQuestionResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 QuestionTypeDto.Number,
                 tags),
 
             MatchingAnswerDefinition m => new MatchingQuestionResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 m.Type.ToDto(),
                 m.Mode.ToDto(),
                 tags,
                 m.LeftItems.Select(o => new MatchingItemResponse(
                     o.Id,
                     o.Text,
-                    o.ImageName)).ToList(),
+                    o.ImageId)).ToList(),
                 m.RightItems.Select(o => new MatchingItemResponse(
                     o.Id,
                     o.Text,
-                    o.ImageName)).ToList()),
+                    o.ImageId)).ToList()),
 
             _ => throw new NotSupportedException(
                      $"Unsupported answer definition: {question.AnswerDefinition.GetType().Name}")
@@ -75,7 +75,7 @@ public static class QuestionMappingExtensions
             ChoiceAnswerDefinition c => new ChoiceQuestionResultResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 c.Type.ToDto(),
                 c.Mode.ToDto(),
                 c.EvaluationMode.ToDto(),
@@ -83,13 +83,13 @@ public static class QuestionMappingExtensions
                 c.Options.Select(o => new AnswerOptionResultResponse(
                     o.Id,
                     o.Text,
-                    o.ImageName,
+                    o.ImageId,
                     o.IsCorrect)).ToList()),
 
             TextAnswerDefinition t => new TextQuestionResultResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 QuestionTypeDto.Text,
                 t.CorrectAnswer,
                 tags),
@@ -97,7 +97,7 @@ public static class QuestionMappingExtensions
             NumberAnswerDefinition n => new NumberQuestionResultResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 QuestionTypeDto.Number,
                 n.CorrectAnswer,
                 tags),
@@ -105,18 +105,18 @@ public static class QuestionMappingExtensions
             MatchingAnswerDefinition m => new MatchingQuestionResultResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 m.Type.ToDto(),
                 m.Mode.ToDto(),
                 tags,
                 m.LeftItems.Select(o => new MatchingItemResponse(
                     o.Id,
                     o.Text,
-                    o.ImageName)).ToList(),
+                    o.ImageId)).ToList(),
                 m.RightItems.Select(o => new MatchingItemResponse(
                     o.Id,
                     o.Text,
-                    o.ImageName)).ToList(),
+                    o.ImageId)).ToList(),
                 m.Pairs.Select(p => new MatchingPairDto(
                     p.LeftId,
                     p.RightId)).ToList()),
@@ -135,7 +135,7 @@ public static class QuestionMappingExtensions
             ChoiceAnswerDefinition c => new ChoiceQuestionPreviewResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 c.Type.ToDto(),
                 c.Mode.ToDto(),
                 c.EvaluationMode.ToDto(),
@@ -144,21 +144,21 @@ public static class QuestionMappingExtensions
             TextAnswerDefinition _ => new TextQuestionPreviewResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 QuestionTypeDto.Text,
                 tags),
 
             NumberAnswerDefinition _ => new NumberQuestionPreviewResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 QuestionTypeDto.Number,
                 tags),
 
             MatchingAnswerDefinition m => new MatchingQuestionPreviewResponse(
                 question.Id,
                 question.Text,
-                question.ImageName,
+                question.ImageId,
                 m.Type.ToDto(),
                 m.Mode.ToDto(),
                 tags),
