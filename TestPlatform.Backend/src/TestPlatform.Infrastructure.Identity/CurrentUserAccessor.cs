@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using TestPlatform.Application.Users;
-using TestPlatform.Contracts.Users.DTOs;
 
 namespace TestPlatform.Infrastructure.Identity;
 
@@ -13,15 +12,17 @@ public class CurrentUserAccessor : ICurrentUserAccessor
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public CurrentUserDto? User
+    public CurrentIdentity? User
     {
         get
         {
             var context = _httpContextAccessor.HttpContext;
             if (context == null)
+            {
                 return null;
+            }
 
-            return context.Items["CurrentUser"] as CurrentUserDto;
+            return CurrentIdentityHttpContext.Get(context);
         }
     }
 }

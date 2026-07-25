@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TestPlatform.Core.Exams;
 
@@ -35,6 +35,12 @@ public class ExamsConfiguration : IEntityTypeConfiguration<Exam>
 
         builder.Property(x => x.PublishedAt);
 
+        builder.Property(x => x.AttemptsLimit).IsRequired();
+        builder.Property(x => x.ReviewPolicy).HasConversion<string>().IsRequired();
+
+        builder.Ignore(x => x.TotalQuestions);
+        builder.Ignore(x => x.TotalMaxScore);
+
         builder.OwnsOne(x => x.Schedule, b =>
         {
             b.ToJson();
@@ -45,21 +51,32 @@ public class ExamsConfiguration : IEntityTypeConfiguration<Exam>
             b.ToJson();
         });
 
-        builder.OwnsMany(x => x.Questions, b =>
+        builder.OwnsMany(x => x.Sections, section =>
         {
-            b.ToTable("exam_questions");
+            section.ToTable("exam_sections");
 
-            b.WithOwner()
+            section.WithOwner()
                 .HasForeignKey("ExamId");
 
-            b.HasKey("ExamId", "QuestionId");
+            section.HasKey("ExamId", "Id");
+            section.Property(x => x.Id).ValueGeneratedNever();
+            section.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            section.Property(x => x.QuestionsToSelect).IsRequired();
+            section.Property(x => x.ScorePerQuestion).IsRequired();
+            section.Ignore(x => x.QuestionIds);
+            section.Ignore(x => x.MaxScore);
 
-            b.Property(x => x.QuestionId).IsRequired();
-            b.Property(x => x.Order).IsRequired();
-            b.Property(x => x.Score).IsRequired();
-
-            b.HasIndex("ExamId", "QuestionId").IsUnique();
-            b.HasIndex("ExamId", "Order").IsUnique();
+            section.OwnsMany(x => x.Questions, question =>
+            {
+                question.ToTable("exam_section_questions");
+                question.WithOwner().HasForeignKey("ExamId", "SectionId");
+                question.HasKey("ExamId", "SectionId", nameof(ExamSectionQuestion.QuestionId));
+                question.Property(x => x.QuestionId).IsRequired();
+                question.HasOne<TestPlatform.Core.Questions.Question>()
+                    .WithMany()
+                    .HasForeignKey(x => x.QuestionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         });
 
         builder.HasIndex(x => x.AuthorId);

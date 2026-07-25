@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Response;
+namespace TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Response;
 
 public record MatchingItemResponse(
     Guid Id,

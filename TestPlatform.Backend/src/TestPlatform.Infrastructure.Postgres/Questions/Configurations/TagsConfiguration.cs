@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TestPlatform.Core.Questions;
 
@@ -16,12 +16,16 @@ public class TagsConfiguration : IEntityTypeConfiguration<Tag>
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.HasIndex(x => x.Name).IsUnique();
+        builder.Property(x => x.NormalizedName)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.HasIndex(x => x.NormalizedName)
+            .IsUnique()
+            .HasDatabaseName("ux_tags_normalized_name");
 
         builder.Property(x => x.Description)
             .HasMaxLength(250);
 
-        builder.HasIndex(x => x.Name)
-            .HasDatabaseName("ix_tags_name_lower_unique");
     }
 }

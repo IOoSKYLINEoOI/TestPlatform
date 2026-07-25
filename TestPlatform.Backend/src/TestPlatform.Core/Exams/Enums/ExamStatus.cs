@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Core.Exams.Enums;
+namespace TestPlatform.Core.Exams.Enums;
 
 public enum ExamStatus
 {

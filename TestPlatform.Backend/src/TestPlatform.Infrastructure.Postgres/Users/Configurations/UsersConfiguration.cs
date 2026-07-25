@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TestPlatform.Core.Users;
 
@@ -16,17 +16,17 @@ public class UsersConfiguration : IEntityTypeConfiguration<User>
             .ValueGeneratedNever();
 
         builder.Property(x => x.KeycloakId)
-            .HasMaxLength(255)
+            .HasMaxLength(User.MaxKeycloakIdLength)
             .IsRequired();
 
-        builder.Property(x => x.TabNumber)
-            .HasMaxLength(50)
+        builder.Property(x => x.EmployeeNumber)
+            .HasMaxLength(User.MaxEmployeeNumberLength)
             .IsRequired();
 
         builder.HasIndex(x => x.KeycloakId)
             .IsUnique();
 
-        builder.HasIndex(x => x.TabNumber)
+        builder.HasIndex(x => x.EmployeeNumber)
             .IsUnique();
     }
 }

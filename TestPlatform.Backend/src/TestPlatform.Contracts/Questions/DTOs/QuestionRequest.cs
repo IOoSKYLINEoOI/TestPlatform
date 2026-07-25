@@ -10,5 +10,6 @@ namespace TestPlatform.Contracts.Questions.DTOs;
 [JsonDerivedType(typeof(MatchingQuestionRequest), "matching")]
 public abstract record QuestionRequest(
     string Text,
+    string? Explanation,
     Guid? ImageId,
     List<Guid> TagIds);

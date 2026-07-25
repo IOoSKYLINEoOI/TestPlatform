@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Tests;
 using TestPlatform.Core.Tests;
 

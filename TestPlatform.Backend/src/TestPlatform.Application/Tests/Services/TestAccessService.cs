@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Common.Error;
@@ -38,7 +38,7 @@ public class TestAccessService : IAccessService<Test>
         if (test is null)
         {
             _logger.LogInformation("Exam with {Id} not found.", id);
-            return Result.Failure<Test>(ErrorCodes.ExamNotFound);
+            return Result.Failure<Test>(ErrorCodes.TestNotFound);
         }
 
         if (test.AuthorId != user.Id && !user.IsAdmin)

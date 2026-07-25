@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Core.Attempts;
+namespace TestPlatform.Core.Attempts;
 
 public record Score(decimal Earned, decimal Max)
 {

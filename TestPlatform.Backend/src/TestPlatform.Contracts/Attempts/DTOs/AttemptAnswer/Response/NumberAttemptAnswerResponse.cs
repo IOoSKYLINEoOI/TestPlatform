@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Contracts.Attempts.DTOs.AttemptAnswer.Response;
+namespace TestPlatform.Contracts.Attempts.DTOs.AttemptAnswer.Response;
 
 public record NumberAttemptAnswerResponse(
     Guid QuestionId,

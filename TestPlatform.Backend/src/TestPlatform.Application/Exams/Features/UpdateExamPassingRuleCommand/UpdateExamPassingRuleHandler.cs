@@ -1,7 +1,6 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Exams.Services;
 using TestPlatform.Contracts.Exams.DTOs;
 using TestPlatform.Core.Exams;
 
@@ -29,17 +28,23 @@ public class UpdateExamPassingRuleHandler : ICommandHandler<UpdateExamPassingRul
     {
         var accessResult = await _examAccessService.GetForModifyAsync(command.Id, cancellationToken);
         if (accessResult.IsFailure)
+        {
             return accessResult;
+        }
 
         var exam = accessResult.Value;
 
         var passingRuleResult = ExamPassingRule.Create(command.Request.MinScore, command.Request.MinPercent);
         if (passingRuleResult.IsFailure)
+        {
             return passingRuleResult;
+        }
 
         var result = exam.ChangePassingRule(passingRuleResult.Value);
         if (result.IsFailure)
+        {
             return result;
+        }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Core.Exams;
@@ -27,7 +27,9 @@ public class DeleteExamTimeLimitHandler : ICommandHandler<DeleteExamTimeLimitCom
     {
         var accessResult = await _examAccessService.GetForModifyAsync(command.Id, cancellationToken);
         if (accessResult.IsFailure)
+        {
             return accessResult;
+        }
 
         var exam = accessResult.Value;
 

@@ -1,20 +1,48 @@
-﻿using TestPlatform.Contracts.Attempts.DTOs.AttemptAnswer.Response;
+using System.Text.Json.Serialization;
+using TestPlatform.Contracts.Attempts.DTOs.AttemptAnswer.Response;
 using TestPlatform.Contracts.Attempts.Enums;
-using TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Response;
+using TestPlatform.Contracts.Questions.DTOs.Results;
 
 namespace TestPlatform.Contracts.Attempts.DTOs;
 
-public record AttemptDetailsResponse(
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(TestAttemptDetailsResponse), "test")]
+[JsonDerivedType(typeof(ExamAttemptDetailsResponse), "exam")]
+public abstract record AttemptDetailsResponse(
     Guid Id,
     AttemptStatusDto Status,
     int CorrectAnswers,
-    int TotalQuestion,
+    int TotalQuestions,
+    double Percentage);
+
+public sealed record TestAttemptDetailsResponse(
+    Guid Id,
+    AttemptStatusDto Status,
+    int CorrectAnswers,
+    int TotalQuestions,
+    double Percentage,
+    IReadOnlyCollection<TestAttemptQuestionDetailsResponse> Questions)
+    : AttemptDetailsResponse(Id, Status, CorrectAnswers, TotalQuestions, Percentage);
+
+public sealed record ExamAttemptDetailsResponse(
+    Guid Id,
+    AttemptStatusDto Status,
+    int CorrectAnswers,
+    int TotalQuestions,
+    double Percentage,
     decimal EarnedPoints,
     decimal TotalMaxScore,
-    IReadOnlyCollection<AttemptQuestionDetailsResponse> Questions);
+    bool Passed,
+    IReadOnlyCollection<ExamAttemptQuestionDetailsResponse> Questions)
+    : AttemptDetailsResponse(Id, Status, CorrectAnswers, TotalQuestions, Percentage);
 
-public record AttemptQuestionDetailsResponse(
+public sealed record TestAttemptQuestionDetailsResponse(
+    int Order,
+    AttemptQuestionResultResponse Question,
+    AttemptAnswerResponse? UserAnswer);
+
+public sealed record ExamAttemptQuestionDetailsResponse(
     int Order,
     decimal Score,
-    QuestionResultResponse Question,
+    AttemptQuestionResultResponse Question,
     AttemptAnswerResponse? UserAnswer);

@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using TestPlatform.Application.Questions.Tags;
+using Microsoft.EntityFrameworkCore;
+using TestPlatform.Application.Tags;
 using TestPlatform.Core.Questions;
 
 namespace TestPlatform.Infrastructure.Postgres.Questions;
@@ -18,10 +18,10 @@ public class TagsRepository : ITagsRepository
         string name,
         CancellationToken cancellationToken)
     {
-        var normalizedName = name.Trim().ToUpperInvariant();
+        string normalizedName = name.Trim().ToUpperInvariant();
 
         return await _context.Tags.AnyAsync(
-            x => x.Id != excludedTagId && x.Name.ToUpper() == normalizedName,
+            x => x.Id != excludedTagId && x.NormalizedName == normalizedName,
             cancellationToken);
     }
 

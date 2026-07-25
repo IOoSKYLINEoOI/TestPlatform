@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using CSharpFunctionalExtensions;
 using TestPlatform.Core.Questions.AnswerDefinition.Abstractions;
 using TestPlatform.Core.Questions.Enums;
@@ -45,14 +45,20 @@ public class MatchingAnswerDefinition : TypedQuestionAnswerDefinition<Dictionary
         var rightList = rightItems.ToList();
         var pairList = pairs.ToList();
 
-        if (!pairList.Any())
-            return Result.Failure<MatchingAnswerDefinition>("Должна быть хотя бы одна пара.");
+        if (pairList.Count == 0)
+        {
+            return Result.Failure<MatchingAnswerDefinition>("question.answer.matching_pair_required");
+        }
 
-        if (!leftList.Any())
-            return Result.Failure<MatchingAnswerDefinition>("Должен быть хотя бы один элемент слева.");
+        if (leftList.Count == 0)
+        {
+            return Result.Failure<MatchingAnswerDefinition>("question.answer.left_item_required");
+        }
 
-        if (!rightList.Any())
-            return Result.Failure<MatchingAnswerDefinition>("Должен быть хотя бы один элемент справа.");
+        if (rightList.Count == 0)
+        {
+            return Result.Failure<MatchingAnswerDefinition>("question.answer.right_item_required");
+        }
 
         var leftIds = leftList.Select(x => x.Id).ToHashSet();
         var rightIds = rightList.Select(x => x.Id).ToHashSet();
@@ -62,28 +68,68 @@ public class MatchingAnswerDefinition : TypedQuestionAnswerDefinition<Dictionary
             .ToList();
 
         if (leftList.Count != rightList.Count)
-            return Result.Failure<MatchingAnswerDefinition>("Количество элементов слева и справа должно совпадать.");
+        {
+            return Result.Failure<MatchingAnswerDefinition>("question.answer.matching_item_count_mismatch");
+        }
+
+        if (leftList.Select(item => item.Id).Distinct().Count() != leftList.Count ||
+            rightList.Select(item => item.Id).Distinct().Count() != rightList.Count)
+        {
+            return Result.Failure<MatchingAnswerDefinition>("question.answer.duplicate_matching_item_ids");
+        }
 
         if (pairList.GroupBy(x => x.LeftId).Any(g => g.Count() > 1))
-            return Result.Failure<MatchingAnswerDefinition>("Левый элемент не может входить в несколько пар.");
+        {
+            return Result.Failure<MatchingAnswerDefinition>("question.answer.duplicate_left_item");
+        }
 
         if (pairList.GroupBy(x => x.RightId).Any(g => g.Count() > 1))
-            return Result.Failure<MatchingAnswerDefinition>("Правый элемент не может входить в несколько пар.");
+        {
+            return Result.Failure<MatchingAnswerDefinition>("question.answer.duplicate_right_item");
+        }
 
         if (pairList.Count != leftList.Count)
-            return Result.Failure<MatchingAnswerDefinition>("Каждый элемент должен участвовать в одной паре.");
+        {
+            return Result.Failure<MatchingAnswerDefinition>("question.answer.unmatched_item");
+        }
 
-        if (invalidPairs.Any())
-            return Result.Failure<MatchingAnswerDefinition>("Пары содержат несуществующие элементы.");
+        if (invalidPairs.Count > 0)
+        {
+            return Result.Failure<MatchingAnswerDefinition>("question.answer.unknown_matching_item");
+        }
 
         return Result.Success(
             new MatchingAnswerDefinition(mode, leftList, rightList, pairList));
     }
 
+    public override QuestionAnswerDefinition Copy()
+    {
+        var leftItems = _leftItems
+            .Select(item => MatchingItem.Create(item.Text, item.ImageId).Value)
+            .ToList();
+        var rightItems = _rightItems
+            .Select(item => MatchingItem.Create(item.Text, item.ImageId).Value)
+            .ToList();
+
+        var leftIds = _leftItems
+            .Zip(leftItems)
+            .ToDictionary(pair => pair.First.Id, pair => pair.Second.Id);
+        var rightIds = _rightItems
+            .Zip(rightItems)
+            .ToDictionary(pair => pair.First.Id, pair => pair.Second.Id);
+        var pairs = _pairs
+            .Select(pair => new MatchingPair(leftIds[pair.LeftId], rightIds[pair.RightId]))
+            .ToList();
+
+        return new MatchingAnswerDefinition(Mode, leftItems, rightItems, pairs);
+    }
+
     public override decimal GetScore(Dictionary<Guid, Guid> userPairs)
     {
         if (userPairs.Count == 0)
+        {
             return 0m;
+        }
 
         var correctPairs = _pairs.ToDictionary(x => x.LeftId, x => x.RightId);
 

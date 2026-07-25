@@ -1,9 +1,13 @@
-﻿using TestPlatform.Contracts.Attempts.Enums;
-using TestPlatform.Contracts.Questions.DTOs;
+using TestPlatform.Contracts.Attempts.Enums;
+using TestPlatform.Contracts.Questions.DTOs.Passing;
 
 namespace TestPlatform.Contracts.Attempts.DTOs;
 
-public record StartAttemptResponse(Guid AttemptId, AttemptStartSourceResponse SourceResponse);
+public record StartAttemptResponse(
+    Guid AttemptId,
+    int AttemptNumber,
+    AttemptStatusDto Status,
+    AttemptStartSourceResponse SourceResponse);
 
 public record AttemptStartSourceResponse(
     int? TimeLimitSeconds,
@@ -13,5 +17,5 @@ public record AttemptStartSourceResponse(
 
 public record QuestionAssignmentResponse(
     int Order,
-    decimal Score,
-    QuestionResponse Question);
+    decimal? Score,
+    AttemptQuestionResponse Question);

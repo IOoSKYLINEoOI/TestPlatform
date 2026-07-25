@@ -1,6 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TestPlatform.Core.Shared;
 using TestPlatform.Core.Tests;
 
 namespace TestPlatform.Infrastructure.Postgres.Tests.Configurations;
@@ -14,7 +13,7 @@ public class TestsConfiguration : IEntityTypeConfiguration<Test>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Title)
-            .HasMaxLength(100)
+            .HasMaxLength(200)
             .IsRequired();
 
         builder.Property(x => x.Description)
@@ -28,6 +27,14 @@ public class TestsConfiguration : IEntityTypeConfiguration<Test>
         builder.Property(x => x.AuthorId)
             .IsRequired();
 
+        builder.Property(x => x.Status)
+            .HasConversion<int>()
+            .IsRequired();
+
+        builder.Property(x => x.CreatedAt).IsRequired();
+        builder.Property(x => x.UpdatedAt).IsRequired();
+        builder.Property(x => x.PublishedAt);
+
         builder.OwnsMany(x => x.Questions, b =>
         {
             b.ToTable("test_questions");
@@ -38,9 +45,11 @@ public class TestsConfiguration : IEntityTypeConfiguration<Test>
             b.HasKey("TestId", "QuestionId");
 
             b.Property(x => x.QuestionId).IsRequired();
+            b.HasOne<TestPlatform.Core.Questions.Question>()
+                .WithMany()
+                .HasForeignKey(x => x.QuestionId)
+                .OnDelete(DeleteBehavior.Restrict);
             b.Property(x => x.Order).IsRequired();
-            b.Property(x => x.Score).IsRequired();
-
             b.HasIndex("TestId", "QuestionId").IsUnique();
             b.HasIndex("TestId", "Order").IsUnique();
         });

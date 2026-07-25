@@ -1,4 +1,4 @@
-﻿using TestPlatform.Core.Questions.Enums;
+using TestPlatform.Core.Questions.Enums;
 
 namespace TestPlatform.Application.Attempts.Interfaces;
 

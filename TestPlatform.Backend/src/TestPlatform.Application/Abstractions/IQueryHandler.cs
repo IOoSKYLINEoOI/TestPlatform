@@ -1,5 +1,4 @@
-﻿using CSharpFunctionalExtensions;
-using TestPlatform.Contracts.Attempts.DTOs;
+using CSharpFunctionalExtensions;
 
 namespace TestPlatform.Application.Abstractions;
 

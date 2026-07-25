@@ -1,4 +1,4 @@
-﻿using TestPlatform.Application.Attempts.Services.SourceService;
+using TestPlatform.Application.Attempts.Services.SourceService;
 using TestPlatform.Application.Questions.Extensions;
 using TestPlatform.Contracts.Attempts.DTOs;
 using TestPlatform.Core.Attempts.Enums;
@@ -19,8 +19,8 @@ public static class AttemptStartMapper
                 .OrderBy(q => q.Order)
                 .Select(q => new QuestionAssignmentResponse(
                     q.Order,
-                    q.Score,
-                    q.Question.ToResponse()))
+                    type == AttemptType.Exam ? q.Score : null,
+                    q.Question.ToAttemptResponse()))
                 .ToList());
     }
 }

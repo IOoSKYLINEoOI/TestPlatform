@@ -6,9 +6,9 @@ public class MinioStorageOptions
 
     public string PublicEndpoint { get; set; } = "http://localhost:9000";
 
-    public string AccessKey { get; set; } = "minioadmin";
+    public string AccessKey { get; set; } = string.Empty;
 
-    public string SecretKey { get; set; } = "minioadmin";
+    public string SecretKey { get; set; } = string.Empty;
 
     public string BucketName { get; set; } = "testplatform-images";
 

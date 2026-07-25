@@ -11,14 +11,20 @@ public interface IFileAssetService
 
     Task<Result> AttachAsync(Guid fileId, Guid userId, CancellationToken cancellationToken);
 
-    Task<Result> DeleteAsync(Guid fileId, Guid userId, CancellationToken cancellationToken);
+    Task<Result> DeleteAsync(
+        Guid fileId,
+        Guid userId,
+        bool canManageAll,
+        CancellationToken cancellationToken);
+
+    Task<Result> ReleaseIfUnreferencedAsync(Guid fileId, CancellationToken cancellationToken);
 
     Task<Result<Stream>> GetStreamAsync(Guid fileId, CancellationToken cancellationToken);
 
     Task<Result<string>> GetUrlAsync(Guid fileId, CancellationToken cancellationToken);
 }
 
-public record FileAssetUploadResult(Guid FileId, string Url);
+public record FileAssetUploadResult(Guid FileId);
 
 public record FileUploadRequest(
     string FileName,

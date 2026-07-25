@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Common.Error;
@@ -46,7 +46,9 @@ public class CreateExamHandler : ICommandHandler<CreateExamCommand, Guid>
             user.Id);
 
         if (examResult.IsFailure)
+        {
             return Result.Failure<Guid>(examResult.Error);
+        }
 
         await _examsRepository.AddAsync(examResult.Value, cancellationToken);
 

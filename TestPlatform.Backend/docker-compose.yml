@@ -2,15 +2,31 @@ services:
   postgres:
     image: postgres:15
     container_name: testplatform_postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456789
+      POSTGRES_USER: ${APP_DB_USER}
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD}
       POSTGRES_DB: testPlatformDb
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${APP_DB_USER} -d testPlatformDb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak-postgres:
+    image: postgres:16
+    container_name: testplatform_keycloak_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${KEYCLOAK_DB_USER}
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      POSTGRES_DB: keycloak
+    volumes:
+      - keycloak_pgdata:/var/lib/postgresql/data
 
   api:
     container_name: testplatform_api
@@ -20,17 +36,87 @@ services:
     ports:
       - "5062:5062"
     depends_on:
-      - postgres
-      - minio
-      - seq
+      postgres:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
+      seq:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      keycloak-bootstrap:
+        condition: service_completed_successfully
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://+:5062"
-      ConnectionStrings__TestPlatformContextPostgreSQL: "Host=postgres;Port=5432;Database=testPlatformDb;Username=postgres;Password=123456789"
+      ConnectionStrings__TestPlatformContextPostgreSQL: "Host=postgres;Port=5432;Database=testPlatformDb;Username=${APP_DB_USER};Password=${APP_DB_PASSWORD}"
+      Authentication__MetadataAddress: "http://keycloak:8080/realms/test-platform/.well-known/openid-configuration"
+      Authentication__ValidIssuer: "http://localhost:8080/realms/test-platform"
+      Authentication__Audience: "test-platform-api"
+      IdentityManagement__BaseUrl: "http://keycloak:8080"
+      IdentityManagement__Realm: "test-platform"
+      IdentityManagement__ClientId: "test-platform-admin"
+      IdentityManagement__ClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
       ImageStorage__Minio__Endpoint: "minio:9000"
       ImageStorage__Minio__PublicEndpoint: "http://localhost:9100"
-      ImageStorage__Minio__AccessKey: "minioadmin"
-      ImageStorage__Minio__SecretKey: "minioadmin"
+      ImageStorage__Minio__AccessKey: ${MINIO_ROOT_USER}
+      ImageStorage__Minio__SecretKey: ${MINIO_ROOT_PASSWORD}
+      ImageStorage__Minio__BucketName: "testplatform-images"
+      ImageStorage__Minio__UseSsl: "false"
+      Seq__ServerUrl: "http://seq:5341"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:5062/health/live"]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
+
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: "no"
+    command: ["dotnet", "TestPlatform.Web.dll", "--migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__TestPlatformContextPostgreSQL: "Host=postgres;Port=5432;Database=testPlatformDb;Username=${APP_DB_USER};Password=${APP_DB_PASSWORD}"
+      Authentication__MetadataAddress: "http://keycloak:8080/realms/test-platform/.well-known/openid-configuration"
+      Authentication__ValidIssuer: "http://localhost:8080/realms/test-platform"
+      Authentication__Audience: "test-platform-api"
+      ImageStorage__Minio__Endpoint: "minio:9000"
+      ImageStorage__Minio__PublicEndpoint: "http://localhost:9100"
+      ImageStorage__Minio__AccessKey: ${MINIO_ROOT_USER}
+      ImageStorage__Minio__SecretKey: ${MINIO_ROOT_PASSWORD}
+      ImageStorage__Minio__BucketName: "testplatform-images"
+      ImageStorage__Minio__UseSsl: "false"
+      Seq__ServerUrl: "http://seq:5341"
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: "no"
+    command: ["dotnet", "TestPlatform.Web.dll", "--seed"]
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__TestPlatformContextPostgreSQL: "Host=postgres;Port=5432;Database=testPlatformDb;Username=${APP_DB_USER};Password=${APP_DB_PASSWORD}"
+      Authentication__MetadataAddress: "http://keycloak:8080/realms/test-platform/.well-known/openid-configuration"
+      Authentication__ValidIssuer: "http://localhost:8080/realms/test-platform"
+      Authentication__Audience: "test-platform-api"
+      ImageStorage__Minio__Endpoint: "minio:9000"
+      ImageStorage__Minio__PublicEndpoint: "http://localhost:9100"
+      ImageStorage__Minio__AccessKey: ${MINIO_ROOT_USER}
+      ImageStorage__Minio__SecretKey: ${MINIO_ROOT_PASSWORD}
       ImageStorage__Minio__BucketName: "testplatform-images"
       ImageStorage__Minio__UseSsl: "false"
       Seq__ServerUrl: "http://seq:5341"
@@ -41,7 +127,7 @@ services:
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
-      SEQ_FIRSTRUN_ADMINPASSWORD: "seqadmin"
+      SEQ_FIRSTRUN_ADMINPASSWORD: ${SEQ_ADMIN_PASSWORD}
     ports:
       - "5341:5341"
       - "8081:80"
@@ -51,34 +137,64 @@ services:
   minio:
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     container_name: testplatform_minio
-    restart: always
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
       - "9100:9000"
       - "9101:9001"
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.5.6
     container_name: testplatform_keycloak
-    command: start-dev
+    command: start-dev --import-realm
+    restart: unless-stopped
+    depends_on:
+      - keycloak-postgres
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-postgres
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
     ports:
       - "8080:8080"
-      - "9000:9000"
     volumes:
-      - ./containers/identity:/opt/keycloak/data
-      - ./containers/identity/themes:/opt/keycloak/themes
-    user: root
-  
+      - ./containers/keycloak/import:/opt/keycloak/data/import:ro
+      - ./containers/keycloak/themes:/opt/keycloak/themes:ro
+
+  keycloak-bootstrap:
+    image: quay.io/keycloak/keycloak:26.5.6
+    container_name: testplatform_keycloak_bootstrap
+    restart: "no"
+    entrypoint: ["/bin/bash", "/opt/keycloak/bootstrap/bootstrap-demo-users.sh"]
+    depends_on:
+      keycloak:
+        condition: service_started
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD}
+      DEMO_TEACHER_PASSWORD: ${DEMO_TEACHER_PASSWORD}
+      DEMO_EMPLOYEE_PASSWORD: ${DEMO_EMPLOYEE_PASSWORD}
+    volumes:
+      - ./containers/keycloak/bootstrap-demo-users.sh:/opt/keycloak/bootstrap/bootstrap-demo-users.sh:ro
+
 volumes:
   pgdata:
+  keycloak_pgdata:
   minio_data:
   seq_data:

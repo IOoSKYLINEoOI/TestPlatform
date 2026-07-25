@@ -1,3 +1,3 @@
-﻿namespace TestPlatform.Contracts.Exams.DTOs;
+namespace TestPlatform.Contracts.Exams.DTOs;
 
 public record UpdateExamPassingRuleRequest(int? MinScore, double? MinPercent);

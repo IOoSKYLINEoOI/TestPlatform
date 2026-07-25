@@ -1,5 +1,4 @@
-﻿using CSharpFunctionalExtensions;
-using TestPlatform.Application.Attempts.Services;
+using CSharpFunctionalExtensions;
 using TestPlatform.Application.Attempts.Services.SourceService;
 using TestPlatform.Core.Attempts.Enums;
 

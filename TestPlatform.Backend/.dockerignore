@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.git/
+.idea/
+.agents/
+.codex/
+.env
+*.user
+*.DotSettings.user
+TestResults/

@@ -1,13 +1,14 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Common.Error;
 using TestPlatform.Application.Questions;
-using TestPlatform.Contracts.Share;
+using TestPlatform.Core.Questions.AnswerDefinition;
+using TestPlatform.Core.Questions.Enums;
 using TestPlatform.Core.Tests;
 
 namespace TestPlatform.Application.Tests.Features.AddTestQuestionCommand;
 
-public record AddTestQuestionCommand(Guid Id, AddQuestionRequest Request) : ICommand;
+public record AddTestQuestionCommand(Guid Id, Guid QuestionId) : ICommand;
 
 public class AddTestQuestionHandler : ICommandHandler<AddTestQuestionCommand>
 {
@@ -29,17 +30,39 @@ public class AddTestQuestionHandler : ICommandHandler<AddTestQuestionCommand>
     {
         var accessResult = await _testAccessService.GetForModifyAsync(command.Id, cancellationToken);
         if (accessResult.IsFailure)
+        {
             return accessResult;
+        }
 
         var test = accessResult.Value;
 
-        bool questionExists = await _questionsRepository.ExistsAsync(command.Request.QuestionId, cancellationToken);
-        if (questionExists is false)
+        var question = await _questionsRepository.GetByIdAsync(command.QuestionId, cancellationToken);
+        if (question is null)
+        {
             return Result.Failure(ErrorCodes.QuestionNotFound);
+        }
 
-        var result = test.AddQuestion(command.Request.QuestionId, command.Request.Score);
+        if (question.Status != QuestionStatus.Published)
+        {
+            return Result.Failure("question.not_published");
+        }
+
+        var supportsCorrectnessOnly = question.AnswerDefinition switch
+        {
+            ChoiceAnswerDefinition choice => choice.EvaluationMode == EvaluationMode.Strict,
+            MatchingAnswerDefinition matching => matching.Mode == EvaluationMode.Strict,
+            _ => true,
+        };
+        if (!supportsCorrectnessOnly)
+        {
+            return Result.Failure("test.partial_evaluation_not_supported");
+        }
+
+        var result = test.AddQuestion(command.QuestionId);
         if (result.IsFailure)
+        {
             return result;
+        }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

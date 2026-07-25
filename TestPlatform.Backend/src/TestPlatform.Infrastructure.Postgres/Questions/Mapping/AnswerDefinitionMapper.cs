@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using CSharpFunctionalExtensions;
 using TestPlatform.Core.Questions.AnswerDefinition;
 using TestPlatform.Core.Questions.AnswerDefinition.Abstractions;
@@ -23,16 +23,18 @@ public class AnswerDefinitionMapper
 
             return Result.Success(json);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return Result.Failure<string>(ex.Message);
+            return Result.Failure<string>("persistence.answer_definition.serialization_failed");
         }
     }
 
     public Result<QuestionAnswerDefinition> Deserialize(string json)
     {
         if (string.IsNullOrWhiteSpace(json))
-            return Result.Failure<QuestionAnswerDefinition>("JSON is empty");
+        {
+            return Result.Failure<QuestionAnswerDefinition>("persistence.answer_definition.empty_json");
+        }
 
         AnswerDefinitionDto? dto;
 
@@ -40,25 +42,24 @@ public class AnswerDefinitionMapper
         {
             dto = JsonSerializer.Deserialize<AnswerDefinitionDto>(json);
         }
-        catch (JsonException ex)
+        catch (JsonException)
         {
-            return Result.Failure<QuestionAnswerDefinition>($"Invalid JSON: {ex.Message}");
+            return Result.Failure<QuestionAnswerDefinition>("persistence.answer_definition.invalid_json");
         }
 
         if (dto is null)
-            return Result.Failure<QuestionAnswerDefinition>("Failed to deserialize DTO");
-
-        if (!Enum.IsDefined(typeof(QuestionType), dto.Type))
-            return Result.Failure<QuestionAnswerDefinition>($"Unknown type: {dto.Type}");
+        {
+            return Result.Failure<QuestionAnswerDefinition>("persistence.answer_definition.deserialization_failed");
+        }
 
         return dto.Type switch
         {
-            QuestionType.Choice => MapChoice(dto.Data),
-            QuestionType.Text => MapText(dto.Data),
-            QuestionType.Number => MapNumber(dto.Data),
-            QuestionType.Matching => MapMatching(dto.Data),
+            "choice" => MapChoice(dto.Data),
+            "text" => MapText(dto.Data),
+            "number" => MapNumber(dto.Data),
+            "matching" => MapMatching(dto.Data),
 
-            _ => Result.Failure<QuestionAnswerDefinition>($"Unsupported type: {dto.Type}")
+            _ => Result.Failure<QuestionAnswerDefinition>("persistence.answer_definition.unsupported_type")
         };
     }
 
@@ -66,6 +67,7 @@ public class AnswerDefinitionMapper
     {
         var obj = new
         {
+            schemaVersion = 1,
             type = "choice",
             data = new
             {
@@ -100,6 +102,7 @@ public class AnswerDefinitionMapper
     {
         var obj = new
         {
+            schemaVersion = 1,
             type = "text",
             data = new
             {
@@ -114,6 +117,7 @@ public class AnswerDefinitionMapper
     {
         var obj = new
         {
+            schemaVersion = 1,
             type = "number",
             data = new
             {
@@ -128,6 +132,7 @@ public class AnswerDefinitionMapper
     {
         var obj = new
         {
+            schemaVersion = 1,
             type = "matching",
             data = new
             {
@@ -142,12 +147,14 @@ public class AnswerDefinitionMapper
                 {
                     id = x.Id,
                     text = x.Text,
+                    imageId = x.ImageId,
                 }),
 
                 right = def.RightItems.Select(x => new
                 {
                     id = x.Id,
                     text = x.Text,
+                    imageId = x.ImageId,
                 }),
 
                 pairs = def.Pairs.Select(p => new
@@ -166,13 +173,27 @@ public class AnswerDefinitionMapper
         var mode = data.GetProperty("mode").GetString();
         var evaluationMode = data.GetProperty("evaluationMode").GetString();
 
-        var options = data.GetProperty("options")
-            .EnumerateArray()
-            .Select(x => AnswerOption.Create(
-                x.GetProperty("text").GetString()!,
-                x.GetProperty("isCorrect").GetBoolean(),
-                TryGetImageId(x)).Value)
-            .ToList();
+        var options = new List<AnswerOption>();
+        foreach (var option in data.GetProperty("options").EnumerateArray())
+        {
+            if (!TryGetGuid(option, "id", out var id))
+            {
+                return Result.Failure<QuestionAnswerDefinition>("persistence.answer_definition.invalid_option_id");
+            }
+
+            var optionResult = AnswerOption.Create(
+                id,
+                option.GetProperty("text").GetString() ?? string.Empty,
+                option.GetProperty("isCorrect").GetBoolean(),
+                TryGetImageId(option));
+
+            if (optionResult.IsFailure)
+            {
+                return Result.Failure<QuestionAnswerDefinition>(optionResult.Error);
+            }
+
+            options.Add(optionResult.Value);
+        }
 
         var modeDomain = mode switch
         {
@@ -194,7 +215,9 @@ public class AnswerDefinitionMapper
             options);
 
         if (result.IsFailure)
+        {
             return Result.Failure<QuestionAnswerDefinition>(result.Error);
+        }
 
         return Result.Success<QuestionAnswerDefinition>(result.Value);
     }
@@ -202,17 +225,23 @@ public class AnswerDefinitionMapper
     private Result<QuestionAnswerDefinition> MapText(JsonElement data)
     {
         if (!data.TryGetProperty("answer", out var answerProp))
-            return Result.Failure<QuestionAnswerDefinition>("Missing 'answer' field");
+        {
+            return Result.Failure<QuestionAnswerDefinition>("persistence.answer_definition.answer_missing");
+        }
 
         var answer = answerProp.GetString();
 
         if (string.IsNullOrWhiteSpace(answer))
-            return Result.Failure<QuestionAnswerDefinition>("Text answer is empty");
+        {
+            return Result.Failure<QuestionAnswerDefinition>("persistence.answer_definition.text_answer_empty");
+        }
 
         var result = TextAnswerDefinition.Create(answer);
 
         if (result.IsFailure)
+        {
             return Result.Failure<QuestionAnswerDefinition>(result.Error);
+        }
 
         return Result.Success<QuestionAnswerDefinition>(result.Value);
     }
@@ -220,7 +249,9 @@ public class AnswerDefinitionMapper
     private Result<QuestionAnswerDefinition> MapNumber(JsonElement data)
     {
         if (!data.TryGetProperty("answer", out var answerProp))
-            return Result.Failure<QuestionAnswerDefinition>("Missing 'answer' field");
+        {
+            return Result.Failure<QuestionAnswerDefinition>("persistence.answer_definition.answer_missing");
+        }
 
         decimal value;
 
@@ -235,22 +266,26 @@ public class AnswerDefinitionMapper
                 var str = answerProp.GetString();
 
                 if (!decimal.TryParse(str, out value))
-                    return Result.Failure<QuestionAnswerDefinition>("Invalid decimal format in 'answer'");
+                {
+                    return Result.Failure<QuestionAnswerDefinition>("persistence.answer_definition.invalid_decimal");
+                }
             }
             else
             {
-                return Result.Failure<QuestionAnswerDefinition>("Invalid 'answer' type for number question");
+                return Result.Failure<QuestionAnswerDefinition>("persistence.answer_definition.invalid_number_type");
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return Result.Failure<QuestionAnswerDefinition>($"Failed to parse number: {ex.Message}");
+            return Result.Failure<QuestionAnswerDefinition>("persistence.answer_definition.number_parsing_failed");
         }
 
         var result = NumberAnswerDefinition.Create(value);
 
         if (result.IsFailure)
+        {
             return Result.Failure<QuestionAnswerDefinition>(result.Error);
+        }
 
         return Result.Success<QuestionAnswerDefinition>(result.Value);
     }
@@ -259,15 +294,21 @@ public class AnswerDefinitionMapper
     {
         var leftResult = ParseItems(data.GetProperty("left"));
         if (leftResult.IsFailure)
+        {
             return Result.Failure<QuestionAnswerDefinition>(leftResult.Error);
+        }
 
         var rightResult = ParseItems(data.GetProperty("right"));
         if (rightResult.IsFailure)
+        {
             return Result.Failure<QuestionAnswerDefinition>(rightResult.Error);
+        }
 
         var pairsResult = ParsePairs(data.GetProperty("pairs"));
         if (pairsResult.IsFailure)
+        {
             return Result.Failure<QuestionAnswerDefinition>(pairsResult.Error);
+        }
 
         var mode = data.GetProperty("mode").GetString();
 
@@ -285,7 +326,9 @@ public class AnswerDefinitionMapper
             pairsResult.Value);
 
         if (result.IsFailure)
+        {
             return Result.Failure<QuestionAnswerDefinition>(result.Error);
+        }
 
         return Result.Success<QuestionAnswerDefinition>(result.Value);
     }
@@ -297,18 +340,29 @@ public class AnswerDefinitionMapper
         foreach (var item in array.EnumerateArray())
         {
             if (!item.TryGetProperty("text", out var textProp))
-                return Result.Failure<List<MatchingItem>>("Missing 'text' in item");
+            {
+                return Result.Failure<List<MatchingItem>>("persistence.answer_definition.item_text_missing");
+            }
 
             var text = textProp.GetString();
             if (string.IsNullOrWhiteSpace(text))
-                return Result.Failure<List<MatchingItem>>("Item text is empty");
+            {
+                return Result.Failure<List<MatchingItem>>("persistence.answer_definition.item_text_empty");
+            }
 
             var imageId = TryGetImageId(item);
 
-            var result = MatchingItem.Create(text, imageId);
+            if (!TryGetGuid(item, "id", out var id))
+            {
+                return Result.Failure<List<MatchingItem>>("persistence.answer_definition.invalid_matching_item_id");
+            }
+
+            var result = MatchingItem.Create(id, text, imageId);
 
             if (result.IsFailure)
+            {
                 return Result.Failure<List<MatchingItem>>(result.Error);
+            }
 
             list.Add(result.Value);
         }
@@ -323,19 +377,24 @@ public class AnswerDefinitionMapper
         foreach (var item in array.EnumerateArray())
         {
             if (!item.TryGetProperty("leftId", out var leftProp))
-                return Result.Failure<List<MatchingPair>>("Missing leftId");
+            {
+                return Result.Failure<List<MatchingPair>>("persistence.answer_definition.left_id_missing");
+            }
 
             if (!item.TryGetProperty("rightId", out var rightProp))
-                return Result.Failure<List<MatchingPair>>("Missing rightId");
+            {
+                return Result.Failure<List<MatchingPair>>("persistence.answer_definition.right_id_missing");
+            }
 
-            var leftStr = leftProp.GetString();
-            var rightStr = rightProp.GetString();
+            if (!TryReadGuid(leftProp, out var leftId))
+            {
+                return Result.Failure<List<MatchingPair>>("persistence.answer_definition.invalid_left_id");
+            }
 
-            if (!Guid.TryParse(leftStr, out var leftId))
-                return Result.Failure<List<MatchingPair>>("Invalid leftId GUID");
-
-            if (!Guid.TryParse(rightStr, out var rightId))
-                return Result.Failure<List<MatchingPair>>("Invalid rightId GUID");
+            if (!TryReadGuid(rightProp, out var rightId))
+            {
+                return Result.Failure<List<MatchingPair>>("persistence.answer_definition.invalid_right_id");
+            }
 
             list.Add(new MatchingPair(leftId, rightId));
         }
@@ -345,9 +404,22 @@ public class AnswerDefinitionMapper
     private static Guid? TryGetImageId(JsonElement element)
     {
         if (!element.TryGetProperty("imageId", out var imageIdProperty))
+        {
             return null;
+        }
 
-        var value = imageIdProperty.GetString();
-        return Guid.TryParse(value, out var imageId) ? imageId : null;
+        return TryReadGuid(imageIdProperty, out var imageId) ? imageId : null;
+    }
+
+    private static bool TryGetGuid(JsonElement element, string propertyName, out Guid id)
+    {
+        id = Guid.Empty;
+        return element.TryGetProperty(propertyName, out var property) && TryReadGuid(property, out id);
+    }
+
+    private static bool TryReadGuid(JsonElement property, out Guid id)
+    {
+        id = Guid.Empty;
+        return property.ValueKind == JsonValueKind.String && Guid.TryParse(property.GetString(), out id);
     }
 }

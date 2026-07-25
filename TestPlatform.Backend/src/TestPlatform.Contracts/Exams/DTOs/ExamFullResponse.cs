@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Contracts.Exams.DTOs;
+namespace TestPlatform.Contracts.Exams.DTOs;
 
 public record ExamFullResponse(
     Guid Id,
@@ -8,21 +8,24 @@ public record ExamFullResponse(
     Guid? CoverImageId,
     Guid AuthorId,
     string Status,
+    int AttemptsLimit,
+    ExamReviewPolicyDto ReviewPolicy,
+    int TotalQuestions,
+    int TotalMaxScore,
     DateTime CreatedAt,
     DateTime? PublishedAt,
     ExamScheduleResponse? Schedule,
     PassingRuleResponse? PassingRule,
-    IReadOnlyCollection<ExamQuestionResponse> Questions);
+    IReadOnlyCollection<ExamSectionResponse> Sections);
 
-public record ExamScheduleResponse(
-    DateTime? AvailableFrom,
-    DateTime? AvailableTo);
+public record ExamScheduleResponse(DateTime? AvailableFrom, DateTime? AvailableTo);
 
-public record PassingRuleResponse(
-    int? MinScore,
-    double? MinPercent);
+public record PassingRuleResponse(int? MinScore, double? MinPercent);
 
-public record ExamQuestionResponse(
-    Guid QuestionId,
-    int Order,
-    int Score);
+public record ExamSectionResponse(
+    Guid Id,
+    string Name,
+    int QuestionsToSelect,
+    int ScorePerQuestion,
+    int MaxScore,
+    IReadOnlyCollection<Guid> QuestionIds);

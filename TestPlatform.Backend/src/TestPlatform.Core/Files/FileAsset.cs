@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 
 namespace TestPlatform.Core.Files;
 
@@ -53,22 +53,34 @@ public class FileAsset
         Guid uploadedByUserId)
     {
         if (string.IsNullOrWhiteSpace(objectKey))
+        {
             return Result.Failure<FileAsset>("file.object_key_required");
+        }
 
         if (string.IsNullOrWhiteSpace(fileName))
+        {
             return Result.Failure<FileAsset>("file.name_required");
+        }
 
         if (string.IsNullOrWhiteSpace(contentType))
+        {
             return Result.Failure<FileAsset>("file.content_type_required");
+        }
 
         if (sizeBytes <= 0)
+        {
             return Result.Failure<FileAsset>("file.empty");
+        }
 
         if (uploadedByUserId == Guid.Empty)
+        {
             return Result.Failure<FileAsset>("file.uploader_required");
+        }
 
         if (id == Guid.Empty)
+        {
             return Result.Failure<FileAsset>("file.id_required");
+        }
 
         return Result.Success(new FileAsset(
             id,
@@ -81,11 +93,20 @@ public class FileAsset
 
     public Result Attach(Guid userId)
     {
-        if (Status == FileAssetStatus.Deleted)
+        if (Status is FileAssetStatus.DeletionPending or FileAssetStatus.Deleted)
+        {
             return Result.Failure("file.deleted");
+        }
 
         if (UploadedByUserId != userId)
+        {
             return Result.Failure("file.forbidden");
+        }
+
+        if (Status == FileAssetStatus.Attached)
+        {
+            return Result.Success();
+        }
 
         Status = FileAssetStatus.Attached;
         AttachedAt = DateTime.UtcNow;
@@ -96,11 +117,24 @@ public class FileAsset
     public Result MarkDeleted()
     {
         if (Status == FileAssetStatus.Deleted)
+        {
             return Result.Success();
+        }
 
         Status = FileAssetStatus.Deleted;
         DeletedAt = DateTime.UtcNow;
 
+        return Result.Success();
+    }
+
+    public Result RequestDeletion()
+    {
+        if (Status is FileAssetStatus.DeletionPending or FileAssetStatus.Deleted)
+        {
+            return Result.Success();
+        }
+
+        Status = FileAssetStatus.DeletionPending;
         return Result.Success();
     }
 }

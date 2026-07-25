@@ -1,42 +1,62 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Common.Error;
 using TestPlatform.Contracts.Exams.DTOs;
+using TestPlatform.Application.Users;
 
 namespace TestPlatform.Application.Exams.Features.GetByIdExamQuery;
 
 public record GetByIdExamQuery(Guid Id) : IQuery;
 
-public class GetByIdExamHandler(IExamsReadDbContext examsDbContext) : IQueryHandler<GetByIdExamQuery, ExamFullResponse>
+public sealed class GetByIdExamHandler(
+    IExamsReadDbContext examsDbContext,
+    ICurrentUserAccessor currentUserAccessor)
+    : IQueryHandler<GetByIdExamQuery, ExamFullResponse>
 {
     public async Task<Result<ExamFullResponse>> Handle(GetByIdExamQuery query, CancellationToken cancellationToken)
     {
-        var response = await examsDbContext.ReadExams
-            .Where(x => x.Id == query.Id)
-            .Select(x => new ExamFullResponse(
-                Id: x.Id,
-                Title: x.Title,
-                Description: x.Description,
-                TimeLimitSeconds: x.TimeLimitSeconds,
-                CoverImageId: x.CoverImageId,
-                AuthorId: x.AuthorId,
-                Status: x.Status.ToString(),
-                CreatedAt: x.CreatedAt,
-                PublishedAt: x.PublishedAt,
-                Schedule: x.Schedule == null ? null : new ExamScheduleResponse(x.Schedule.AvailableFrom, x.Schedule.AvailableTo),
-                PassingRule: x.PassingRule == null ? null : new PassingRuleResponse(x.PassingRule.MinScore, x.PassingRule.MinPercent),
-                Questions: x.Questions
-                    .OrderBy(q => q.Order)
-                    .Select(q => new ExamQuestionResponse(
-                        q.QuestionId,
-                        q.Order,
-                        q.Score))
-                    .ToList()))
-            .FirstOrDefaultAsync(cancellationToken);
+        var user = currentUserAccessor.User;
+        if (user is null)
+        {
+            return Result.Failure<ExamFullResponse>(ErrorCodes.Unauthorized);
+        }
 
-        return response is null
-            ? Result.Failure<ExamFullResponse>(ErrorCodes.ExamNotFound)
-            : Result.Success(response);
+        var exam = await examsDbContext.ReadExams
+            .AsNoTracking()
+            .Include(item => item.Sections)
+            .ThenInclude(section => section.Questions)
+            .FirstOrDefaultAsync(
+                item => item.Id == query.Id && (item.AuthorId == user.Id || user.IsAdmin),
+                cancellationToken);
+
+        if (exam is null)
+        {
+            return Result.Failure<ExamFullResponse>(ErrorCodes.ExamNotFound);
+        }
+
+        return Result.Success(new ExamFullResponse(
+            exam.Id,
+            exam.Title,
+            exam.Description,
+            exam.TimeLimitSeconds,
+            exam.CoverImageId,
+            exam.AuthorId,
+            exam.Status.ToString(),
+            exam.AttemptsLimit,
+            (ExamReviewPolicyDto)exam.ReviewPolicy,
+            exam.TotalQuestions,
+            exam.TotalMaxScore,
+            exam.CreatedAt,
+            exam.PublishedAt,
+            exam.Schedule is null ? null : new ExamScheduleResponse(exam.Schedule.AvailableFrom, exam.Schedule.AvailableTo),
+            exam.PassingRule is null ? null : new PassingRuleResponse(exam.PassingRule.MinScore, exam.PassingRule.MinPercent),
+            exam.Sections.Select(section => new ExamSectionResponse(
+                section.Id,
+                section.Name,
+                section.QuestionsToSelect,
+                section.ScorePerQuestion,
+                section.MaxScore,
+                section.QuestionIds)).ToList()));
     }
 }

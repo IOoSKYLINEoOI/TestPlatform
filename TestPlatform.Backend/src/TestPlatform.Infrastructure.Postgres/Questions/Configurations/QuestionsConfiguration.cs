@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TestPlatform.Core.Questions;
 using TestPlatform.Infrastructure.Postgres.Questions.Mapping;
@@ -13,8 +13,29 @@ public class QuestionsConfiguration : IEntityTypeConfiguration<Question>
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Text)
-            .HasMaxLength(200)
+        builder.ComplexProperty(x => x.Content, content =>
+        {
+            content.Property(x => x.Text)
+                .HasColumnName("Text")
+                .HasMaxLength(QuestionContent.MaxTextLength)
+                .IsRequired();
+
+            content.Property(x => x.Explanation)
+                .HasColumnName("Explanation")
+                .HasMaxLength(QuestionContent.MaxExplanationLength);
+        });
+
+        builder.Property(x => x.CreatedByUserId)
+            .IsRequired();
+
+        builder.Property(x => x.CreatedAt)
+            .IsRequired();
+
+        builder.Property(x => x.UpdatedAt)
+            .IsRequired();
+
+        builder.Property(x => x.Status)
+            .HasConversion<int>()
             .IsRequired();
 
         builder.Ignore(x => x.QuestionType);
@@ -27,6 +48,7 @@ public class QuestionsConfiguration : IEntityTypeConfiguration<Question>
 
         builder.Property(x => x.AnswerDefinition)
             .HasConversion(new AnswerDefinitionValueConverter())
-            .HasColumnType("jsonb");
+            .HasColumnType("jsonb")
+            .IsRequired();
     }
 }

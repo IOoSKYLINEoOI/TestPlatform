@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using TestPlatform.Core.Questions.AnswerDefinition.Abstractions;
 using TestPlatform.Core.Questions.Enums;
 
@@ -34,24 +34,48 @@ public class ChoiceAnswerDefinition : TypedQuestionAnswerDefinition<List<Guid>>
         IEnumerable<AnswerOption> options)
     {
         if (mode == ChoiceMode.Single && evaluationMode != EvaluationMode.Strict)
-            return Result.Failure<ChoiceAnswerDefinition>("Для SingleChoice доступен только строгий режим оценки.");
+        {
+            return Result.Failure<ChoiceAnswerDefinition>("question.answer.single_choice_requires_strict_mode");
+        }
 
         var optionList = options.ToList();
-        if (optionList.Count == 0)
-            return Result.Failure<ChoiceAnswerDefinition>("Должен быть хотя бы один вариант ответа.");
+        if (optionList.Count < 2)
+        {
+            return Result.Failure<ChoiceAnswerDefinition>("question.answer.too_few_options");
+        }
 
         if (optionList.Count > MaxOptions)
-            return Result.Failure<ChoiceAnswerDefinition>($"Максимум {MaxOptions} вариантов ответа.");
+        {
+            return Result.Failure<ChoiceAnswerDefinition>("question.answer.too_many_options");
+        }
+
+        if (optionList.GroupBy(option => option.Text.Trim(), StringComparer.OrdinalIgnoreCase).Any(group => group.Count() > 1))
+        {
+            return Result.Failure<ChoiceAnswerDefinition>("question.answer.duplicate_options");
+        }
 
         var correctCount = optionList.Count(x => x.IsCorrect);
 
         if (mode == ChoiceMode.Single && correctCount != 1)
-            return Result.Failure<ChoiceAnswerDefinition>("SingleChoice должен иметь ровно один правильный ответ.");
+        {
+            return Result.Failure<ChoiceAnswerDefinition>("question.answer.single_choice_requires_one_correct");
+        }
 
         if (mode == ChoiceMode.Multiple && correctCount < 1)
-            return Result.Failure<ChoiceAnswerDefinition>("MultipleChoice должен иметь хотя бы один правильный ответ.");
+        {
+            return Result.Failure<ChoiceAnswerDefinition>("question.answer.correct_option_required");
+        }
 
         return Result.Success(new ChoiceAnswerDefinition(mode, evaluationMode, optionList));
+    }
+
+    public override QuestionAnswerDefinition Copy()
+    {
+        var options = _options
+            .Select(option => AnswerOption.Create(option.Text, option.IsCorrect, option.ImageId).Value)
+            .ToList();
+
+        return new ChoiceAnswerDefinition(Mode, EvaluationMode, options);
     }
 
     public override decimal GetScore(List<Guid> selected)
@@ -67,14 +91,16 @@ public class ChoiceAnswerDefinition : TypedQuestionAnswerDefinition<List<Guid>>
         {
             EvaluationMode.Strict => correctIds.SetEquals(selectedIds) ? 1m : 0m,
             EvaluationMode.Partial => CalculatePartial(correctIds, selectedIds),
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new InvalidOperationException($"Unsupported evaluation mode: {EvaluationMode}.")
         };
     }
 
     private static decimal CalculatePartial(HashSet<Guid> correctIds, HashSet<Guid> selectedIds)
     {
         if (correctIds.Count == 0)
+        {
             return 0m;
+        }
 
         int correctSelected = selectedIds
             .Intersect(correctIds)

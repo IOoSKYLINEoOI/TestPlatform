@@ -1,4 +1,4 @@
-﻿using TestPlatform.Contracts.Questions.Enums;
+using TestPlatform.Contracts.Questions.Enums;
 using TestPlatform.Contracts.Tags.DTOs;
 
 namespace TestPlatform.Contracts.Questions.DTOs.Preview;

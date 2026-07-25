@@ -1,7 +1,6 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Exams.Services;
 using TestPlatform.Contracts.Exams.DTOs;
 using TestPlatform.Core.Exams;
 
@@ -29,17 +28,23 @@ public class UpdateExamScheduleHandler : ICommandHandler<UpdateExamScheduleComma
     {
         var accessResult = await _examAccessService.GetForModifyAsync(command.Id, cancellationToken);
         if (accessResult.IsFailure)
+        {
             return accessResult;
+        }
 
         var exam = accessResult.Value;
 
         var scheduleResult = ExamSchedule.Create(command.Request.AvailableFrom, command.Request.AvailableTo);
         if (scheduleResult.IsFailure)
+        {
             return scheduleResult;
+        }
 
         var result = exam.ChangeSchedule(scheduleResult.Value);
         if (result.IsFailure)
+        {
             return result;
+        }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

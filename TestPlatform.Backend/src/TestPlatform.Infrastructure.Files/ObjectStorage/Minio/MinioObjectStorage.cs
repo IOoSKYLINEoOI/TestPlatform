@@ -29,7 +29,9 @@ public class MinioObjectStorage : IObjectStorage
             .WithCredentials(_options.AccessKey, _options.SecretKey);
 
         if (publicEndpoint.Scheme == Uri.UriSchemeHttps)
+        {
             publicClient = publicClient.WithSSL();
+        }
 
         _publicMinioClient = publicClient.Build();
     }
@@ -125,7 +127,9 @@ public class MinioObjectStorage : IObjectStorage
     {
         var existsArgs = new BucketExistsArgs().WithBucket(_options.BucketName);
         if (await _minioClient.BucketExistsAsync(existsArgs, cancellationToken))
+        {
             return;
+        }
 
         await _minioClient.MakeBucketAsync(
             new MakeBucketArgs().WithBucket(_options.BucketName),

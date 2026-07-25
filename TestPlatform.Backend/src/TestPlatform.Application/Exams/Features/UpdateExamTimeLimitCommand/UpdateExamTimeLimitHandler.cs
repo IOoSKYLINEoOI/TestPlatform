@@ -1,7 +1,7 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Contracts.Share;
+using TestPlatform.Contracts.Common;
 using TestPlatform.Core.Exams;
 
 namespace TestPlatform.Application.Exams.Features.UpdateExamTimeLimitCommand;
@@ -28,13 +28,17 @@ public class UpdateExamTimeLimitHandler : ICommandHandler<UpdateExamTimeLimitCom
     {
         var accessResult = await _examAccessService.GetForModifyAsync(command.Id, cancellationToken);
         if (accessResult.IsFailure)
+        {
             return accessResult;
+        }
 
         var exam = accessResult.Value;
 
         var result = exam.ChangeTimeLimit(command.Request.TimeLimitSeconds);
         if (result.IsFailure)
+        {
             return result;
+        }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
