@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Core.Exams;
@@ -27,13 +27,17 @@ public class DeleteExamScheduleHandler : ICommandHandler<DeleteExamScheduleComma
     {
         var accessResult = await _examAccessService.GetForModifyAsync(command.Id, cancellationToken);
         if (accessResult.IsFailure)
+        {
             return accessResult;
+        }
 
         var exam = accessResult.Value;
 
         var result = exam.RemoveSchedule();
         if (result.IsFailure)
+        {
             return result;
+        }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

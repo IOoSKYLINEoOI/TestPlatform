@@ -1,9 +1,11 @@
-﻿using TestPlatform.Application.Questions.Mappers;
-using TestPlatform.Application.Questions.Tags.Extensions;
-using TestPlatform.Contracts.Questions.DTOs;
+using TestPlatform.Application.Questions.Mappers;
+using TestPlatform.Application.Tags.Extensions;
 using TestPlatform.Contracts.Questions.DTOs.AnswerDefinition;
 using TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Response;
+using TestPlatform.Contracts.Questions.DTOs.Editor;
+using TestPlatform.Contracts.Questions.DTOs.Passing;
 using TestPlatform.Contracts.Questions.DTOs.Preview;
+using TestPlatform.Contracts.Questions.DTOs.Results;
 using TestPlatform.Contracts.Questions.Enums;
 using TestPlatform.Core.Questions;
 using TestPlatform.Core.Questions.AnswerDefinition;
@@ -12,117 +14,157 @@ namespace TestPlatform.Application.Questions.Extensions;
 
 public static class QuestionMappingExtensions
 {
-    public static QuestionResponse ToResponse(this Question question)
+    public static AttemptQuestionResponse ToAttemptResponse(this Question question)
     {
         var tags = question.Tags.ToResponses();
 
         return question.AnswerDefinition switch
         {
-            ChoiceAnswerDefinition c => new ChoiceQuestionResponse(
+            ChoiceAnswerDefinition definition => new ChoiceAttemptQuestionResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
-                c.Type.ToDto(),
-                c.Mode.ToDto(),
-                c.EvaluationMode.ToDto(),
+                definition.Type.ToDto(),
+                definition.Mode.ToDto(),
+                definition.EvaluationMode.ToDto(),
                 tags,
-                c.Options.Select(o => new AnswerOptionResponse(
-                    o.Id,
-                    o.Text,
-                    o.ImageId)).ToList()),
-
-            TextAnswerDefinition _ => new TextQuestionResponse(
+                definition.Options.Select(option => new AnswerOptionResponse(
+                    option.Id,
+                    option.Text,
+                    option.ImageId)).ToList()),
+            TextAnswerDefinition => new TextAttemptQuestionResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
                 QuestionTypeDto.Text,
                 tags),
-
-            NumberAnswerDefinition _ => new NumberQuestionResponse(
+            NumberAnswerDefinition => new NumberAttemptQuestionResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
                 QuestionTypeDto.Number,
                 tags),
-
-            MatchingAnswerDefinition m => new MatchingQuestionResponse(
+            MatchingAnswerDefinition definition => new MatchingAttemptQuestionResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
-                m.Type.ToDto(),
-                m.Mode.ToDto(),
+                definition.Type.ToDto(),
+                definition.Mode.ToDto(),
                 tags,
-                m.LeftItems.Select(o => new MatchingItemResponse(
-                    o.Id,
-                    o.Text,
-                    o.ImageId)).ToList(),
-                m.RightItems.Select(o => new MatchingItemResponse(
-                    o.Id,
-                    o.Text,
-                    o.ImageId)).ToList()),
-
-            _ => throw new NotSupportedException(
-                     $"Unsupported answer definition: {question.AnswerDefinition.GetType().Name}")
+                ToMatchingItems(definition.LeftItems),
+                ToMatchingItems(definition.RightItems)),
+            _ => throw Unsupported(question),
         };
     }
 
-    public static QuestionResultResponse ToResultResponse(this Question question)
+    public static AttemptQuestionResultResponse ToAttemptResultResponse(this Question question)
     {
         var tags = question.Tags.ToResponses();
 
         return question.AnswerDefinition switch
         {
-            ChoiceAnswerDefinition c => new ChoiceQuestionResultResponse(
+            ChoiceAnswerDefinition definition => new ChoiceAttemptQuestionResultResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
-                c.Type.ToDto(),
-                c.Mode.ToDto(),
-                c.EvaluationMode.ToDto(),
+                definition.Type.ToDto(),
+                definition.Mode.ToDto(),
+                definition.EvaluationMode.ToDto(),
                 tags,
-                c.Options.Select(o => new AnswerOptionResultResponse(
-                    o.Id,
-                    o.Text,
-                    o.ImageId,
-                    o.IsCorrect)).ToList()),
-
-            TextAnswerDefinition t => new TextQuestionResultResponse(
+                question.Explanation,
+                ToResultOptions(definition)),
+            TextAnswerDefinition definition => new TextAttemptQuestionResultResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
                 QuestionTypeDto.Text,
-                t.CorrectAnswer,
-                tags),
-
-            NumberAnswerDefinition n => new NumberQuestionResultResponse(
+                tags,
+                question.Explanation,
+                definition.CorrectAnswer),
+            NumberAnswerDefinition definition => new NumberAttemptQuestionResultResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
                 QuestionTypeDto.Number,
-                n.CorrectAnswer,
-                tags),
-
-            MatchingAnswerDefinition m => new MatchingQuestionResultResponse(
+                tags,
+                question.Explanation,
+                definition.CorrectAnswer),
+            MatchingAnswerDefinition definition => new MatchingAttemptQuestionResultResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
-                m.Type.ToDto(),
-                m.Mode.ToDto(),
+                definition.Type.ToDto(),
+                definition.Mode.ToDto(),
                 tags,
-                m.LeftItems.Select(o => new MatchingItemResponse(
-                    o.Id,
-                    o.Text,
-                    o.ImageId)).ToList(),
-                m.RightItems.Select(o => new MatchingItemResponse(
-                    o.Id,
-                    o.Text,
-                    o.ImageId)).ToList(),
-                m.Pairs.Select(p => new MatchingPairDto(
-                    p.LeftId,
-                    p.RightId)).ToList()),
+                question.Explanation,
+                ToMatchingItems(definition.LeftItems),
+                ToMatchingItems(definition.RightItems),
+                ToMatchingPairs(definition)),
+            _ => throw Unsupported(question),
+        };
+    }
 
-            _ => throw new NotSupportedException(
-                $"Unsupported answer definition: {question.AnswerDefinition.GetType().Name}")
+    public static QuestionEditorResponse ToEditorResponse(this Question question)
+    {
+        var tags = question.Tags.ToResponses();
+        var status = question.Status.ToDto();
+
+        return question.AnswerDefinition switch
+        {
+            ChoiceAnswerDefinition definition => new ChoiceQuestionEditorResponse(
+                question.Id,
+                question.Text,
+                question.ImageId,
+                definition.Type.ToDto(),
+                definition.Mode.ToDto(),
+                definition.EvaluationMode.ToDto(),
+                tags,
+                question.Explanation,
+                status,
+                question.CreatedByUserId,
+                question.CreatedAt,
+                question.UpdatedAt,
+                ToResultOptions(definition)),
+            TextAnswerDefinition definition => new TextQuestionEditorResponse(
+                question.Id,
+                question.Text,
+                question.ImageId,
+                QuestionTypeDto.Text,
+                tags,
+                question.Explanation,
+                status,
+                question.CreatedByUserId,
+                question.CreatedAt,
+                question.UpdatedAt,
+                definition.CorrectAnswer),
+            NumberAnswerDefinition definition => new NumberQuestionEditorResponse(
+                question.Id,
+                question.Text,
+                question.ImageId,
+                QuestionTypeDto.Number,
+                tags,
+                question.Explanation,
+                status,
+                question.CreatedByUserId,
+                question.CreatedAt,
+                question.UpdatedAt,
+                definition.CorrectAnswer),
+            MatchingAnswerDefinition definition => new MatchingQuestionEditorResponse(
+                question.Id,
+                question.Text,
+                question.ImageId,
+                definition.Type.ToDto(),
+                definition.Mode.ToDto(),
+                tags,
+                question.Explanation,
+                status,
+                question.CreatedByUserId,
+                question.CreatedAt,
+                question.UpdatedAt,
+                ToMatchingItems(definition.LeftItems),
+                ToMatchingItems(definition.RightItems),
+                ToMatchingPairs(definition)),
+            _ => throw Unsupported(question),
         };
     }
 
@@ -130,41 +172,54 @@ public static class QuestionMappingExtensions
     {
         var tags = question.Tags.ToResponses();
 
-        return question.AnswerDefinition switch
+        QuestionPreviewResponse response = question.AnswerDefinition switch
         {
-            ChoiceAnswerDefinition c => new ChoiceQuestionPreviewResponse(
+            ChoiceAnswerDefinition definition => new ChoiceQuestionPreviewResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
-                c.Type.ToDto(),
-                c.Mode.ToDto(),
-                c.EvaluationMode.ToDto(),
+                definition.Type.ToDto(),
+                definition.Mode.ToDto(),
+                definition.EvaluationMode.ToDto(),
                 tags),
-
-            TextAnswerDefinition _ => new TextQuestionPreviewResponse(
+            TextAnswerDefinition => new TextQuestionPreviewResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
                 QuestionTypeDto.Text,
                 tags),
-
-            NumberAnswerDefinition _ => new NumberQuestionPreviewResponse(
+            NumberAnswerDefinition => new NumberQuestionPreviewResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
                 QuestionTypeDto.Number,
                 tags),
-
-            MatchingAnswerDefinition m => new MatchingQuestionPreviewResponse(
+            MatchingAnswerDefinition definition => new MatchingQuestionPreviewResponse(
                 question.Id,
                 question.Text,
                 question.ImageId,
-                m.Type.ToDto(),
-                m.Mode.ToDto(),
+                definition.Type.ToDto(),
+                definition.Mode.ToDto(),
                 tags),
-
-            _ => throw new NotSupportedException(
-                $"Unsupported answer definition: {question.AnswerDefinition.GetType().Name}")
+            _ => throw Unsupported(question),
         };
+
+        return response with { Status = question.Status.ToDto() };
     }
+
+    private static IReadOnlyList<AnswerOptionResultResponse> ToResultOptions(ChoiceAnswerDefinition definition) =>
+        definition.Options.Select(option => new AnswerOptionResultResponse(
+            option.Id,
+            option.Text,
+            option.ImageId,
+            option.IsCorrect)).ToList();
+
+    private static IReadOnlyList<MatchingItemResponse> ToMatchingItems(IEnumerable<MatchingItem> items) =>
+        items.Select(item => new MatchingItemResponse(item.Id, item.Text, item.ImageId)).ToList();
+
+    private static IReadOnlyList<MatchingPairDto> ToMatchingPairs(MatchingAnswerDefinition definition) =>
+        definition.Pairs.Select(pair => new MatchingPairDto(pair.LeftId, pair.RightId)).ToList();
+
+    private static NotSupportedException Unsupported(Question question) =>
+        new($"Unsupported answer definition: {question.AnswerDefinition.GetType().Name}");
 }

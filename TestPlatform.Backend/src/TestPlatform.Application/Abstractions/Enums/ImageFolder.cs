@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Application.Abstractions.Enums;
+namespace TestPlatform.Application.Abstractions.Enums;
 
 public enum ImageFolder
 {

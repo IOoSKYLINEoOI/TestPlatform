@@ -1,4 +1,4 @@
-﻿using TestPlatform.Core.Users;
+using TestPlatform.Core.Users;
 
 namespace TestPlatform.Application.Users;
 

@@ -1,4 +1,4 @@
-﻿using TestPlatform.Contracts.Attempts.Enums;
+using TestPlatform.Contracts.Attempts.Enums;
 using TestPlatform.Core.Attempts.Enums;
 
 namespace TestPlatform.Application.Attempts.Mappers;

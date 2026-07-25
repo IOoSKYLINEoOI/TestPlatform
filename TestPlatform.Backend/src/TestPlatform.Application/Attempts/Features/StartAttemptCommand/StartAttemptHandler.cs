@@ -1,7 +1,8 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Attempts.Mappers;
+using TestPlatform.Application.Attempts.Services;
 using TestPlatform.Application.Attempts.Services.SourceService;
 using TestPlatform.Application.Common.Error;
 using TestPlatform.Application.Extensions;
@@ -15,22 +16,22 @@ public record StartAttemptCommand(StartRequest Request) : ICommand;
 
 public class StartAttemptHandler : ICommandHandler<StartAttemptCommand, StartAttemptResponse>
 {
-    private readonly IAttemptsRepository _attemptsRepository;
+    private readonly IAttemptStartStore _attemptStartStore;
     private readonly AttemptSourceResolver _resolver;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly AttemptQuestionLoader _questionLoader;
     private readonly ICurrentUserAccessor _currentUser;
     private readonly ILogger<StartAttemptHandler> _logger;
 
     public StartAttemptHandler(
-        IAttemptsRepository attemptsRepository,
+        IAttemptStartStore attemptStartStore,
         AttemptSourceResolver resolver,
-        IUnitOfWork unitOfWork,
+        AttemptQuestionLoader questionLoader,
         ICurrentUserAccessor currentUser,
         ILogger<StartAttemptHandler> logger)
     {
-        _attemptsRepository = attemptsRepository;
+        _attemptStartStore = attemptStartStore;
         _resolver = resolver;
-        _unitOfWork = unitOfWork;
+        _questionLoader = questionLoader;
         _currentUser = currentUser;
         _logger = logger;
     }
@@ -48,13 +49,34 @@ public class StartAttemptHandler : ICommandHandler<StartAttemptCommand, StartAtt
         var request = command.Request;
         var attemptType = request.Type.ToDomain();
 
+        if (request.RequestId == Guid.Empty)
+        {
+            return Result.Failure<StartAttemptResponse>("attempt.request_id_required");
+        }
+
+        var existing = await _attemptStartStore.FindByRequestIdAsync(
+            user.Id,
+            request.RequestId,
+            cancellationToken);
+        if (existing is not null)
+        {
+            if (existing.Type != attemptType || existing.SourceId != request.SourceId)
+            {
+                return Result.Failure<StartAttemptResponse>("attempt.request_id_conflict");
+            }
+
+            return await MapStoredAttemptAsync(existing, cancellationToken);
+        }
+
         var sourceResult = await _resolver.GetSourceAsync(
             attemptType,
             request.SourceId,
             cancellationToken);
 
         if (sourceResult.IsFailure)
+        {
             return Result.Failure<StartAttemptResponse>(sourceResult.Error);
+        }
 
         var source = sourceResult.Value;
 
@@ -62,29 +84,77 @@ public class StartAttemptHandler : ICommandHandler<StartAttemptCommand, StartAtt
             user.Id,
             request.Type.ToDomain(),
             request.SourceId,
-            source.TotalQuestions,
-            source.TotalMaxScore,
-            source.TimeLimitSeconds);
+            source.Questions
+                .Select(x => new AttemptQuestionSelection(x.Question.Id, x.Order, x.Score))
+                .ToList(),
+            source.TimeLimitSeconds,
+            source.MinPassingScore,
+            source.MinPassingPercent,
+            source.AvailableTo,
+            source.ReviewAvailableAt,
+            request.RequestId);
 
         if (attemptResult.IsFailure)
+        {
             return Result.Failure<StartAttemptResponse>(attemptResult.Error);
+        }
 
         var attempt = attemptResult.Value;
 
         var startResult = attempt.Start();
         if (startResult.IsFailure)
+        {
             return Result.Failure<StartAttemptResponse>(startResult.Error);
+        }
 
-        await _attemptsRepository.AddAsync(attempt, cancellationToken);
+        var addResult = await _attemptStartStore.AddAsync(
+            attempt,
+            source.AttemptsLimit,
+            cancellationToken);
+        if (addResult.IsFailure)
+        {
+            return Result.Failure<StartAttemptResponse>(addResult.Error);
+        }
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        attempt = addResult.Value.Attempt;
+
+        if (!addResult.Value.Created)
+        {
+            return await MapStoredAttemptAsync(attempt, cancellationToken);
+        }
 
         var response = new StartAttemptResponse(
             attempt.Id,
+            attempt.AttemptNumber,
+            attempt.Status.ToDto(),
             AttemptStartMapper.ToStartResponse(source, attemptType));
 
         _logger.LogResult("Attempt started", attempt.Id, attemptResult);
 
         return Result.Success(response);
+    }
+
+    private async Task<Result<StartAttemptResponse>> MapStoredAttemptAsync(
+        Attempt attempt,
+        CancellationToken cancellationToken)
+    {
+        var storedQuestions = await _questionLoader.LoadAsync(
+            attempt.QuestionSelections,
+            cancellationToken);
+        if (storedQuestions.IsFailure)
+        {
+            return Result.Failure<StartAttemptResponse>(storedQuestions.Error);
+        }
+
+        var source = new AttemptSource(
+            storedQuestions.Value,
+            attempt.TotalQuestions,
+            attempt.TotalMaxScore,
+            attempt.TimeLimitSeconds);
+        return Result.Success(new StartAttemptResponse(
+            attempt.Id,
+            attempt.AttemptNumber,
+            attempt.Status.ToDto(),
+            AttemptStartMapper.ToStartResponse(source, attempt.Type)));
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace TestPlatform.Contracts.Tests.DTOs;
+using TestPlatform.Contracts.Tests.Enums;
+
+namespace TestPlatform.Contracts.Tests.DTOs;
 
 public record TestResponse(
     Guid Id,
@@ -7,4 +9,6 @@ public record TestResponse(
     int? TimeLimitSeconds,
     Guid? AuthorId,
     DateTime CreatedAt,
+    DateTime UpdatedAt,
+    TestStatusDto Status,
     int TotalQuestions);

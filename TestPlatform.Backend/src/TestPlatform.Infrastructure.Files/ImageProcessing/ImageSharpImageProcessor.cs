@@ -21,15 +21,21 @@ public class ImageSharpImageProcessor : IImageProcessor
         CancellationToken cancellationToken)
     {
         if (source.Length == 0)
+        {
             return Result.Failure<ProcessedImage>("file.empty");
+        }
 
         var maxBytes = _options.MaxFileSizeMb * 1024 * 1024;
         if (source.Length > maxBytes)
+        {
             return Result.Failure<ProcessedImage>("file.too_large");
+        }
 
         var extension = Path.GetExtension(source.FileName).ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(extension) || !_options.AllowedExtensions.Contains(extension))
+        {
             return Result.Failure<ProcessedImage>("file.invalid_extension");
+        }
 
         await using var output = new MemoryStream();
 

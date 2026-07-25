@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Core.Questions.Enums;
+namespace TestPlatform.Core.Questions.Enums;
 
 public enum ChoiceMode
 {

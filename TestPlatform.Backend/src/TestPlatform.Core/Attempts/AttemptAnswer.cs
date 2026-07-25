@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 
 namespace TestPlatform.Core.Attempts;
 
@@ -33,8 +33,10 @@ public class AttemptAnswer
     {
         var ids = optionIds.Distinct().ToList();
 
-        if (!ids.Any())
-            return Result.Failure<AttemptAnswer>("Должен быть выбран хотя бы один вариант.");
+        if (ids.Count == 0)
+        {
+            return Result.Failure<AttemptAnswer>("attempt.answer.choice_required");
+        }
 
         var answer = new AttemptAnswer(questionId);
 
@@ -48,7 +50,9 @@ public class AttemptAnswer
         string text)
     {
         if (string.IsNullOrWhiteSpace(text))
-            return Result.Failure<AttemptAnswer>("Текст ответа обязателен.");
+        {
+            return Result.Failure<AttemptAnswer>("attempt.answer.text_required");
+        }
 
         return Result.Success(
             new AttemptAnswer(questionId) { TextAnswer = text.Trim(), });
@@ -71,13 +75,45 @@ public class AttemptAnswer
     {
         var pairList = pairs.ToList();
 
-        if (!pairList.Any())
-            return Result.Failure<AttemptAnswer>("Должна быть хотя бы одна пара.");
+        if (pairList.Count == 0)
+        {
+            return Result.Failure<AttemptAnswer>("attempt.answer.pair_required");
+        }
+
+        if (pairList.GroupBy(x => x.LeftOptionId).Any(x => x.Count() > 1))
+        {
+            return Result.Failure<AttemptAnswer>("attempt.answer.duplicate_left_item");
+        }
+
+        if (pairList.GroupBy(x => x.RightOptionId).Any(x => x.Count() > 1))
+        {
+            return Result.Failure<AttemptAnswer>("attempt.answer.duplicate_right_item");
+        }
 
         var answer = new AttemptAnswer(questionId);
 
         answer._matchingPairs.AddRange(pairList);
 
         return Result.Success(answer);
+    }
+
+    public object ToEvaluationValue()
+    {
+        if (_selectedOptionIds.Count > 0)
+        {
+            return _selectedOptionIds.ToList();
+        }
+
+        if (TextAnswer is not null)
+        {
+            return TextAnswer;
+        }
+
+        if (NumberAnswer.HasValue)
+        {
+            return NumberAnswer.Value;
+        }
+
+        return _matchingPairs.ToDictionary(x => x.LeftOptionId, x => x.RightOptionId);
     }
 }

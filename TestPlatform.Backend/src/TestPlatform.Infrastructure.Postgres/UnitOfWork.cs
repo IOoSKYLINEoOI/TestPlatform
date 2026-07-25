@@ -1,4 +1,4 @@
-﻿using TestPlatform.Application.Abstractions;
+using TestPlatform.Application.Abstractions;
 
 namespace TestPlatform.Infrastructure.Postgres;
 

@@ -1,16 +1,15 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Common.Error;
 using TestPlatform.Application.Extensions;
 using TestPlatform.Application.Users;
 using TestPlatform.Contracts.Tests.DTOs;
-using TestPlatform.Contracts.Users.DTOs;
 using TestPlatform.Core.Tests;
 
 namespace TestPlatform.Application.Tests.Features.CreateTestCommand;
 
-public record CreateTestCommand(TestRequest Request, CurrentUserDto CurrentUser) : ICommand;
+public record CreateTestCommand(TestRequest Request) : ICommand;
 
 public class CreateTestHandler : ICommandHandler<CreateTestCommand, Guid>
 {
@@ -44,10 +43,12 @@ public class CreateTestHandler : ICommandHandler<CreateTestCommand, Guid>
         var testResult = Test.Create(
             command.Request.Title,
             command.Request.Description,
-            command.CurrentUser.Id);
+            user.Id);
 
         if (testResult.IsFailure)
+        {
             return Result.Failure<Guid>(testResult.Error);
+        }
 
         await _testsRepository.AddAsync(testResult.Value, cancellationToken);
 

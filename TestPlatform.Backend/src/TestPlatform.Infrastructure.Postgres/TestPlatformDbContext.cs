@@ -1,9 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Attempts;
 using TestPlatform.Application.Exams;
 using TestPlatform.Application.Files;
 using TestPlatform.Application.Questions;
-using TestPlatform.Application.Questions.Tags;
+using TestPlatform.Application.Tags;
 using TestPlatform.Application.Tests;
 using TestPlatform.Application.Users;
 using TestPlatform.Core.Attempts;
@@ -25,31 +25,31 @@ public class TestPlatformDbContext(DbContextOptions<TestPlatformDbContext> optio
         IAttemptsReadDbContext,
         IUsersReadDbContext
 {
-    public DbSet<Attempt> Attempts { get; set; }
+    public DbSet<Attempt> Attempts => Set<Attempt>();
 
     public IQueryable<Attempt> ReadAttempts => Attempts.AsNoTracking().AsQueryable();
 
-    public DbSet<Exam> Exams { get; set; }
+    public DbSet<Exam> Exams => Set<Exam>();
 
     public IQueryable<Exam> ReadExams => Exams.AsNoTracking().AsQueryable();
 
-    public DbSet<Test> Tests { get; set; }
+    public DbSet<Test> Tests => Set<Test>();
 
     public IQueryable<Test> ReadTests => Tests.AsNoTracking().AsQueryable();
 
-    public DbSet<Question> Questions { get; set; }
+    public DbSet<Question> Questions => Set<Question>();
 
     public IQueryable<Question> ReadQuestions => Questions.AsNoTracking().AsQueryable();
 
-    public DbSet<Tag> Tags { get; set; }
+    public DbSet<Tag> Tags => Set<Tag>();
 
     public IQueryable<Tag> ReadTags => Tags.AsNoTracking().AsQueryable();
 
-    public DbSet<User> Users { get; set; }
+    public DbSet<User> Users => Set<User>();
 
     public IQueryable<User> ReadUsers => Users.AsNoTracking().AsQueryable();
 
-    public DbSet<FileAsset> FileAssets { get; set; }
+    public DbSet<FileAsset> FileAssets => Set<FileAsset>();
 
     public IQueryable<FileAsset> ReadFileAssets => FileAssets.AsNoTracking().AsQueryable();
 

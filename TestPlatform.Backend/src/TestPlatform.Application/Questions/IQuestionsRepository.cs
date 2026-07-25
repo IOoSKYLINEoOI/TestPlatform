@@ -1,4 +1,4 @@
-﻿using TestPlatform.Core.Questions;
+using TestPlatform.Core.Questions;
 
 namespace TestPlatform.Application.Questions;
 

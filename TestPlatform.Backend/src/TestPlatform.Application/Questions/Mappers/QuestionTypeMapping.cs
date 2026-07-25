@@ -1,4 +1,4 @@
-﻿using TestPlatform.Contracts.Questions.Enums;
+using TestPlatform.Contracts.Questions.Enums;
 using TestPlatform.Core.Questions.Enums;
 
 namespace TestPlatform.Application.Questions.Mappers;

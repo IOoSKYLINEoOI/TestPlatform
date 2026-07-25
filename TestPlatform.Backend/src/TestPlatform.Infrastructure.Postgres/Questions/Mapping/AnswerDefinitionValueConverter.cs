@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TestPlatform.Core.Questions.AnswerDefinition.Abstractions;
 
 namespace TestPlatform.Infrastructure.Postgres.Questions.Mapping;

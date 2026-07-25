@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using TestPlatform.Core.Questions.AnswerDefinition.Abstractions;
 using TestPlatform.Core.Questions.Enums;
 
@@ -19,6 +19,8 @@ public class NumberAnswerDefinition : TypedQuestionAnswerDefinition<decimal>
     {
         return Result.Success(new NumberAnswerDefinition(correctAnswer));
     }
+
+    public override QuestionAnswerDefinition Copy() => new NumberAnswerDefinition(CorrectAnswer);
 
     public override decimal GetScore(decimal answer)
     {

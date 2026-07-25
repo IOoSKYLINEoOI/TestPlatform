@@ -1,9 +1,6 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Common.Error;
-using TestPlatform.Application.Exams.Services;
-using TestPlatform.Application.Users;
 using TestPlatform.Core.Exams;
 
 namespace TestPlatform.Application.Exams.Features.ArchiveExamCommand;
@@ -30,13 +27,17 @@ public class ArchiveExamHandler : ICommandHandler<ArchiveExamCommand>
     {
         var accessResult = await _examAccessService.GetForModifyAsync(command.Id, cancellationToken);
         if (accessResult.IsFailure)
+        {
             return accessResult;
+        }
 
         var exam = accessResult.Value;
 
         var result = exam.Archive();
         if (result.IsFailure)
+        {
             return Result.Failure(result.Error);
+        }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

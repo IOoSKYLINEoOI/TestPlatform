@@ -1,3 +1,3 @@
-﻿namespace TestPlatform.Contracts.Exams.DTOs;
+namespace TestPlatform.Contracts.Exams.DTOs;
 
 public record UpdateExamScheduleRequest(DateTime? AvailableFrom, DateTime? AvailableTo);

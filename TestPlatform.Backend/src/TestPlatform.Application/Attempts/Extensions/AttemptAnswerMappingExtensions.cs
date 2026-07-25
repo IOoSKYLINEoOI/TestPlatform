@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using TestPlatform.Contracts.Attempts.DTOs.AttemptAnswer.Request;
 using TestPlatform.Contracts.Attempts.DTOs.AttemptAnswer.Response;
 using TestPlatform.Core.Attempts;

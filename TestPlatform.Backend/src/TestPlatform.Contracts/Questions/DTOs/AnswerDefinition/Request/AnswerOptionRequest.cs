@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Request;
+namespace TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Request;
 
 public record AnswerOptionRequest(
     string Text,

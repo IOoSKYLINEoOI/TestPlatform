@@ -1,7 +1,9 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Tests.DTOs;
+using TestPlatform.Contracts.Tests.Enums;
+using TestPlatform.Core.Tests.Enums;
 
 namespace TestPlatform.Application.Tests.Features.GetAllTestsQuery;
 
@@ -12,6 +14,7 @@ public class GetAllTestsHandler(ITestsReadDbContext testsDbContext) : IQueryHand
     public async Task<Result<IReadOnlyList<TestResponse>>> Handle(GetAllTestsQuery query, CancellationToken cancellationToken)
     {
         var response = await testsDbContext.ReadTests
+            .Where(t => t.Status == TestStatus.Published)
             .Select(t => new TestResponse(
                 t.Id,
                 t.Title,
@@ -19,6 +22,8 @@ public class GetAllTestsHandler(ITestsReadDbContext testsDbContext) : IQueryHand
                 t.TimeLimitSeconds,
                 t.AuthorId,
                 t.CreatedAt,
+                t.UpdatedAt,
+                (TestStatusDto)t.Status,
                 t.Questions.Count))
             .ToListAsync(cancellationToken);
 

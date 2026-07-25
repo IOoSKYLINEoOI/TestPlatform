@@ -1,8 +1,9 @@
-﻿namespace TestPlatform.Core.Files;
+namespace TestPlatform.Core.Files;
 
 public enum FileAssetStatus
 {
     Temporary,
     Attached,
+    DeletionPending,
     Deleted,
 }

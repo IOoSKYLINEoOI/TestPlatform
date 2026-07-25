@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Attempts.Interfaces;
@@ -6,10 +6,12 @@ using TestPlatform.Application.Attempts.Services;
 using TestPlatform.Application.Attempts.Services.SourceService;
 using TestPlatform.Application.Exams.Services;
 using TestPlatform.Application.Files;
-using TestPlatform.Application.Questions.Tags.Validators;
+using TestPlatform.Application.Questions.Services;
+using TestPlatform.Application.Tags.Validators;
 using TestPlatform.Application.Tests.Services;
 using TestPlatform.Core.Attempts;
 using TestPlatform.Core.Exams;
+using TestPlatform.Core.Questions;
 using TestPlatform.Core.Tests;
 
 namespace TestPlatform.Application;
@@ -36,11 +38,15 @@ public static class TestPlatformApplicationExtensions
         services.AddScoped<IAttemptSourceService, TestAttemptSource>();
         services.AddScoped<IAttemptSourceService, ExamAttemptSource>();
         services.AddScoped<AttemptSourceResolver>();
+        services.AddScoped<AttemptQuestionLoader>();
 
         services.AddScoped<IAccessService<Exam>, ExamAccessService>();
+        services.AddScoped<IAccessService<Question>, QuestionAccessService>();
+        services.AddScoped<QuestionFileAttachmentService>();
         services.AddScoped<IAccessService<Test>, TestAccessService>();
         services.AddScoped<IAccessService<Attempt>, AttemptAccessService>();
         services.AddScoped<IFileAssetService, FileAssetService>();
+        services.AddScoped<ITemporaryFileCleanupService, TemporaryFileCleanupService>();
 
         return services;
     }

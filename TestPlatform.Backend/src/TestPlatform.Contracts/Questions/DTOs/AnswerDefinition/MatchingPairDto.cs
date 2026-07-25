@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Contracts.Questions.DTOs.AnswerDefinition;
+namespace TestPlatform.Contracts.Questions.DTOs.AnswerDefinition;
 
 public record MatchingPairDto(
     Guid LeftId,

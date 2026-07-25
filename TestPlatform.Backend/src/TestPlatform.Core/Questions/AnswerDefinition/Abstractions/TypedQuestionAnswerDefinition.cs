@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Core.Questions.AnswerDefinition.Abstractions;
+namespace TestPlatform.Core.Questions.AnswerDefinition.Abstractions;
 
 public abstract class TypedQuestionAnswerDefinition<TAnswer> : QuestionAnswerDefinition
 {
@@ -7,7 +7,9 @@ public abstract class TypedQuestionAnswerDefinition<TAnswer> : QuestionAnswerDef
     public override decimal Evaluate(object answer)
     {
         if (answer is not TAnswer typed)
+        {
             return 0m;
+        }
 
         return GetScore(typed);
     }

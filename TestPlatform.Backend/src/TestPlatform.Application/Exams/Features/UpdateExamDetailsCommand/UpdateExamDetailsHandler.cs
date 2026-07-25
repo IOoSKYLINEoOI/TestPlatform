@@ -1,7 +1,6 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
-using TestPlatform.Application.Exams.Services;
 using TestPlatform.Contracts.Exams.DTOs;
 using TestPlatform.Core.Exams;
 
@@ -29,7 +28,9 @@ public class UpdateExamDetailsHandler : ICommandHandler<UpdateExamDetailsCommand
     {
         var accessResult = await _examAccessService.GetForModifyAsync(command.Id, cancellationToken);
         if (accessResult.IsFailure)
+        {
             return accessResult;
+        }
 
         var exam = accessResult.Value;
 
@@ -37,14 +38,18 @@ public class UpdateExamDetailsHandler : ICommandHandler<UpdateExamDetailsCommand
         {
             var changeTitleResult = exam.ChangeTitle(command.Request.Title);
             if (changeTitleResult.IsFailure)
+            {
                 return Result.Failure(changeTitleResult.Error);
+            }
         }
 
         if (command.Request.Description != null)
         {
             var changeDescriptionResult = exam.ChangeDescription(command.Request.Description);
             if (changeDescriptionResult.IsFailure)
+            {
                 return Result.Failure(changeDescriptionResult.Error);
+            }
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using TestPlatform.Application.Attempts.Interfaces;
 using TestPlatform.Core.Attempts.Enums;
 
@@ -19,7 +19,9 @@ public class AttemptSourceResolver
         CancellationToken ct)
     {
         if (!_sources.TryGetValue(type, out var service))
-            return Task.FromResult(Result.Failure<AttemptSource>("Unknown attempt type."));
+        {
+            return Task.FromResult(Result.Failure<AttemptSource>("attempt.unsupported_type"));
+        }
 
         return service.GetSourceAsync(sourceId, ct);
     }

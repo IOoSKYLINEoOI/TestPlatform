@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using TestPlatform.Core.Questions.AnswerDefinition.Abstractions;
 using TestPlatform.Core.Questions.Enums;
 
@@ -18,10 +18,14 @@ public class TextAnswerDefinition : TypedQuestionAnswerDefinition<string>
     public static Result<TextAnswerDefinition> Create(string correctAnswer)
     {
         if (string.IsNullOrWhiteSpace(correctAnswer))
-            return Result.Failure<TextAnswerDefinition>("Правильный ответ обязателен.");
+        {
+            return Result.Failure<TextAnswerDefinition>("question.answer.text_required");
+        }
 
         return Result.Success(new TextAnswerDefinition(correctAnswer.Trim()));
     }
+
+    public override QuestionAnswerDefinition Copy() => new TextAnswerDefinition(CorrectAnswer);
 
     public override decimal GetScore(string answer)
     {

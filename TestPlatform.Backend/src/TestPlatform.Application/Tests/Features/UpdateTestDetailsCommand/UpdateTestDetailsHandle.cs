@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Contracts.Tests.DTOs;
@@ -28,7 +28,9 @@ public class UpdateTestDetailsHandler : ICommandHandler<UpdateTestCommand>
     {
         var accessResult = await _testAccessService.GetForModifyAsync(command.Id, cancellationToken);
         if (accessResult.IsFailure)
+        {
             return accessResult;
+        }
 
         var test = accessResult.Value;
 
@@ -36,14 +38,18 @@ public class UpdateTestDetailsHandler : ICommandHandler<UpdateTestCommand>
         {
             var changeTitleResult = test.ChangeTitle(command.Request.Title);
             if (changeTitleResult.IsFailure)
+            {
                 return Result.Failure(changeTitleResult.Error);
+            }
         }
 
         if (command.Request.Description != null)
         {
             var changeDescriptionResult = test.ChangeDescription(command.Request.Description);
             if (changeDescriptionResult.IsFailure)
+            {
                 return Result.Failure(changeDescriptionResult.Error);
+            }
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

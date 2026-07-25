@@ -1,4 +1,4 @@
-﻿using TestPlatform.Core.Attempts;
+using TestPlatform.Core.Attempts;
 
 namespace TestPlatform.Application.Attempts;
 

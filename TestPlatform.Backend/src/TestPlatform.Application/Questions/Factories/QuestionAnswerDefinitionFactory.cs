@@ -1,7 +1,6 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using TestPlatform.Application.Questions.Mappers;
 using TestPlatform.Contracts.Questions.DTOs;
-using TestPlatform.Contracts.Questions.DTOs.AnswerDefinition;
 using TestPlatform.Contracts.Questions.DTOs.AnswerDefinition.Request;
 using TestPlatform.Core.Questions.AnswerDefinition;
 using TestPlatform.Core.Questions.AnswerDefinition.Abstractions;
@@ -43,7 +42,9 @@ public static class QuestionAnswerDefinitionFactory
         var combined = Result.Combine(options);
 
         if (combined.IsFailure)
+        {
             return Result.Failure<QuestionAnswerDefinition>(combined.Error);
+        }
 
         var definitionResult = ChoiceAnswerDefinition.Create(
             request.Mode.ToDomain(),
@@ -91,11 +92,15 @@ public static class QuestionAnswerDefinitionFactory
 
         var leftResult = Result.Combine(leftItems);
         if (leftResult.IsFailure)
+        {
             return Result.Failure<QuestionAnswerDefinition>(leftResult.Error);
+        }
 
         var rightResult = Result.Combine(rightItems);
         if (rightResult.IsFailure)
+        {
             return Result.Failure<QuestionAnswerDefinition>(rightResult.Error);
+        }
 
         var pairs = request.Pairs
             .Select(p => new MatchingPair(p.LeftId, p.RightId))

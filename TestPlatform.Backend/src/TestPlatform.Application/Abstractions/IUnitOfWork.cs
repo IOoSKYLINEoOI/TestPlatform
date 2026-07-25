@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Application.Abstractions;
+namespace TestPlatform.Application.Abstractions;
 
 public interface IUnitOfWork
 {

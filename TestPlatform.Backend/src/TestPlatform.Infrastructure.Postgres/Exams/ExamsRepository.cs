@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Exams;
 using TestPlatform.Core.Exams;
 
@@ -12,7 +12,8 @@ public class ExamsRepository : IExamsRepository
 
     public async Task<Exam?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         => await _context.Exams
-            .Include(x => x.Questions)
+            .Include(x => x.Sections)
+            .ThenInclude(x => x.Questions)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public async Task AddAsync(Exam exam, CancellationToken cancellationToken)

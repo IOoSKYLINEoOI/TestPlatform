@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 
 namespace TestPlatform.Core.Questions.AnswerDefinition;
 
@@ -28,18 +28,24 @@ public class MatchingItem
     {
         var validator = Validate(text);
         if (validator.IsFailure)
+        {
             return Result.Failure<MatchingItem>(validator.Error);
+        }
 
         if (id == Guid.Empty)
-            return Result.Failure<MatchingItem>("Идентификатор элемента сопоставления обязателен.");
+        {
+            return Result.Failure<MatchingItem>("question.answer.matching_item_id_required");
+        }
 
-        return Result.Success(new MatchingItem(id, text, imageId));
+        return Result.Success(new MatchingItem(id, text.Trim(), imageId));
     }
 
     private static Result Validate(string text)
     {
         if (string.IsNullOrWhiteSpace(text) || text.Length > MaxLengthText)
-            return Result.Failure<MatchingItem>($"'{nameof(text)}' не может быть пустым или длиннее {MaxLengthText} символов.");
+        {
+            return Result.Failure<MatchingItem>("question.answer.invalid_matching_item_text");
+        }
 
         return Result.Success();
     }

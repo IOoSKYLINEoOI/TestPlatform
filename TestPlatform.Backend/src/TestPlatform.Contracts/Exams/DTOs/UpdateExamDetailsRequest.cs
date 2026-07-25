@@ -1,4 +1,4 @@
-﻿namespace TestPlatform.Contracts.Exams.DTOs;
+namespace TestPlatform.Contracts.Exams.DTOs;
 
 public record UpdateExamDetailsRequest(
     string? Title,

@@ -1,4 +1,4 @@
-﻿using TestPlatform.Core.Files;
+using TestPlatform.Core.Files;
 
 namespace TestPlatform.Application.Files;
 

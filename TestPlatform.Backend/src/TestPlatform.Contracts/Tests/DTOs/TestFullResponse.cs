@@ -1,4 +1,6 @@
-﻿namespace TestPlatform.Contracts.Tests.DTOs;
+using TestPlatform.Contracts.Tests.Enums;
+
+namespace TestPlatform.Contracts.Tests.DTOs;
 
 public record TestFullResponse(
     Guid Id,
@@ -8,9 +10,11 @@ public record TestFullResponse(
     Guid? CoverImageId,
     Guid? AuthorId,
     DateTime CreatedAt,
+    DateTime UpdatedAt,
+    DateTime? PublishedAt,
+    TestStatusDto Status,
     IReadOnlyCollection<TestQuestionResponse> Questions);
 
 public record TestQuestionResponse(
     Guid QuestionId,
-    int Order,
-    int Score);
+    int Order);

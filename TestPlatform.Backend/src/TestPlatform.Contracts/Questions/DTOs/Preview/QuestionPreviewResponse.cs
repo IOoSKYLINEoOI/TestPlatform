@@ -14,4 +14,7 @@ public abstract record QuestionPreviewResponse(
     string Text,
     Guid? ImageId,
     QuestionTypeDto Type,
-    IReadOnlyList<TagResponse> Tags);
+    IReadOnlyList<TagResponse> Tags)
+{
+    public QuestionStatusDto Status { get; init; }
+}
