@@ -16,7 +16,6 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
     [Migration("20260722203129_TestLifecycle")]
     partial class TestLifecycle
     {
-        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618

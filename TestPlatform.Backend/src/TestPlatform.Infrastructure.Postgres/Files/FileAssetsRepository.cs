@@ -28,7 +28,6 @@ public class FileAssetsRepository(TestPlatformDbContext dbContext) : IFileAssets
             return true;
         }
 
-        // Answer definitions are stored as JSON, therefore check their image references after materialization.
         var definitions = await dbContext.Questions
             .AsNoTracking()
             .Select(item => item.AnswerDefinition)

@@ -126,6 +126,55 @@ public class Test
         return Result.Success();
     }
 
+    public Result ReorderQuestions(IReadOnlyList<Guid> questionIds)
+    {
+        var editable = EnsureDraft();
+        if (editable.IsFailure)
+        {
+            return editable;
+        }
+
+        if (!HasValidQuestionOrder(questionIds))
+        {
+            return Result.Failure("test.invalid_question_order");
+        }
+
+        for (var index = 0; index < questionIds.Count; index++)
+        {
+            _questions.First(question => question.QuestionId == questionIds[index]).SetOrder(index + 1);
+        }
+
+        Touch();
+        return Result.Success();
+    }
+
+    public Result PrepareQuestionReorder(IReadOnlyList<Guid> questionIds)
+    {
+        var editable = EnsureDraft();
+        if (editable.IsFailure)
+        {
+            return editable;
+        }
+
+        if (!HasValidQuestionOrder(questionIds))
+        {
+            return Result.Failure("test.invalid_question_order");
+        }
+
+        if (_questions.Count == 0)
+        {
+            return Result.Success();
+        }
+
+        var temporaryStart = _questions.Min(question => question.Order) - _questions.Count - 1;
+        for (var index = 0; index < questionIds.Count; index++)
+        {
+            _questions.First(question => question.QuestionId == questionIds[index]).SetOrder(temporaryStart - index);
+        }
+
+        return Result.Success();
+    }
+
     public Result ChangeTitle(string title)
     {
         var editable = EnsureDraft();
@@ -311,6 +360,11 @@ public class Test
             ordered[i].SetOrder(i + 1);
         }
     }
+
+    private bool HasValidQuestionOrder(IReadOnlyList<Guid> questionIds) =>
+        questionIds.Count == _questions.Count &&
+        questionIds.Distinct().Count() == questionIds.Count &&
+        questionIds.All(id => _questions.Any(question => question.QuestionId == id));
 
     private Result EnsureDraft() =>
         Status == TestStatus.Draft

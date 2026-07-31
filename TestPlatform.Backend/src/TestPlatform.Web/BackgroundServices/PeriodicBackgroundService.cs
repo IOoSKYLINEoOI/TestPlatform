@@ -25,7 +25,6 @@ public abstract class PeriodicBackgroundService(
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
-            // Expected when the application is shutting down.
         }
     }
 

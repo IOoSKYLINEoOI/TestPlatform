@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TestPlatform.Infrastructure.Postgres.Migrations
 {
-    /// <inheritdoc />
     public partial class TestLifecycle : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<DateTime>(
@@ -38,7 +36,6 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                 defaultValueSql: "CURRENT_TIMESTAMP");
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(

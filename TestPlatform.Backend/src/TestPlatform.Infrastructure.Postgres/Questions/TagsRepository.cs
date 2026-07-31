@@ -13,6 +13,13 @@ public class TagsRepository : ITagsRepository
     public async Task<Tag?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         => await _context.Tags.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<Tag>> GetByIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken)
+        => await _context.Tags
+            .Where(tag => ids.Contains(tag.Id))
+            .ToListAsync(cancellationToken);
+
     public async Task<bool> ExistsByNameAsync(
         Guid? excludedTagId,
         string name,

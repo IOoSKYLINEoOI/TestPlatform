@@ -4,8 +4,4 @@
       <PackageReference Include="CSharpFunctionalExtensions" Version="3.7.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <AdditionalFiles Include="stylecop.json" />
-    </ItemGroup>
-
 </Project>

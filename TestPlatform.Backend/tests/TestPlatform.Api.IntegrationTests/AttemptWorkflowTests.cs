@@ -66,6 +66,10 @@ public sealed class AttemptWorkflowTests(TestPlatformWebApplicationFactory facto
         var publishResponse = await client.PostAsync($"/tests/{testId}/publish", null);
         Assert.Equal(HttpStatusCode.NoContent, publishResponse.StatusCode);
 
+        var notStartedFilterResponse = await client.GetAsync(
+            $"/tests/{testId}/attempts?status=notStarted");
+        Assert.Equal(HttpStatusCode.OK, notStartedFilterResponse.StatusCode);
+
         var requestId = Guid.NewGuid();
         var startResponse = await client.PostAsJsonAsync(
             "/attempts",
@@ -94,6 +98,16 @@ public sealed class AttemptWorkflowTests(TestPlatformWebApplicationFactory facto
         var testResult = Assert.IsType<TestAttemptResultResponse>(result);
         Assert.Equal(1, testResult.CorrectAnswers);
         Assert.Equal(100, testResult.Percentage);
+
+        var detailsResponse = await client.GetAsync($"/attempts/{started.AttemptId}/result");
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        var detailsJson = await detailsResponse.Content.ReadAsStringAsync();
+        using var detailsDocument = JsonDocument.Parse(detailsJson);
+        var detailsRoot = detailsDocument.RootElement;
+        Assert.Equal("test", detailsRoot.GetProperty("type").GetString());
+        var detailsQuestions = detailsRoot.GetProperty("questions");
+        Assert.Equal(1, detailsQuestions.GetArrayLength());
+        Assert.Equal(question.Id, detailsQuestions[0].GetProperty("question").GetProperty("id").GetGuid());
     }
 
     [Fact]
@@ -107,6 +121,37 @@ public sealed class AttemptWorkflowTests(TestPlatformWebApplicationFactory facto
         var response = await client.GetAsync("/questions");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AttemptSources_SearchesFiltersAndPaginatesTestsAndExamsTogether()
+    {
+        using var client = factory.CreateClient();
+        var marker = $"sources-{Guid.NewGuid():N}";
+        var testResponse = await client.PostAsJsonAsync(
+            "/tests",
+            new TestRequest($"{marker}-test", "Test source"));
+        var examResponse = await client.PostAsJsonAsync(
+            "/exams",
+            new TestPlatform.Contracts.Exams.DTOs.ExamRequest(
+                $"{marker}-exam",
+                "Exam source"));
+        Assert.Equal(HttpStatusCode.Created, testResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, examResponse.StatusCode);
+
+        var all = await client.GetFromJsonAsync<AttemptSourcePageResponse>(
+            $"/attempts/sources?search={marker}&page=1&pageSize=1");
+        Assert.NotNull(all);
+        Assert.Single(all.Items);
+        Assert.Equal(2, all.TotalCount);
+        Assert.Equal(1, all.PageSize);
+
+        var exams = await client.GetFromJsonAsync<AttemptSourcePageResponse>(
+            $"/attempts/sources?search={marker}&type=exam");
+        Assert.NotNull(exams);
+        var exam = Assert.Single(exams.Items);
+        Assert.Equal(AttemptTypeDto.Exam, exam.Type);
+        Assert.Equal($"{marker}-exam", exam.Title);
     }
 
     [Fact]

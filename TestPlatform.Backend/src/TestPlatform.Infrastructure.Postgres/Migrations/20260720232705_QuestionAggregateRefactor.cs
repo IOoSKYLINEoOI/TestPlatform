@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TestPlatform.Infrastructure.Postgres.Migrations
 {
-    /// <inheritdoc />
     public partial class QuestionAggregateRefactor : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<string>(
@@ -57,7 +55,6 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
 
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(

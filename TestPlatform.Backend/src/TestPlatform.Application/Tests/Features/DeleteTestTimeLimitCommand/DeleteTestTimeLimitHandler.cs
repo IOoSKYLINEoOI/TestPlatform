@@ -36,7 +36,7 @@ public class DeleteTestTimeLimitHandler : ICommandHandler<DeleteTestTimeLimitCom
         var result = test.RemoveTimeLimit();
         if (result.IsFailure)
         {
-            _logger.LogInformation("Failed to remove time limit to test {TestId}: {Error}", command.Id, result.Error);
+            _logger.LogWarning("Failed to remove time limit from test {TestId}: {ErrorCode}", command.Id, result.Error);
             return result;
         }
 

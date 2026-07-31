@@ -7,6 +7,7 @@ using TestPlatform.Application.Exams.Features.ArchiveExamCommand;
 using TestPlatform.Application.Exams.Features.CreateExamCommand;
 using TestPlatform.Application.Exams.Features.GetByIdExamQuery;
 using TestPlatform.Application.Exams.Features.GetExamCatalogQuery;
+using TestPlatform.Application.Exams.Features.GetExamManagementQuery;
 using TestPlatform.Application.Exams.Features.PublishExamCommand;
 using TestPlatform.Application.Exams.Features.UpdateExamDetailsCommand;
 using TestPlatform.Contracts.Authorization;
@@ -18,6 +19,22 @@ namespace TestPlatform.Api.Exams;
 [Route("exams")]
 public sealed class ExamsController : ApiControllerBase
 {
+    [Authorize(Policy = AuthorizationPolicies.ManageContent)]
+    [HttpGet("management")]
+    [SwaggerOperation(OperationId = "GetExamManagementList")]
+    public async Task<IActionResult> GetManagementList(
+        [FromServices] IQueryHandler<GetExamManagementQuery, ExamManagementPageResponse> handler,
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await handler.Handle(
+            new GetExamManagementQuery(search, page, pageSize),
+            cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : ToErrorResult(result.Error);
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetCatalog(
         [FromServices] IQueryHandler<GetExamCatalogQuery, ExamCatalogPageResponse> handler,

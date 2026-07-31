@@ -16,7 +16,6 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
     [Migration("20260722212055_StrengthenAssessmentModel")]
     partial class StrengthenAssessmentModel
     {
-        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618

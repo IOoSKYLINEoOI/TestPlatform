@@ -31,6 +31,10 @@ done
     -s 'supportedLocales=["ru"]' \
     -s "defaultLocale=ru" >/dev/null
 
+"${KCADM}" update "users/profile" \
+    -r "${REALM}" \
+    -f /opt/keycloak/bootstrap/user-profile.json >/dev/null
+
 ensure_employee_number_token_claim() {
     local scope_id=""
     local mapper_id=""
@@ -151,8 +155,7 @@ ensure_user() {
         "${KCADM}" create users \
             -r "${REALM}" \
             -s "username=${username}" \
-            -s "enabled=true" \
-            -s "attributes={\"employee_number\":[\"${employee_number}\"]}" >/dev/null
+            -s "enabled=true" >/dev/null
 
         user_id="$("${KCADM}" get users \
             -r "${REALM}" \
@@ -163,8 +166,7 @@ ensure_user() {
     else
         "${KCADM}" update "users/${user_id}" \
             -r "${REALM}" \
-            -s "enabled=true" \
-            -s "attributes={\"employee_number\":[\"${employee_number}\"]}" >/dev/null
+            -s "enabled=true" >/dev/null
     fi
 
     "${KCADM}" set-password \
@@ -176,6 +178,19 @@ ensure_user() {
         -r "${REALM}" \
         --uid "${user_id}" \
         --rolename "${role}" >/dev/null
+
+    if [[ "${role}" == "Admin" ]]; then
+        "${KCADM}" add-roles \
+            -r "${REALM}" \
+            --uid "${user_id}" \
+            --cclientid realm-management \
+            --rolename realm-admin >/dev/null
+    fi
+
+    "${KCADM}" update "users/${user_id}" \
+        -r "${REALM}" \
+        -b "{\"enabled\":true,\"attributes\":{\"employee_number\":[\"${employee_number}\"]}}" \
+        -n >/dev/null
 
     echo "Keycloak demo account '${username}' is ready with role '${role}'."
 }

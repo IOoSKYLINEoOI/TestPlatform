@@ -14,7 +14,7 @@ public static class AttemptStatusMapping
             AttemptStatus.EXPIRED => AttemptStatusDto.EXPIRED,
             AttemptStatus.ABANDONED => AttemptStatusDto.ABANDONED,
             AttemptStatus.CANCELLED => AttemptStatusDto.CANCELLED,
-            AttemptStatus.NOT_STARTED => AttemptStatusDto.NOT_STARTED,
+            AttemptStatus.NOT_STARTED => AttemptStatusDto.NotStarted,
             _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
         };
     }
@@ -28,7 +28,7 @@ public static class AttemptStatusMapping
             AttemptStatusDto.EXPIRED => AttemptStatus.EXPIRED,
             AttemptStatusDto.ABANDONED => AttemptStatus.ABANDONED,
             AttemptStatusDto.CANCELLED => AttemptStatus.CANCELLED,
-            AttemptStatusDto.NOT_STARTED => AttemptStatus.NOT_STARTED,
+            AttemptStatusDto.NotStarted => AttemptStatus.NOT_STARTED,
             _ => throw new ArgumentOutOfRangeException(nameof(statusDto), statusDto, null)
         };
     }

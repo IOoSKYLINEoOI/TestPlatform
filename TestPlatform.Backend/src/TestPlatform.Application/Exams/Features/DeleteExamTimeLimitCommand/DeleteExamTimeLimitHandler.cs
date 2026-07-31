@@ -36,7 +36,7 @@ public class DeleteExamTimeLimitHandler : ICommandHandler<DeleteExamTimeLimitCom
         var result = exam.RemoveTimeLimit();
         if (result.IsFailure)
         {
-            _logger.LogInformation("Failed to remove time limit to exam {ExamId}: {Error}", command.Id, result.Error);
+            _logger.LogWarning("Failed to remove time limit from exam {ExamId}: {ErrorCode}", command.Id, result.Error);
             return result;
         }
 

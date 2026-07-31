@@ -41,7 +41,7 @@ public class DeleteExamCoverImageHandler : ICommandHandler<DeleteExamCoverImageC
         var result = exam.RemoveCoverImage();
         if (result.IsFailure)
         {
-            _logger.LogInformation("Failed to remove cover image to exam {ExamId}: {Error}", command.Id, result.Error);
+            _logger.LogWarning("Failed to remove cover image from exam {ExamId}: {ErrorCode}", command.Id, result.Error);
             return result;
         }
 

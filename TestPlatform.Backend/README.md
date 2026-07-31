@@ -1,110 +1,128 @@
 # TestPlatform Backend
 
-## Local start with Docker
+Backend учебной платформы: API для управления вопросами, тегами, тестами и экзаменами, прохождения попыток, загрузки изображений и управления учётными записями сотрудников.
 
-1. Copy `.env.example` to `.env` and replace the example secrets.
-2. Start the complete environment:
+Документация проекта ведётся на русском языке. Контракт HTTP API доступен в Swagger после локального запуска.
+
+## Технологии
+
+- .NET 10 / ASP.NET Core, EF Core и PostgreSQL;
+- Keycloak и JWT-аутентификация;
+- MinIO для изображений, Seq для структурированных логов;
+- Docker Compose для локального окружения;
+- xUnit: модульные и интеграционные тесты.
+
+## Состав решения
+
+| Проект | Назначение |
+| --- | --- |
+| `src/TestPlatform.Web` | Точка входа, HTTP-конвейер, Swagger, health checks и фоновые задачи. |
+| `src/TestPlatform.Api` | Контроллеры HTTP API. |
+| `src/TestPlatform.Application` | Прикладные сценарии и бизнес-координация. |
+| `src/TestPlatform.Core` | Предметная модель и бизнес-правила. |
+| `src/TestPlatform.Contracts` | DTO и контракты API. |
+| `src/TestPlatform.Infrastructure.*` | PostgreSQL, Keycloak и файловое хранилище. |
+| `tests/*` | Модульные и интеграционные тесты. |
+
+## Быстрый старт в Docker
+
+Файл Compose находится в корне проекта `TestPlatform`, на один уровень выше этой папки. Все команды этого раздела выполняются из этого корня.
+
+1. Создайте файл окружения рядом с `docker-compose.yml`:
+
+   ```powershell
+   Copy-Item .\TestPlatform.Backend\.env.example .\.env
+   ```
+
+2. Замените все примерные пароли и `KEYCLOAK_ADMIN_CLIENT_SECRET` в `.env` на уникальные значения.
+
+3. Запустите окружение:
 
    ```powershell
    docker compose up --build
    ```
 
-Docker Compose starts PostgreSQL first, runs all application migrations in the
-one-shot `migrations` container, and only then starts the API. The migration
-container is expected to finish with exit code `0`; it is not a long-running
-service.
+Compose последовательно поднимает PostgreSQL, применяет миграции в одноразовом контейнере `migrations`, создаёт демонстрационные данные в контейнере `seed`, настраивает Keycloak и только затем запускает API и административный интерфейс. Одноразовые контейнеры должны завершиться с кодом `0`.
 
-Local addresses:
+| Сервис | Адрес |
+| --- | --- |
+| API / Swagger (Development) | http://localhost:5062/swagger |
+| API liveness | http://localhost:5062/health/live |
+| API readiness | http://localhost:5062/health/ready |
+| Администрирование Keycloak | http://localhost:8080/admin |
+| Seq | http://localhost:8081 |
+| Консоль MinIO | http://localhost:9101 |
+| Admin UI | http://localhost:5176 |
 
-- API and Swagger: `http://localhost:5062/swagger`
-- API liveness: `http://localhost:5062/health/live`
-- API readiness: `http://localhost:5062/health/ready`
-- Keycloak administration: `http://localhost:8080/admin`
-- Seq: `http://localhost:8081`
-- MinIO console: `http://localhost:9101`
+Swagger включён только в окружении `Development`. Все контроллеры по умолчанию требуют аутентифицированного пользователя; исключение — health checks.
 
-## Database migrations
+## Локальный запуск без Docker
 
-Create a migration after changing the EF Core model:
+Для запуска приложения требуются доступные PostgreSQL, Keycloak и MinIO. Seq подключается при наличии непустого `Seq:ServerUrl`; без него приложение продолжит писать логи в консоль. Параметры подключения задаются в `appsettings.Development.json`, переменных окружения или User Secrets. Секреты не добавляйте в `appsettings.json`.
+
+```powershell
+dotnet restore
+dotnet run --project .\src\TestPlatform.Web
+```
+
+Для provisioning пользователей сохраните секрет сервисного клиента Keycloak локально:
+
+```powershell
+dotnet user-secrets set "IdentityManagement:ClientSecret" "<strong-secret>" `
+  --project .\src\TestPlatform.Web
+```
+
+Разрешённые CORS-источники: `http://localhost:5175` и `http://localhost:5176`.
+
+## Миграции и демонстрационные данные
+
+Создать миграцию после изменения модели EF Core:
 
 ```powershell
 dotnet ef migrations add MigrationName `
-  --project src/TestPlatform.Infrastructure.Postgres `
-  --startup-project src/TestPlatform.Web
+  --project .\src\TestPlatform.Infrastructure.Postgres `
+  --startup-project .\src\TestPlatform.Web
 ```
 
-Apply migrations without starting the HTTP server:
+Применить миграции без запуска HTTP-сервера:
 
 ```powershell
-dotnet run --project src/TestPlatform.Web -- --migrate
+dotnet run --project .\src\TestPlatform.Web -- --migrate
 ```
 
-Do not use `EnsureCreated` for the application database. It bypasses migration
-history and is only used by the SQLite integration-test fixture.
-
-## Development seed data
-
-Docker Compose runs the one-shot `seed` container after migrations and before
-the API. It creates an idempotent connected demo dataset:
-
-- 20 demo users, including one content author;
-- 12 tags;
-- 150 questions with text, number, single-choice, and multiple-choice answers;
-- 20 practice tests with published and draft examples;
-- 8 exams with 30-question pools and stable five-question scoring;
-- 240 attempts distributed across finished, active, expired, abandoned, and
-  not-started states.
-
-Run the same seed manually:
+Создать демонстрационные данные:
 
 ```powershell
-dotnet run --project src/TestPlatform.Web -- --seed
+dotnet run --project .\src\TestPlatform.Web -- --seed
 ```
 
-The command applies pending migrations first and is rejected outside the
-`Development` environment. Repeated execution detects the seed marker user and
-does not create duplicates.
+Команда `--seed` доступна только в `Development`, сначала применяет миграции и выполняется идемпотентно. Не используйте `EnsureCreated` для прикладной PostgreSQL-базы: этот метод обходит историю миграций. Он применяется только в SQLite-фикстуре интеграционных тестов.
 
-### Demo logins
+Seed создаёт 20 пользователей, 12 тегов, 150 вопросов, 20 тренировочных тестов, 8 экзаменов и 240 попыток в разных состояниях.
 
-The one-shot `keycloak-bootstrap` container creates three idempotent Keycloak
-accounts after the realm is available:
+## Демонстрационные учётные записи
 
-| Username | Employee number | Role |
+Пароли задаются в `.env` переменными `DEMO_*_PASSWORD` перед `docker compose up`.
+
+| Пользователь | Табельный номер | Роль |
 | --- | --- | --- |
 | `demo.admin` | `DEMO-ADMIN` | `Admin` |
 | `demo.teacher` | `DEMO-TEACHER-LOGIN` | `Teacher` |
 | `demo.employee` | `DEMO-EMPLOYEE` | `Employee` |
 
-Set their passwords in `.env` before starting Docker:
+Скрипт bootstrap обновляет существующие demo-аккаунты, не создавая дубликатов. Учётные записи `seed:*` используются только как владельцы контента и истории попыток; вход в них невозможен.
 
-```dotenv
-DEMO_ADMIN_PASSWORD=replace-with-a-strong-demo-password
-DEMO_TEACHER_PASSWORD=replace-with-a-strong-demo-password
-DEMO_EMPLOYEE_PASSWORD=replace-with-a-strong-demo-password
-```
+## Роли и API
 
-The bootstrap script updates existing demo accounts instead of duplicating
-them. Passwords are intentionally not stored in the realm export, source code,
-or logs. The `seed:*` PostgreSQL users are synthetic owners for content and
-attempt history; they are not login accounts.
+В системе определены роли `Admin`, `Teacher` и `Employee`.
 
-## Employee account provisioning
+- `Admin` управляет системой, пользователями и всем контентом;
+- `Teacher` создаёт и редактирует учебный контент и теги;
+- `Employee` проходит доступные тесты и экзамены.
 
-Set a strong random value for `KEYCLOAK_ADMIN_CLIENT_SECRET` in `.env`. The same
-value is injected into the Keycloak service-account client and into the API.
-For a non-Docker API start, store it outside `appsettings.json`:
+Основные группы ресурсов: `/questions`, `/tags`, `/tests`, `/exams`, `/attempts`, `/images` и `/users`. Полный перечень запросов, схем и требований авторизации приведён в Swagger.
 
-```powershell
-dotnet user-secrets set "IdentityManagement:ClientSecret" "replace-with-a-strong-secret" `
-  --project src/TestPlatform.Web
-```
-
-An administrator can create an account through:
-
-```http
-POST /users
-```
+Администратор создаёт сотрудника запросом `POST /users`:
 
 ```json
 {
@@ -115,13 +133,30 @@ POST /users
 }
 ```
 
-Usernames accept Latin letters, digits, dots, underscores, and hyphens. The
-password is marked as temporary, so Keycloak requires the employee to replace
-it during the first login. Allowed realm roles are `Admin`, `Teacher`, and
-`Employee`; only an existing `Admin` may call this endpoint.
+Имя пользователя может состоять из латинских букв, цифр, точек, подчёркиваний и дефисов. Пароль выдаётся как временный: Keycloak потребует заменить его при первом входе.
 
-Realm import is applied only when Keycloak initializes a new realm. If the
-`test-platform` realm already exists in the Keycloak PostgreSQL volume, adding
-the service-account client to the JSON export does not modify that existing
-realm. For a development environment without valuable data, recreate the
-containers and volumes before testing the new provisioning endpoint.
+Подробности настройки Keycloak и профиля пользователя: [`containers/keycloak/README.md`](containers/keycloak/README.md).
+
+## Проверки
+
+```powershell
+dotnet test .\TestPlatform.sln
+dotnet build .\TestPlatform.sln --configuration Release
+```
+
+## Полезные команды Docker
+
+Выполняйте из корня `TestPlatform`:
+
+```powershell
+# Остановить окружение, сохранив тома с данными
+docker compose down
+
+# Просмотреть состояние контейнеров
+docker compose ps
+
+# Просмотреть логи API
+docker compose logs --tail 100 api
+```
+
+Импорт realm в Keycloak выполняется только при создании нового realm. Если нужно заново применить импорт в локальной среде без ценных данных, удалите соответствующий том Keycloak согласно инструкции в [`containers/keycloak/README.md`](containers/keycloak/README.md).

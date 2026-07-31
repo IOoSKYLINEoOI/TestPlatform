@@ -16,7 +16,6 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
     [Migration("20260723142524_RenameTabNumberToEmployeeNumber")]
     partial class RenameTabNumberToEmployeeNumber
     {
-        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618

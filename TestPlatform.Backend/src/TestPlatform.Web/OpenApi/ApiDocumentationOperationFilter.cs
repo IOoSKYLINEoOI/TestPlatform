@@ -4,9 +4,6 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace TestPlatform.Web.OpenApi;
 
-/// <summary>
-/// Applies the API documentation conventions shared by every controller action.
-/// </summary>
 public sealed class ApiDocumentationOperationFilter : IOperationFilter
 {
     private static readonly IReadOnlyDictionary<string, Documentation> DocumentationByAction =

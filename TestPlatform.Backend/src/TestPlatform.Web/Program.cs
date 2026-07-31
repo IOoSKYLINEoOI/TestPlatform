@@ -18,6 +18,7 @@ using TestPlatform.Infrastructure.Identity;
 using TestPlatform.Infrastructure.Postgres;
 using TestPlatform.Infrastructure.Postgres.Seeding;
 using TestPlatform.Web.BackgroundServices;
+using TestPlatform.Web.Auditing;
 using TestPlatform.Web.Errors;
 using TestPlatform.Web.Health;
 using TestPlatform.Web.OpenApi;
@@ -30,7 +31,24 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    builder.Configuration.AddUserSecrets<Program>();
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Configuration.AddUserSecrets<Program>();
+    }
+
+    var allowedOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? [];
+    if (builder.Environment.IsProduction() && allowedOrigins.Length == 0)
+    {
+        throw new InvalidOperationException(
+            "Cors:AllowedOrigins must contain at least one trusted frontend origin in Production.");
+    }
+
+    if (allowedOrigins.Length == 0)
+    {
+        allowedOrigins = ["http://localhost:5175", "http://localhost:5176"];
+    }
     builder.Services.AddSerilog((_, loggerConfiguration) =>
     {
         loggerConfiguration
@@ -39,9 +57,13 @@ try
             .Enrich.FromLogContext()
             .Enrich.WithProperty("Application", "TestPlatform")
             .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
-            .WriteTo.Console()
-            .WriteTo.Seq(builder.Configuration["Seq:ServerUrl"]
-                ?? throw new InvalidOperationException("Seq:ServerUrl is not configured."));
+            .WriteTo.Console();
+
+        var seqServerUrl = builder.Configuration["Seq:ServerUrl"];
+        if (!string.IsNullOrWhiteSpace(seqServerUrl))
+        {
+            loggerConfiguration.WriteTo.Seq(seqServerUrl);
+        }
     });
 
     builder.Services.AddEndpointsApiExplorer();
@@ -63,7 +85,7 @@ try
         options.AddPolicy("Frontend", policy =>
         {
             policy
-                .WithOrigins("http://localhost:5175")
+                .WithOrigins(allowedOrigins)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
@@ -147,7 +169,6 @@ try
     }
 
     app.UseExceptionHandler();
-
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
@@ -170,9 +191,18 @@ try
                 return LogEventLevel.Error;
             }
 
-            return context.Response.StatusCode >= StatusCodes.Status400BadRequest
-                ? LogEventLevel.Warning
-                : LogEventLevel.Information;
+            if (context.Response.StatusCode >= StatusCodes.Status400BadRequest)
+            {
+                return LogEventLevel.Warning;
+            }
+
+            if (context.Request.Path.StartsWithSegments("/health")
+                || HttpMethods.IsGet(context.Request.Method))
+            {
+                return LogEventLevel.Debug;
+            }
+
+            return LogEventLevel.Information;
         };
 
         options.EnrichDiagnosticContext = (diagnosticContext, context) =>
@@ -195,6 +225,7 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseMiddleware<CurrentIdentityMiddleware>();
+    app.UseMiddleware<AuditLogMiddleware>();
     app.MapControllers();
     app.MapHealthChecks("/health/live", new HealthCheckOptions
     {
@@ -210,16 +241,13 @@ try
 }
 catch (HostAbortedException)
 {
-    // EF Core design-time tools intentionally stop the temporary application host.
 }
 catch (Exception ex)
 {
     Log.Fatal(ex, "Application terminated unexpectedly");
-    Environment.ExitCode = 1;
+    throw;
 }
 finally
 {
     Log.CloseAndFlush();
 }
-
-public partial class Program;

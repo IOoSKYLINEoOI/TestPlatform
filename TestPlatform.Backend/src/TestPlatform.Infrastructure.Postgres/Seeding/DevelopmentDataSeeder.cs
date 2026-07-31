@@ -410,7 +410,6 @@ public sealed class DevelopmentDataSeeder(
                 attempt.Expire();
                 break;
             case 5:
-                // Keep the attempt in progress.
                 break;
         }
     }

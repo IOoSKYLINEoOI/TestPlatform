@@ -1,5 +1,4 @@
 using CSharpFunctionalExtensions;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Extensions;
@@ -20,7 +19,7 @@ public class CreateQuestionHandler : ICommandHandler<CreateQuestionCommand, Guid
     private readonly IQuestionsRepository _questionsRepository;
     private readonly QuestionFileAttachmentService _fileAttachmentService;
     private readonly ICurrentUserAccessor _currentUserAccessor;
-    private readonly ITagsReadDbContext _tagsReadDbContext;
+    private readonly ITagsRepository _tagsRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CreateQuestionHandler> _logger;
 
@@ -28,14 +27,14 @@ public class CreateQuestionHandler : ICommandHandler<CreateQuestionCommand, Guid
         IQuestionsRepository questionsRepository,
         QuestionFileAttachmentService fileAttachmentService,
         ICurrentUserAccessor currentUserAccessor,
-        ITagsReadDbContext tagsReadDbContext,
+        ITagsRepository tagsRepository,
         IUnitOfWork unitOfWork,
         ILogger<CreateQuestionHandler> logger)
     {
         _questionsRepository = questionsRepository;
         _fileAttachmentService = fileAttachmentService;
         _currentUserAccessor = currentUserAccessor;
-        _tagsReadDbContext = tagsReadDbContext;
+        _tagsRepository = tagsRepository;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -75,9 +74,7 @@ public class CreateQuestionHandler : ICommandHandler<CreateQuestionCommand, Guid
 
         var tagIds = command.Request.TagIds.Distinct().ToList();
 
-        var tags = await _tagsReadDbContext.ReadTags
-            .Where(t => tagIds.Contains(t.Id))
-            .ToListAsync(cancellationToken);
+        var tags = await _tagsRepository.GetByIdsAsync(tagIds, cancellationToken);
 
         var missingTags = tagIds.Except(tags.Select(t => t.Id)).ToList();
 

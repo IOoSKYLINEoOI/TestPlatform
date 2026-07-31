@@ -127,7 +127,7 @@ public class StartAttemptHandler : ICommandHandler<StartAttemptCommand, StartAtt
             attempt.Id,
             attempt.AttemptNumber,
             attempt.Status.ToDto(),
-            AttemptStartMapper.ToStartResponse(source, attemptType));
+            AttemptStartMapper.ToStartResponse(source, attemptType, attempt.Id));
 
         _logger.LogResult("Attempt started", attempt.Id, attemptResult);
 
@@ -155,6 +155,6 @@ public class StartAttemptHandler : ICommandHandler<StartAttemptCommand, StartAtt
             attempt.Id,
             attempt.AttemptNumber,
             attempt.Status.ToDto(),
-            AttemptStartMapper.ToStartResponse(source, attempt.Type)));
+            AttemptStartMapper.ToStartResponse(source, attempt.Type, attempt.Id)));
     }
 }

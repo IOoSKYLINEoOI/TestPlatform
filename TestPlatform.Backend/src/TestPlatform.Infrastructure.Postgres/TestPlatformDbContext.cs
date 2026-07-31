@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Attempts;
+using TestPlatform.Application.Auditing;
 using TestPlatform.Application.Exams;
 using TestPlatform.Application.Files;
 using TestPlatform.Application.Questions;
@@ -7,6 +8,7 @@ using TestPlatform.Application.Tags;
 using TestPlatform.Application.Tests;
 using TestPlatform.Application.Users;
 using TestPlatform.Core.Attempts;
+using TestPlatform.Core.Auditing;
 using TestPlatform.Core.Exams;
 using TestPlatform.Core.Files;
 using TestPlatform.Core.Questions;
@@ -23,8 +25,13 @@ public class TestPlatformDbContext(DbContextOptions<TestPlatformDbContext> optio
         IExamsReadDbContext,
         IFileAssetsReadDbContext,
         IAttemptsReadDbContext,
+        IAttemptSourcesReadDbContext,
+        IAuditLogReadDbContext,
         IUsersReadDbContext
 {
+    public DbSet<AuditLogEntry> AuditLog => Set<AuditLogEntry>();
+    public IQueryable<AuditLogEntry> ReadAuditLog => AuditLog.AsNoTracking().AsQueryable();
+
     public DbSet<Attempt> Attempts => Set<Attempt>();
 
     public IQueryable<Attempt> ReadAttempts => Attempts.AsNoTracking().AsQueryable();

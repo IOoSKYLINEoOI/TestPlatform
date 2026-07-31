@@ -1,5 +1,4 @@
 using CSharpFunctionalExtensions;
-using Microsoft.EntityFrameworkCore;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Common.Error;
 using TestPlatform.Application.Files;
@@ -17,7 +16,7 @@ public record UpdateQuestionCommand(Guid Id, QuestionRequest Request) : ICommand
 public class UpdateQuestionHandler : ICommandHandler<UpdateQuestionCommand>
 {
     private readonly IAccessService<Question> _questionAccessService;
-    private readonly ITagsReadDbContext _tagsReadDbContext;
+    private readonly ITagsRepository _tagsRepository;
     private readonly QuestionFileAttachmentService _fileAttachmentService;
     private readonly IFileAssetService _fileAssetService;
     private readonly ICurrentUserAccessor _currentUserAccessor;
@@ -25,14 +24,14 @@ public class UpdateQuestionHandler : ICommandHandler<UpdateQuestionCommand>
 
     public UpdateQuestionHandler(
         IAccessService<Question> questionAccessService,
-        ITagsReadDbContext tagsReadDbContext,
+        ITagsRepository tagsRepository,
         QuestionFileAttachmentService fileAttachmentService,
         IFileAssetService fileAssetService,
         ICurrentUserAccessor currentUserAccessor,
         IUnitOfWork unitOfWork)
     {
         _questionAccessService = questionAccessService;
-        _tagsReadDbContext = tagsReadDbContext;
+        _tagsRepository = tagsRepository;
         _fileAttachmentService = fileAttachmentService;
         _fileAssetService = fileAssetService;
         _currentUserAccessor = currentUserAccessor;
@@ -52,9 +51,7 @@ public class UpdateQuestionHandler : ICommandHandler<UpdateQuestionCommand>
 
         var tagIds = command.Request.TagIds.Distinct().ToList();
 
-        var tags = await _tagsReadDbContext.ReadTags
-            .Where(t => tagIds.Contains(t.Id))
-            .ToListAsync(cancellationToken);
+        var tags = await _tagsRepository.GetByIdsAsync(tagIds, cancellationToken);
 
         var missingTags = tagIds.Except(tags.Select(t => t.Id)).ToList();
 

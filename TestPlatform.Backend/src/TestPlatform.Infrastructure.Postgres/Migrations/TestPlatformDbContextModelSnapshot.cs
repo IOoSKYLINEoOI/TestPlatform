@@ -111,6 +111,48 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                     b.ToTable("attempts", (string)null);
                 });
 
+            modelBuilder.Entity("TestPlatform.Core.Auditing.AuditLogEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EmployeeNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("TraceId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("EmployeeNumber");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("audit_log", (string)null);
+                });
+
             modelBuilder.Entity("TestPlatform.Core.Exams.Exam", b =>
                 {
                     b.Property<Guid>("Id")

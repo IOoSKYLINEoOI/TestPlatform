@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TestPlatform.Infrastructure.Postgres.Migrations
 {
-    /// <inheritdoc />
     public partial class FileAssetsStorageRefactor : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
@@ -72,7 +70,6 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                 columns: new[] { "UploadedByUserId", "Status" });
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(

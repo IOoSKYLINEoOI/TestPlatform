@@ -7,7 +7,10 @@ using TestPlatform.Application.Tests.Features.DeleteTestQuestionCommand;
 using TestPlatform.Application.Tests.Features.ArchiveTestCommand;
 using TestPlatform.Application.Tests.Features.GetAllTestsQuery;
 using TestPlatform.Application.Tests.Features.GetByIdTestQuery;
+using TestPlatform.Application.Tests.Features.GetTestManagementQuery;
 using TestPlatform.Application.Tests.Features.PublishTestCommand;
+using TestPlatform.Application.Tests.Features.ReorderTestQuestionsCommand;
+using TestPlatform.Application.Tests.Features.UpdateTestDetailsCommand;
 using TestPlatform.Application.Users;
 using Microsoft.AspNetCore.Authorization;
 using TestPlatform.Contracts.Authorization;
@@ -25,6 +28,19 @@ public class TestsController : ApiControllerBase
     public TestsController(ICurrentUserAccessor currentUserAccessor)
     {
         _currentUserAccessor = currentUserAccessor;
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.ManageContent)]
+    [HttpGet("management")]
+    public async Task<IActionResult> GetManagementList(
+        [FromServices] IQueryHandler<GetTestManagementQuery, TestManagementPageResponse> handler,
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await handler.Handle(new GetTestManagementQuery(search, page, pageSize), cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : ToErrorResult(result.Error);
     }
 
     [Authorize(Policy = AuthorizationPolicies.ManageContent)]
@@ -90,6 +106,18 @@ public class TestsController : ApiControllerBase
     }
 
     [Authorize(Policy = AuthorizationPolicies.ManageContent)]
+    [HttpPatch("{id:guid}")]
+    public async Task<IActionResult> UpdateDetails(
+        [FromServices] ICommandHandler<UpdateTestCommand> handler,
+        [FromRoute] Guid id,
+        [FromBody] UpdateTestDetailsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(new UpdateTestCommand(id, request), cancellationToken);
+        return ToCommandResult(result);
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.ManageContent)]
     [HttpPost("{id:guid}/publish")]
     public async Task<IActionResult> Publish(
         [FromServices] ICommandHandler<PublishTestCommand> handler,
@@ -135,6 +163,20 @@ public class TestsController : ApiControllerBase
     {
         var result = await handler.Handle(
             new DeleteTestQuestionCommand(id, questionId),
+            cancellationToken);
+        return ToCommandResult(result);
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.ManageContent)]
+    [HttpPut("{id:guid}/questions/order")]
+    public async Task<IActionResult> ReorderQuestions(
+        [FromServices] ICommandHandler<ReorderTestQuestionsCommand> handler,
+        [FromRoute] Guid id,
+        [FromBody] ReorderTestQuestionsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(
+            new ReorderTestQuestionsCommand(id, request.QuestionIds),
             cancellationToken);
         return ToCommandResult(result);
     }

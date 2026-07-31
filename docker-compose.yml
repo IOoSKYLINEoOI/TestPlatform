@@ -1,3 +1,5 @@
+name: testplatform
+
 services:
   postgres:
     image: postgres:15
@@ -31,7 +33,7 @@ services:
   api:
     container_name: testplatform_api
     build:
-      context: .
+      context: ./TestPlatform.Backend
       dockerfile: Dockerfile
     ports:
       - "5062:5062"
@@ -49,6 +51,8 @@ services:
       keycloak:
         condition: service_started
       keycloak-bootstrap:
+        condition: service_completed_successfully
+      keycloak-user-attributes:
         condition: service_completed_successfully
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -77,7 +81,7 @@ services:
 
   migrations:
     build:
-      context: .
+      context: ./TestPlatform.Backend
       dockerfile: Dockerfile
     restart: "no"
     command: ["dotnet", "TestPlatform.Web.dll", "--migrate"]
@@ -100,7 +104,7 @@ services:
 
   seed:
     build:
-      context: .
+      context: ./TestPlatform.Backend
       dockerfile: Dockerfile
     restart: "no"
     command: ["dotnet", "TestPlatform.Web.dll", "--seed"]
@@ -173,14 +177,19 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./containers/keycloak/import:/opt/keycloak/data/import:ro
-      - ./containers/keycloak/themes:/opt/keycloak/themes:ro
+      - ./TestPlatform.Backend/containers/keycloak/import:/opt/keycloak/data/import:ro
+      - ./TestPlatform.Backend/containers/keycloak/themes:/opt/keycloak/themes:ro
 
   keycloak-bootstrap:
     image: quay.io/keycloak/keycloak:26.5.6
     container_name: testplatform_keycloak_bootstrap
     restart: "no"
-    entrypoint: ["/bin/bash", "/opt/keycloak/bootstrap/bootstrap-demo-users.sh"]
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - >-
+        sed 's/\r$//' /opt/keycloak/bootstrap/bootstrap-demo-users.sh
+        > /tmp/bootstrap-demo-users.sh
+        && /bin/bash /tmp/bootstrap-demo-users.sh
     depends_on:
       keycloak:
         condition: service_started
@@ -191,7 +200,42 @@ services:
       DEMO_TEACHER_PASSWORD: ${DEMO_TEACHER_PASSWORD}
       DEMO_EMPLOYEE_PASSWORD: ${DEMO_EMPLOYEE_PASSWORD}
     volumes:
-      - ./containers/keycloak/bootstrap-demo-users.sh:/opt/keycloak/bootstrap/bootstrap-demo-users.sh:ro
+      - ./TestPlatform.Backend/containers/keycloak/bootstrap-demo-users.sh:/opt/keycloak/bootstrap/bootstrap-demo-users.sh:ro
+      - ./TestPlatform.Backend/containers/keycloak/user-profile.json:/opt/keycloak/bootstrap/user-profile.json:ro
+
+  keycloak-user-attributes:
+    image: mcr.microsoft.com/powershell:7.5-alpine-3.20
+    container_name: testplatform_keycloak_user_attributes
+    restart: "no"
+    command: ["pwsh", "-NoLogo", "-NoProfile", "-File", "/bootstrap/set-demo-user-attributes.ps1"]
+    depends_on:
+      keycloak-bootstrap:
+        condition: service_completed_successfully
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    volumes:
+      - ./TestPlatform.Backend/containers/keycloak/set-demo-user-attributes.ps1:/bootstrap/set-demo-user-attributes.ps1:ro
+
+  admin:
+    container_name: testplatform_admin
+    build:
+      context: ./TestPlatform.Admin
+      dockerfile: Dockerfile
+      args:
+        VITE_KEYCLOAK_URL: ${PUBLIC_KEYCLOAK_URL:-http://localhost:8080}
+        VITE_KEYCLOAK_REALM: ${KEYCLOAK_REALM:-test-platform}
+        VITE_KEYCLOAK_CLIENT_ID: ${KEYCLOAK_PUBLIC_CLIENT_ID:-public-client}
+        VITE_KEYCLOAK_ADMIN_URL: ${PUBLIC_KEYCLOAK_ADMIN_URL:-http://localhost:8080/admin/test-platform/console/}
+        VITE_SWAGGER_URL: ${PUBLIC_SWAGGER_URL:-http://localhost:5062/swagger/index.html}
+        VITE_SEQ_URL: ${PUBLIC_SEQ_URL:-http://localhost:8081}
+        VITE_MINIO_CONSOLE_URL: ${PUBLIC_MINIO_CONSOLE_URL:-http://localhost:9101}
+    restart: unless-stopped
+    ports:
+      - "5176:80"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   pgdata:

@@ -16,7 +16,6 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
     [Migration("20260722205032_AttemptPassingRuleSnapshot")]
     partial class AttemptPassingRuleSnapshot
     {
-        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618

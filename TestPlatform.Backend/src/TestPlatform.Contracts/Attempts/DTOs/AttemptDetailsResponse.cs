@@ -10,6 +10,13 @@ namespace TestPlatform.Contracts.Attempts.DTOs;
 [JsonDerivedType(typeof(ExamAttemptDetailsResponse), "exam")]
 public abstract record AttemptDetailsResponse(
     Guid Id,
+    int AttemptNumber,
+    Guid SourceId,
+    string SourceTitle,
+    Guid UserId,
+    string EmployeeNumber,
+    DateTime? StartedAt,
+    DateTime? FinishedAt,
     AttemptStatusDto Status,
     int CorrectAnswers,
     int TotalQuestions,
@@ -17,15 +24,29 @@ public abstract record AttemptDetailsResponse(
 
 public sealed record TestAttemptDetailsResponse(
     Guid Id,
+    int AttemptNumber,
+    Guid SourceId,
+    string SourceTitle,
+    Guid UserId,
+    string EmployeeNumber,
+    DateTime? StartedAt,
+    DateTime? FinishedAt,
     AttemptStatusDto Status,
     int CorrectAnswers,
     int TotalQuestions,
     double Percentage,
     IReadOnlyCollection<TestAttemptQuestionDetailsResponse> Questions)
-    : AttemptDetailsResponse(Id, Status, CorrectAnswers, TotalQuestions, Percentage);
+    : AttemptDetailsResponse(Id, AttemptNumber, SourceId, SourceTitle, UserId, EmployeeNumber, StartedAt, FinishedAt, Status, CorrectAnswers, TotalQuestions, Percentage);
 
 public sealed record ExamAttemptDetailsResponse(
     Guid Id,
+    int AttemptNumber,
+    Guid SourceId,
+    string SourceTitle,
+    Guid UserId,
+    string EmployeeNumber,
+    DateTime? StartedAt,
+    DateTime? FinishedAt,
     AttemptStatusDto Status,
     int CorrectAnswers,
     int TotalQuestions,
@@ -34,15 +55,20 @@ public sealed record ExamAttemptDetailsResponse(
     decimal TotalMaxScore,
     bool Passed,
     IReadOnlyCollection<ExamAttemptQuestionDetailsResponse> Questions)
-    : AttemptDetailsResponse(Id, Status, CorrectAnswers, TotalQuestions, Percentage);
+    : AttemptDetailsResponse(Id, AttemptNumber, SourceId, SourceTitle, UserId, EmployeeNumber, StartedAt, FinishedAt, Status, CorrectAnswers, TotalQuestions, Percentage);
 
 public sealed record TestAttemptQuestionDetailsResponse(
     int Order,
+    bool IsCorrect,
+    decimal EarnedScore,
+    decimal MaxScore,
     AttemptQuestionResultResponse Question,
     AttemptAnswerResponse? UserAnswer);
 
 public sealed record ExamAttemptQuestionDetailsResponse(
     int Order,
-    decimal Score,
+    bool IsCorrect,
+    decimal EarnedScore,
+    decimal MaxScore,
     AttemptQuestionResultResponse Question,
     AttemptAnswerResponse? UserAnswer);
