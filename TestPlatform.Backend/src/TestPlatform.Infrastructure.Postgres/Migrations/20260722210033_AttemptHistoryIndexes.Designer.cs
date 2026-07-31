@@ -16,7 +16,6 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
     [Migration("20260722210033_AttemptHistoryIndexes")]
     partial class AttemptHistoryIndexes
     {
-        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618

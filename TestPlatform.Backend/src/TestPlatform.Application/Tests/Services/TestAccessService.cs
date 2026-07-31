@@ -29,7 +29,7 @@ public class TestAccessService : IAccessService<Test>
 
         if (user is null)
         {
-            _logger.LogWarning("Unauthorized access attempt to update exam {ExamId}", id);
+            _logger.LogWarning("Unauthorized access attempt to update test {TestId}", id);
             return Result.Failure<Test>(ErrorCodes.Unauthorized);
         }
 
@@ -37,13 +37,13 @@ public class TestAccessService : IAccessService<Test>
 
         if (test is null)
         {
-            _logger.LogInformation("Exam with {Id} not found.", id);
+            _logger.LogInformation("Test with {TestId} not found.", id);
             return Result.Failure<Test>(ErrorCodes.TestNotFound);
         }
 
         if (test.AuthorId != user.Id && !user.IsAdmin)
         {
-            _logger.LogWarning("User {UserId} has no rights to update exam {ExamId}", user.Id, id);
+            _logger.LogWarning("User {UserId} has no rights to update test {TestId}", user.Id, id);
             return Result.Failure<Test>(ErrorCodes.Forbidden);
         }
 

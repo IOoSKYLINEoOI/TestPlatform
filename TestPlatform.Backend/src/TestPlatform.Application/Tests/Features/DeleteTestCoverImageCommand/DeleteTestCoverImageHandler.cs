@@ -41,7 +41,7 @@ public class DeleteTestCoverImageHandler : ICommandHandler<DeleteTestCoverImageC
         var result = test.RemoveCoverImage();
         if (result.IsFailure)
         {
-            _logger.LogInformation("Failed to remove cover image to test {TestId}: {Error}", command.Id, result.Error);
+            _logger.LogWarning("Failed to remove cover image from test {TestId}: {ErrorCode}", command.Id, result.Error);
             return result;
         }
 

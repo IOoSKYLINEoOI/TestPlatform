@@ -110,10 +110,12 @@
       "directAccessGrantsEnabled": false,
       "redirectUris": [
         "http://localhost:5175/*",
+        "http://localhost:5176/*",
         "http://localhost:5062/swagger/oauth2-redirect.html"
       ],
       "webOrigins": [
         "http://localhost:5175",
+        "http://localhost:5176",
         "http://localhost:5062"
       ],
       "defaultClientScopes": ["profile", "email", "roles", "web-origins", "test-platform-api"]

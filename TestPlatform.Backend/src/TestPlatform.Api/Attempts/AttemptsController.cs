@@ -8,6 +8,7 @@ using TestPlatform.Application.Attempts.Features.FinishAttemptCommand;
 using TestPlatform.Application.Attempts.Features.GetByIdAttemptDetailsQuery;
 using TestPlatform.Application.Attempts.Features.GetByIdAttemptQuery;
 using TestPlatform.Application.Attempts.Features.GetMyAttemptsQuery;
+using TestPlatform.Application.Attempts.Features.GetAttemptSourcesQuery;
 using TestPlatform.Application.Attempts.Features.RemoveAttemptAnswerCommand;
 using TestPlatform.Application.Attempts.Features.SaveAttemptAnswerCommand;
 using TestPlatform.Application.Attempts.Features.StartAttemptCommand;
@@ -24,6 +25,25 @@ namespace TestPlatform.Api.Attempts;
 [Route("attempts")]
 public class AttemptsController : ApiControllerBase
 {
+    [Authorize(Policy = AuthorizationPolicies.ManageContent)]
+    [HttpGet("sources")]
+    [SwaggerOperation(
+        OperationId = "GetAttemptSources",
+        Summary = "Получить тесты и экзамены для управления попытками")]
+    public async Task<IActionResult> GetSources(
+        [FromServices] IQueryHandler<GetAttemptSourcesQuery, AttemptSourcePageResponse> handler,
+        [FromQuery] string? search = null,
+        [FromQuery] AttemptTypeDto? type = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await handler.Handle(
+            new GetAttemptSourcesQuery(search, type, page, pageSize),
+            cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : ToErrorResult(result.Error);
+    }
+
     [HttpGet]
     [SwaggerOperation(
         OperationId = "GetMyAttempts",

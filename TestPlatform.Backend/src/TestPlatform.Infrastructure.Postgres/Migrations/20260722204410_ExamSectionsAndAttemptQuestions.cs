@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TestPlatform.Infrastructure.Postgres.Migrations
 {
-    /// <inheritdoc />
     public partial class ExamSectionsAndAttemptQuestions : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
@@ -67,7 +65,6 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                 });
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(

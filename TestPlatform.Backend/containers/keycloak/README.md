@@ -1,45 +1,44 @@
 # Keycloak
 
-`test-platform-realm.json` is imported only when the `test-platform` realm does not yet exist.
+Конфигурация realm `test-platform` импортируется только при его первом создании.
 
-To create an employee, an administrator creates a Keycloak user with:
+## Учётные записи сотрудников
 
-- a unique `username` used only for login;
-- a temporary password and the required `Update Password` action;
-- the `employee_number` user attribute;
-- one or more realm roles: `Employee`, `Teacher`, `Admin`.
+Сотрудник Keycloak должен иметь:
 
-`employee_number` is the business identifier. It must not be used as the Keycloak username and must not be editable by the employee.
+- уникальное поле `username` — только для входа;
+- временный пароль с обязательным действием `Update Password`;
+- пользовательский атрибут `employee_number`;
+- одну или несколько realm-ролей: `Employee`, `Teacher`, `Admin`.
 
-The `test-platform-admin` confidential client is used by the API to provision
-employee accounts. Its service account has only `manage-users`, `query-users`,
-and `view-users` realm-management roles. Its secret comes from
-`KEYCLOAK_ADMIN_CLIENT_SECRET`; never commit the real value.
+`employee_number` — бизнес-идентификатор сотрудника. Он не должен использоваться в качестве `username` и не должен редактироваться самим сотрудником.
 
-`bootstrap-demo-users.sh` runs in a separate one-shot container and creates
-`demo.admin`, `demo.teacher`, and `demo.employee`. It waits for Keycloak,
-updates accounts idempotently through `kcadm`, assigns `employee_number` and a
-realm role, applies the `mytheme` login theme, disables the profile-completion
-prompt, and reads all passwords from environment variables.
+Конфиденциальный клиент `test-platform-admin` используется API для создания учётных записей. Его service account имеет только realm-management-роли `manage-users`, `query-users` и `view-users`. Секрет передаётся через `KEYCLOAK_ADMIN_CLIENT_SECRET`; не добавляйте настоящее значение в репозиторий.
 
-Only the login and password are entered during authentication. A newly
-provisioned employee still has to replace the temporary password on the first
-login. This is intentional and must not be confused with profile completion.
+## Демонстрационные пользователи
 
-The User Profile schema is configured through Keycloak's separate Admin API and is not part of the Realm representation import. After the first startup (and after a Keycloak database reset), run:
+Одноразовый контейнер запускает `bootstrap-demo-users.sh`, который создаёт или обновляет `demo.admin`, `demo.teacher` и `demo.employee`. Скрипт ожидает готовности Keycloak, назначает `employee_number` и realm-роль, применяет тему входа `mytheme`, отключает запрос на заполнение профиля и получает все пароли из переменных окружения.
+
+При входе указываются только логин и пароль. Созданный через API сотрудник должен заменить временный пароль при первом входе — это штатное поведение, не связанное с заполнением профиля.
+
+## Профиль пользователя
+
+Схема User Profile настраивается отдельным Admin API и не входит в импорт realm. После первого запуска, а также после сброса базы данных Keycloak, выполните из каталога `TestPlatform.Backend`:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\containers\keycloak\configure-user-profile.ps1
 ```
 
-It makes `employee_number` a required, single-value attribute visible and editable only to administrators. Add an organisation-specific validation pattern in the script when its employee-number format is settled. The application also rejects a token without this claim and rejects a changed number, so a partially configured account cannot access the API.
+Скрипт делает `employee_number` обязательным однозначным атрибутом, видимым и редактируемым только администраторам. При утверждении формата табельного номера добавьте в скрипт проверку по регулярному выражению. Приложение также отклоняет токены без этого claim и с изменённым номером.
 
-For local development, reset the Keycloak database only when realm data can be discarded:
+## Повторный импорт realm
+
+Импорт не изменяет существующий realm. Для локальной среды, в которой данные Keycloak можно удалить, выполните из корня `TestPlatform`:
 
 ```powershell
 docker compose down
-docker volume rm testplatformbackend_keycloak_pgdata
+docker volume rm testplatform_keycloak_pgdata
 docker compose up --build
 ```
 
-For a production deployment use `start`, HTTPS, a stable public hostname and secret values provided outside the repository.
+Для production-окружения используйте режим Keycloak `start`, HTTPS, постоянное публичное имя хоста и секреты, передаваемые вне репозитория.

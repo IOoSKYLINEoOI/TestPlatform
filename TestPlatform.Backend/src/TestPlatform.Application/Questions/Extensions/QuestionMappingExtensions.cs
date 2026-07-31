@@ -14,7 +14,7 @@ namespace TestPlatform.Application.Questions.Extensions;
 
 public static class QuestionMappingExtensions
 {
-    public static AttemptQuestionResponse ToAttemptResponse(this Question question)
+    public static AttemptQuestionResponse ToAttemptResponse(this Question question, int? shuffleSeed = null)
     {
         var tags = question.Tags.ToResponses();
 
@@ -28,7 +28,7 @@ public static class QuestionMappingExtensions
                 definition.Mode.ToDto(),
                 definition.EvaluationMode.ToDto(),
                 tags,
-                definition.Options.Select(option => new AnswerOptionResponse(
+                Shuffle(definition.Options, shuffleSeed).Select(option => new AnswerOptionResponse(
                     option.Id,
                     option.Text,
                     option.ImageId)).ToList()),
@@ -51,8 +51,8 @@ public static class QuestionMappingExtensions
                 definition.Type.ToDto(),
                 definition.Mode.ToDto(),
                 tags,
-                ToMatchingItems(definition.LeftItems),
-                ToMatchingItems(definition.RightItems)),
+                ToMatchingItems(Shuffle(definition.LeftItems, shuffleSeed)),
+                ToMatchingItems(Shuffle(definition.RightItems, shuffleSeed.HasValue ? unchecked(shuffleSeed.Value + 1) : null))),
             _ => throw Unsupported(question),
         };
     }
@@ -219,6 +219,19 @@ public static class QuestionMappingExtensions
 
     private static IReadOnlyList<MatchingPairDto> ToMatchingPairs(MatchingAnswerDefinition definition) =>
         definition.Pairs.Select(pair => new MatchingPairDto(pair.LeftId, pair.RightId)).ToList();
+
+    private static IReadOnlyList<T> Shuffle<T>(IEnumerable<T> items, int? seed)
+    {
+        var result = items.ToList();
+        var random = seed.HasValue ? new Random(seed.Value) : Random.Shared;
+        for (var index = result.Count - 1; index > 0; index--)
+        {
+            var target = random.Next(index + 1);
+            (result[index], result[target]) = (result[target], result[index]);
+        }
+
+        return result;
+    }
 
     private static NotSupportedException Unsupported(Question question) =>
         new($"Unsupported answer definition: {question.AnswerDefinition.GetType().Name}");

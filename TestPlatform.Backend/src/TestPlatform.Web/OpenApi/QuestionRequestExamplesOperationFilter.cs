@@ -26,7 +26,7 @@ public sealed class QuestionRequestExamplesOperationFilter : IOperationFilter
             return;
         }
 
-#pragma warning disable SA1118 // Swagger examples are intentionally formatted as readable JSON.
+#pragma warning disable SA1118
         mediaType.Examples = new Dictionary<string, IOpenApiExample>
         {
             ["text"] = Example("Текстовый вопрос", """

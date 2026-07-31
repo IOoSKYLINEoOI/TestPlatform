@@ -21,5 +21,5 @@ public enum AttemptStatusDto
     CANCELLED = 5,
 
     [JsonStringEnumMemberName("notStarted")]
-    NOT_STARTED = 6,
+    NotStarted = 6,
 }

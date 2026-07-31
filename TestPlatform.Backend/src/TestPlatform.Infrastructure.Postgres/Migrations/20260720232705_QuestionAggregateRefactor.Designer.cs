@@ -15,7 +15,6 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
     [Migration("20260720232705_QuestionAggregateRefactor")]
     partial class QuestionAggregateRefactor
     {
-        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618

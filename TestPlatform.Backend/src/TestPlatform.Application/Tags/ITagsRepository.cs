@@ -6,6 +6,10 @@ public interface ITagsRepository
 {
     Task<Tag?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<Tag>> GetByIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken);
+
     Task<bool> ExistsByNameAsync(Guid? excludedTagId, string name, CancellationToken cancellationToken);
 
     Task<int> GetUsageCountAsync(Guid tagId, CancellationToken cancellationToken);

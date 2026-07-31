@@ -62,8 +62,9 @@ public class TestAttemptSource(
         }
 
         var attemptQuestions = test.Questions
-            .Select(q => new AttemptQuestion(
-                q.Order,
+            .OrderBy(_ => Random.Shared.Next())
+            .Select((q, index) => new AttemptQuestion(
+                index + 1,
                 1,
                 questionMap[q.QuestionId]))
             .ToList();

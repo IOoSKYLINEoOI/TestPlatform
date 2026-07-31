@@ -62,9 +62,8 @@ public sealed class KeycloakIdentityAccountProvisioner(
             }
 
             logger.LogInformation(
-                "Created Keycloak user {KeycloakUserId} with employee number {EmployeeNumber} and role {Role}.",
+                "Created Keycloak user {KeycloakUserId} with role {Role}.",
                 userId,
-                request.EmployeeNumber,
                 request.Role);
 
             return Result.Success(new ProvisionedIdentityAccount(

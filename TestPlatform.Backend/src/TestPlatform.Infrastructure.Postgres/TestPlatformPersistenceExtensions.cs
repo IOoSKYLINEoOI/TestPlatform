@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TestPlatform.Application.Abstractions;
 using TestPlatform.Application.Attempts;
+using TestPlatform.Application.Auditing;
 using TestPlatform.Application.Exams;
 using TestPlatform.Application.Files;
 using TestPlatform.Application.Questions;
@@ -43,6 +44,9 @@ public static class TestPlatformPersistenceExtensions
         services.AddScoped<IAttemptExpirationService, AttemptExpirationService>();
         services.AddScoped<IAttemptStartStore, AttemptStartStore>();
         services.AddScoped<IAttemptsReadDbContext, TestPlatformDbContext>();
+        services.AddScoped<IAttemptSourcesReadDbContext>(provider =>
+            provider.GetRequiredService<TestPlatformDbContext>());
+        services.AddScoped<IAuditLogReadDbContext, TestPlatformDbContext>();
 
         services.AddScoped<IUsersRepository, UsersRepository>();
         services.AddScoped<IUsersReadDbContext, TestPlatformDbContext>();

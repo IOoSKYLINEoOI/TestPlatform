@@ -9,11 +9,11 @@ public static class LoggerExtensions
     {
         if (result.IsSuccess)
         {
-            logger.LogInformation("{Action} succeeded{Id}", action, id.HasValue ? $" for id {id}" : string.Empty);
+            logger.LogInformation("{Operation} succeeded for {EntityId}", action, id);
         }
         else
         {
-            logger.LogWarning("{Action} failed{Id}: {Error}", action, id.HasValue ? $" for id {id}" : string.Empty, result.Error);
+            logger.LogWarning("{Operation} failed for {EntityId}: {ErrorCode}", action, id, result.Error);
         }
     }
 
@@ -21,11 +21,11 @@ public static class LoggerExtensions
     {
         if (result.IsSuccess)
         {
-            logger.LogInformation("{Action} succeeded{Id}", action, id.HasValue ? $" for id {id}" : string.Empty);
+            logger.LogInformation("{Operation} succeeded for {EntityId}", action, id);
         }
         else
         {
-            logger.LogWarning("{Action} failed{Id}: {Error}", action, id.HasValue ? $" for id {id}" : string.Empty, result.Error);
+            logger.LogWarning("{Operation} failed for {EntityId}: {ErrorCode}", action, id, result.Error);
         }
     }
 }

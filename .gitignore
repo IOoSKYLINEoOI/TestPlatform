@@ -290,6 +290,7 @@ FakesAssemblies/
 # Node.js Tools for Visual Studio
 .ntvs_analysis.dat
 node_modules/
+.pnpm-store/
 
 # Visual Studio 6 build log
 *.plg
@@ -421,6 +422,8 @@ autom4te.cache/
 *.tar.gz
 tarballs/
 test-results/
+playwright-report/
+blob-report/
 
 # Mac bundle stuff
 *.dmg

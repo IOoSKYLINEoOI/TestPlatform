@@ -4,10 +4,8 @@
 
 namespace TestPlatform.Infrastructure.Postgres.Migrations
 {
-    /// <inheritdoc />
     public partial class RenameTabNumberToEmployeeNumber : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.RenameColumn(
@@ -21,7 +19,6 @@ namespace TestPlatform.Infrastructure.Postgres.Migrations
                 newName: "IX_users_EmployeeNumber");
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.RenameColumn(
