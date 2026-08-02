@@ -103,6 +103,7 @@ jobs:
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           script: |
             cd /opt/testplatform
+            echo "${{ secrets.PRODUCTION_GHCR_TOKEN }}" | docker login ghcr.io --username iooskylineooi --password-stdin
             docker compose --env-file .env -f docker-compose.production.yml pull
             docker compose --env-file .env -f docker-compose.production.yml up -d --remove-orphans
             docker image prune --force
