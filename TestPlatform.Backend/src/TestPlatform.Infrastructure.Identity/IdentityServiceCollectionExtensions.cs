@@ -22,7 +22,8 @@ public static class IdentityServiceCollectionExtensions
             .AddJwtBearer(options =>
             {
                 options.MapInboundClaims = false;
-                options.RequireHttpsMetadata = !isDevelopment;
+                options.RequireHttpsMetadata = configuration.GetValue<bool?>("Authentication:RequireHttpsMetadata")
+                    ?? !isDevelopment;
                 options.Audience = Required(configuration, "Authentication:Audience");
                 options.MetadataAddress = Required(configuration, "Authentication:MetadataAddress");
                 options.TokenValidationParameters = new TokenValidationParameters

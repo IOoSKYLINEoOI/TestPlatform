@@ -45,6 +45,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__TestPlatformContextPostgreSQL: "Host=postgres;Port=5432;Database=testPlatformDb;Username=${APP_DB_USER:?Set APP_DB_USER};Password=${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}"
       Authentication__MetadataAddress: "${KEYCLOAK_INTERNAL_URL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-test-platform}/.well-known/openid-configuration"
+      # Metadata is fetched over the private Docker network; public Keycloak traffic remains HTTPS.
+      Authentication__RequireHttpsMetadata: "false"
       Authentication__ValidIssuer: "${KEYCLOAK_PUBLIC_URL:?Set KEYCLOAK_PUBLIC_URL}/realms/${KEYCLOAK_REALM:-test-platform}"
       Authentication__Audience: ${KEYCLOAK_API_AUDIENCE:-test-platform-api}
       IdentityManagement__BaseUrl: ${KEYCLOAK_INTERNAL_URL:-http://keycloak:8080}
