@@ -1,0 +1,30 @@
+# Install this file first to obtain Let's Encrypt certificates.
+# After certbot succeeds, replace it with testplatform.conf.template.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name henkel-academy.ru henkel-academy.online;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://app.henkel-academy.ru$request_uri;
+    }
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name app.henkel-academy.ru api.henkel-academy.ru auth.henkel-academy.ru files.henkel-academy.ru;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}

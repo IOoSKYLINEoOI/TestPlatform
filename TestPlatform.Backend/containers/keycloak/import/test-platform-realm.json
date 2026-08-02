@@ -109,11 +109,13 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "redirectUris": [
+        "${APP_PUBLIC_URL}/*",
         "http://localhost:5175/*",
         "http://localhost:5176/*",
         "http://localhost:5062/swagger/oauth2-redirect.html"
       ],
       "webOrigins": [
+        "${APP_PUBLIC_URL}",
         "http://localhost:5175",
         "http://localhost:5176",
         "http://localhost:5062"

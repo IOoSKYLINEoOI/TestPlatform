@@ -1,0 +1,108 @@
+name: Release and deploy
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  API_IMAGE: ghcr.io/iooskylineooi/testplatform-api
+  ADMIN_IMAGE: ghcr.io/iooskylineooi/testplatform-admin
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test backend
+        run: dotnet test TestPlatform.Backend/TestPlatform.sln --configuration Release
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: TestPlatform.Admin/pnpm-lock.yaml
+
+      - name: Test frontend
+        working-directory: TestPlatform.Admin
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm test
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish API image
+        uses: docker/build-push-action@v6
+        with:
+          context: TestPlatform.Backend
+          push: true
+          tags: ${{ env.API_IMAGE }}:${{ github.ref_name }}
+
+      - name: Build and publish admin image
+        uses: docker/build-push-action@v6
+        with:
+          context: TestPlatform.Admin
+          push: true
+          tags: ${{ env.ADMIN_IMAGE }}:${{ github.ref_name }}
+          build-args: |
+            VITE_KEYCLOAK_URL=https://auth.henkel-academy.ru
+            VITE_KEYCLOAK_REALM=test-platform
+            VITE_KEYCLOAK_CLIENT_ID=public-client
+            VITE_KEYCLOAK_ADMIN_URL=https://auth.henkel-academy.ru/admin/test-platform/console/
+            VITE_SWAGGER_URL=https://api.henkel-academy.ru/swagger/index.html
+            VITE_SEQ_URL=
+            VITE_MINIO_CONSOLE_URL=
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload deployment files
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          source: docker-compose.production.yml,TestPlatform.Backend/containers/keycloak
+          target: /opt/testplatform
+
+      - name: Deploy release
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            cd /opt/testplatform
+            docker compose --env-file .env -f docker-compose.production.yml pull
+            docker compose --env-file .env -f docker-compose.production.yml up -d --remove-orphans
+            docker image prune --force
